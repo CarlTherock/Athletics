@@ -1313,7 +1313,7 @@ function renderToday(){
         +'<div style="font-size:11px;color:var(--t3);margin-top:5px">Mobilité 15 min — hanches et épaules</div>'
         +'</div>';
       var sb=document.getElementById('startBtn');
-      if(sb){sb.textContent='Jour de repos 🚶';sb.onclick=null;sb.style.opacity='0.4';}
+      if(sb){sb.textContent="Jour de repos 🚶";sb.onclick=null;sb.style.opacity="0.4";}
     } else {
       var cards='';
       for(var ei=0;ei<day.exercises.length;ei++){
@@ -1331,7 +1331,7 @@ function renderToday(){
       }
       tc.innerHTML=cards;
       var sb=document.getElementById('startBtn');
-      if(sb){sb.textContent='▶ Commencer l'entraînement';sb.onclick=startWo;sb.style.opacity='1';}
+      if(sb){sb.textContent="▶ Commencer l'entraînement";sb.onclick=startWo;sb.style.opacity="1";}
     }
   }
 
@@ -1650,8 +1650,6 @@ const EX_BY_MUSCLE={};
 MUSCLES_ORDER.forEach(m=>EX_BY_MUSCLE[m]=[]);
 EX_LIBRARY.forEach(ex=>{if(EX_BY_MUSCLE[ex.muscle])EX_BY_MUSCLE[ex.muscle].push(ex);});
 
-const MUSCLES_ORDER=["Pectoraux","Dos","Épaules","Biceps","Triceps","Quadriceps","Ischio","Fessiers","Mollets","Core","Full Body"];
-const EX_BY_MUSCLE={};
 MUSCLES_ORDER.forEach(m=>EX_BY_MUSCLE[m]=[]);
 EX_LIBRARY.forEach(ex=>{if(EX_BY_MUSCLE[ex.muscle])EX_BY_MUSCLE[ex.muscle].push(ex);});
 
