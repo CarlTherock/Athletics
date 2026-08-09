@@ -576,6 +576,7 @@ body{
 
 
 
+
 // ════════════════════════════════════════════════════════════
 // PROGRAMME DATA
 // SEMAINE : Dim=J1, Lun=J2, Mar=J3, Mer=J4, Jeu=J5, Ven=REPOS, Sam=REPOS
@@ -800,7 +801,8 @@ function addRestTime(sec){
   S.rTotal = Math.max(5, S.rTotal + sec);
   save();
 }
-function skipRest(){if(S.restInt)clearInterval(S.restInt);document.getElementById('restOv').classList.remove('on');}
+function skipRest(){
+  playDone();if(S.restInt)clearInterval(S.restInt);document.getElementById('restOv').classList.remove('on');}
 
 // ════════════════════════════════════════════════════════════
 // NAVIGATION
@@ -955,6 +957,7 @@ function setOv(id){S.ovDay=id;save();document.getElementById('chgSh').classList.
 // WORKOUT
 // ════════════════════════════════════════════════════════════
 function startWo(){
+  reqWakeLock();
   S.woStart=Date.now();S.sets={};
   go('wo');renderWo();
   if(S.woInt)clearInterval(S.woInt);
@@ -1118,6 +1121,7 @@ function updProg(){
 }
 
 function finishWo(){
+  relWakeLock();
   if(S.woInt)clearInterval(S.woInt);
   const actId=activeDay();const day=dayObj(actId);
   S.sessions.push({date:tod(),dayId:actId,dayName:day.name,bloc:bloc(),week:S.curWeek,duration:Math.floor((Date.now()-S.woStart)/60000),exercises:Object.entries(S.sets).map(([n,sets])=>({name:n,sets}))});
@@ -1239,6 +1243,7 @@ save();
 renderToday();
 renderProg();
 setTimeout(()=>{const sp=document.getElementById('spl');if(sp){sp.classList.add('out');setTimeout(()=>sp.remove(),500);}},1600);
+
 
 
 
