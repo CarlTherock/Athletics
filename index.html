@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <meta name="theme-color" content="#0A0A0A">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -385,6 +385,26 @@ body{position:fixed;top:0;left:0;right:0;bottom:0;overflow:hidden}
 .rest-ov.on{display:flex}
 .sh-bg{position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.75);display:none;align-items:flex-end}
 .sh-bg.on{display:flex}
+
+:root{ --app-height: 100dvh; }
+html,body{ height: var(--app-height) !important; }
+body{ 
+  position:fixed;top:0;left:0;right:0;
+  height: var(--app-height) !important;
+  overflow:hidden;
+}
+.screens{
+  position:fixed;top:0;left:0;right:0;
+  bottom:54px;
+  overflow:hidden;
+}
+@supports(padding-bottom: env(safe-area-inset-bottom)){
+  .screens{ bottom: calc(54px + env(safe-area-inset-bottom,0px)); }
+  .bnav{ 
+    height: calc(54px + env(safe-area-inset-bottom,0px)) !important;
+    padding-bottom: env(safe-area-inset-bottom,0px) !important;
+  }
+}
 </style>
 </head>
 <body>
@@ -592,6 +612,7 @@ body{position:fixed;top:0;left:0;right:0;bottom:0;overflow:hidden}
 
 
 <script>
+
 
 
 
@@ -980,6 +1001,7 @@ function setOv(id){S.ovDay=id;save();document.getElementById('chgSh').classList.
 // WORKOUT
 // ════════════════════════════════════════════════════════════
 function startWo(){
+  initAudio();
   reqWakeLock();
   S.woStart=Date.now();S.sets={};
   go('wo');renderWo();
@@ -1274,60 +1296,55 @@ document.addEventListener('visibilitychange', function(){
   if(document.visibilityState==='visible' && S.woStart) reqWakeLock();
 });
 
-// ── AUDIO — using HTMLAudioElement (works without user gesture on iOS) ──
-var _audioUnlocked = false;
+// ── AUDIO — créé dans startWo() pour garantir le geste utilisateur ──
 var _audioCtx = null;
 
-function unlockAudio(){
-  if(_audioUnlocked) return;
-  _audioUnlocked = true;
-  // Create and immediately suspend a context to unlock
+function initAudio(){
+  // DOIT être appelé depuis un onclick/tap direct (geste utilisateur)
+  if(_audioCtx) return;
   try{
     _audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-    // Play a silent buffer to unlock
-    var buf = _audioCtx.createBuffer(1,1,22050);
-    var src = _audioCtx.createBufferSource();
-    src.buffer = buf;
-    src.connect(_audioCtx.destination);
-    src.start(0);
-  }catch(e){}
+    // Buffer silencieux pour débloquer iOS
+    var buf=_audioCtx.createBuffer(1,1,22050);
+    var src=_audioCtx.createBufferSource();
+    src.buffer=buf; src.connect(_audioCtx.destination); src.start(0);
+  }catch(e){ _audioCtx=null; }
 }
 
-// Unlock on ANY user interaction
-document.addEventListener('touchstart', unlockAudio, {once:true, passive:true});
-document.addEventListener('touchend', unlockAudio, {once:true, passive:true});
-
-function playTone(freq, startTime, dur, vol){
+function playTone(freq, when, dur, vol){
   if(!_audioCtx) return;
   try{
     if(_audioCtx.state==='suspended') _audioCtx.resume();
-    var osc = _audioCtx.createOscillator();
-    var gain = _audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(_audioCtx.destination);
-    osc.frequency.value = freq;
-    osc.type = 'sine';
-    gain.gain.setValueAtTime(vol||0.4, startTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, startTime + dur);
-    osc.start(startTime);
-    osc.stop(startTime + dur);
+    var o=_audioCtx.createOscillator();
+    var g=_audioCtx.createGain();
+    o.connect(g); g.connect(_audioCtx.destination);
+    o.type='sine'; o.frequency.value=freq;
+    g.gain.setValueAtTime(vol||0.5, when);
+    g.gain.exponentialRampToValueAtTime(0.001, when+dur);
+    o.start(when); o.stop(when+dur);
   }catch(e){}
 }
 
 function playDone(){
-  // Schedule 3 beeps using AudioContext time (works in background)
-  if(_audioCtx){
-    try{
-      if(_audioCtx.state==='suspended') _audioCtx.resume();
-      var now = _audioCtx.currentTime;
-      playTone(440, now,       0.15, 0.5);
-      playTone(550, now+0.2,   0.15, 0.5);
-      playTone(660, now+0.4,   0.25, 0.6);
-    }catch(e){}
-  }
-  // Vibration as backup
-  try{ navigator.vibrate && navigator.vibrate([150,80,150,80,300]); }catch(e){}
+  try{ navigator.vibrate&&navigator.vibrate([150,80,150,80,300]); }catch(e){}
+  if(!_audioCtx) return;
+  try{
+    if(_audioCtx.state==='suspended') _audioCtx.resume();
+    var now=_audioCtx.currentTime;
+    playTone(440, now,      0.18, 0.6);
+    playTone(550, now+0.22, 0.18, 0.6);
+    playTone(660, now+0.44, 0.28, 0.7);
+  }catch(e){}
 }
+
+
+// Fix layout height dynamically (Safari address bar issue)
+function fixLayout(){
+  var h = window.innerHeight;
+  document.documentElement.style.setProperty('--app-height', h+'px');
+}
+fixLayout();
+window.addEventListener('resize', fixLayout);
 
 load();
 S.curWeek=calcWeek();
@@ -1335,6 +1352,7 @@ save();
 renderToday();
 renderProg();
 setTimeout(()=>{const sp=document.getElementById('spl');if(sp){sp.classList.add('out');setTimeout(()=>sp.remove(),500);}},1600);
+
 
 
 
