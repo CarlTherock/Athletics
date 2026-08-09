@@ -926,6 +926,7 @@ function openPlate(wStr,exName){
     h+=`<div class="pl-row" style="border-top:2px solid var(--b2)"><div class="pl-name" style="font-weight:800">+ Barre (${BAR} lb)</div></div>`;
   }
   document.getElementById('plBody').innerHTML=h;
+  raiseSheet('plSh');
   document.getElementById('plSh').classList.add('on');
 }
 
@@ -1325,13 +1326,14 @@ function openDaySh(id){
       </div>
       <div style="display:flex;gap:7px;margin-top:8px;flex-wrap:wrap">
         ${!ex.bw&&!ex.rpe?`<button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:11px" onclick="openPlate('${parseFloat(w)||0}','${ex.name}')">🏋️ Voir les plaques</button>`:''}
-        <button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:11px" onclick="openExLibrary(${id},${exIdx})">🔄 Remplacer</button>
+        <button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:11px;display:inline-flex;align-items:center;gap:5px" onclick="openExLibrary(${id},${exIdx})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>Remplacer</button>
       </div>
       <div style="height:1px;background:var(--b);margin-top:11px"></div>
     </div>`;}).join('')}
     <div style="padding:0 12px 12px">
       <button class="btn btn-red btn-lg" onclick="S.ovDay=${id};save();document.getElementById('daySh').classList.remove('on');startWo()">Commencer Jour ${id}</button>
     </div>`;
+  raiseSheet('daySh');
   document.getElementById('daySh').classList.add('on');
 }
 
@@ -2293,6 +2295,11 @@ let exLibTargetName = null;
 let exLibTargetIdx = null;
 let exLibTargetDay = null;
 let exLibActiveTab = null;
+let __shZ = 800;
+function raiseSheet(id){
+  const el = document.getElementById(id);
+  if(el) el.style.zIndex = (++__shZ);
+}
 
 function svgForIcon(icon, color){
   var paths = {
@@ -2373,6 +2380,7 @@ function openExLibrary(dayId, exIdx){
   document.getElementById('exLibTabs').style.display = 'flex';
   renderExLibTabs(muscles);
   renderExLibGrid(exLibActiveTab);
+  raiseSheet('exLibSh');
   document.getElementById('exLibSh').classList.add('on');
 }
 
