@@ -521,23 +521,64 @@ body{
 
   <!-- STATS -->
   <div class="scr" id="sc-stats">
-    <div class="tb"><div class="tb-logo">CTR <em>Stats</em></div><div style="font-size:10px;color:var(--t3)">Plan 300</div></div>
-    <div class="sg" style="margin-top:12px" id="statCards"></div>
-    <span class="lbl">PROGRESSION</span>
-    <div class="ch-wrap">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+    <div class="tb">
+      <div><div class="tb-logo">CTR <em>Stats</em></div><div style="font-size:10px;color:var(--t3)" id="statsDateRange">Plan 300</div></div>
+      <div style="display:flex;gap:6px">
+        <div id="statsTab7" onclick="setStatsRange(7)" style="padding:4px 10px;border-radius:20px;font-size:10px;font-weight:800;cursor:pointer;background:var(--red);color:#fff;border:1px solid var(--red)">7J</div>
+        <div id="statsTab30" onclick="setStatsRange(30)" style="padding:4px 10px;border-radius:20px;font-size:10px;font-weight:800;cursor:pointer;background:var(--bg3);color:var(--t3);border:1px solid var(--b)">30J</div>
+        <div id="statsTabAll" onclick="setStatsRange(0)" style="padding:4px 10px;border-radius:20px;font-size:10px;font-weight:800;cursor:pointer;background:var(--bg3);color:var(--t3);border:1px solid var(--b)">Tout</div>
+      </div>
+    </div>
+
+    <!-- KPI GRID -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin:12px 12px 10px" id="kpiGrid"></div>
+
+    <!-- BODY MAP SVG -->
+    <span class="lbl">CORPS — MUSCLES TRAVAILLÉS</span>
+    <div style="margin:0 12px 12px;background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:14px;display:flex;gap:16px;align-items:flex-start">
+      <div style="flex:1" id="bodyMapWrap"></div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px" id="muscleList"></div>
+    </div>
+
+    <!-- WEEKLY TRAINING CALENDAR -->
+    <span class="lbl">SEMAINE EN COURS</span>
+    <div style="margin:0 12px 12px;background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);overflow:hidden" id="weekCalendar"></div>
+
+    <!-- 1RM TRACKER -->
+    <span class="lbl">1RM ESTIMÉS</span>
+    <div style="margin:0 12px 12px;background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);overflow:hidden" id="oneRMTable"></div>
+
+    <!-- LIFT PROGRESSION CHART -->
+    <span class="lbl">PROGRESSION LIFT</span>
+    <div style="margin:0 12px 10px;background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:13px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <div style="font-size:14px;font-weight:800" id="chLift">Bench Press</div>
-        <select style="background:var(--bg3);border:1px solid var(--b);border-radius:20px;color:#fff;font-size:11px;padding:4px 9px;outline:none" onchange="renderChart(this.value)">
+        <select style="background:var(--bg3);border:1px solid var(--b);border-radius:20px;color:#fff;font-size:11px;padding:4px 9px;outline:none" onchange="renderChart(this.value)" id="liftChartSel">
           <option>Bench Press</option><option>Back Squat</option><option>Barbell OHP</option>
           <option>Pendlay Row</option><option>Deadlift Conventionnel</option><option>Barbell Hip Thrust</option>
+          <option>Romanian Deadlift</option><option>Bulgarian Split Squat</option>
         </select>
       </div>
-      <div class="ch-bars" id="chBars"></div>
+      <div id="chBars" style="display:flex;align-items:flex-end;gap:4px;height:90px;margin-bottom:6px"></div>
+      <div id="chStats" style="display:flex;gap:10px;justify-content:center"></div>
     </div>
-    <span class="lbl">GROUPES MUSCULAIRES</span>
-    <div class="mh" id="mheat"></div>
-    <span class="lbl">SÉANCES RÉCENTES</span>
+
+    <!-- VOLUME PAR MUSCLE (bar chart) -->
+    <span class="lbl">VOLUME PAR GROUPE</span>
+    <div style="margin:0 12px 10px;background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:13px" id="volByMuscle"></div>
+
+    <!-- SETS / REPS DISTRIBUTION -->
+    <span class="lbl">DISTRIBUTION SÉRIES</span>
+    <div style="margin:0 12px 10px;background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:13px;display:flex;gap:12px" id="setsDist"></div>
+
+    <!-- RECENT SESSIONS -->
+    <span class="lbl">HISTORIQUE SÉANCES</span>
     <div id="recentSess" style="margin:0 12px 12px"></div>
+
+    <!-- RENPHO DATA -->
+    <span class="lbl">COMPOSITION CORPORELLE</span>
+    <div style="margin:0 12px 14px;background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);overflow:hidden" id="renphoPanel"></div>
+
   </div>
 
   <!-- PHOTOS -->
@@ -1655,27 +1696,375 @@ function openDaySh(id){
   document.getElementById('daySh').classList.add('on');
 }
 
-// STATS
-function renderStats(){
-  let vol=0;S.sessions.forEach(s=>s.exercises?.forEach(ex=>ex.sets?.forEach(set=>{if(set.w&&set.r)vol+=set.w*set.r;})));
-  document.getElementById('statCards').innerHTML=`
-    <div class="sc"><div class="sc-l">Séances</div><div class="sc-v">${S.sessions.length}</div><div class="sc-d neu">Plan 300</div></div>
-    <div class="sc"><div class="sc-l">Volume</div><div class="sc-v">${vol>0?Math.round(vol/1000)+'k':'0'}</div><div class="sc-d neu">lb soulevées</div></div>
-    <div class="sc"><div class="sc-l">Bench 1RM</div><div class="sc-v" id="sc-b">270</div><div class="sc-d up">lb estimé</div></div>
-    <div class="sc"><div class="sc-l">Squat 1RM</div><div class="sc-v">222</div><div class="sc-d up">lb estimé</div></div>`;
-  const bh=S.hist['Bench Press'];if(bh?.length){const l=bh.slice(-1)[0];const el=document.getElementById('sc-b');if(el)el.textContent=Math.round(l.w*(1+l.r/30)/2.5)*2.5;}
-  renderChart('Bench Press');
-  const maxS=Math.max(...MUSCLES.map(m=>m.s));
-  document.getElementById('mheat').innerHTML=MUSCLES.map(m=>{const pct=(m.s/maxS*100).toFixed(0);return`<div class="mh-row"><div class="mh-n">${m.n}</div><div class="mh-bg"><div class="mh-fill" style="width:${pct}%;background:${m.c}"></div></div><div class="mh-s ${m.s>=100?'up':m.s>=85?'neu':'dn'}">${m.s}</div><div class="mh-tr ${parseFloat(m.d)>=0?'up':'dn'}">${m.d}</div></div>`;}).join('');
-  const rec=[...S.sessions].reverse().slice(0,5);
-  document.getElementById('recentSess').innerHTML=rec.length?rec.map(s=>`<div class="card" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between"><div><div style="font-size:13px;font-weight:800">J${s.dayId} — ${s.dayName}</div><div style="font-size:10px;color:var(--t3);margin-top:1px">${s.date} · Sem. ${s.week} · Bloc ${s.bloc}</div></div><div style="color:var(--rs);font-weight:700;font-size:13px">${s.duration} min</div></div></div>`).join(''):`<div class="card"><div style="text-align:center;padding:12px 0;color:var(--t3);font-size:12px">Lance ton premier workout!</div></div>`;
+// ════════════════════════════════════════════════════════════
+// STATS ENGINE — Full dashboard
+// ════════════════════════════════════════════════════════════
+let statsRange = 7; // days (0 = all time)
+
+function setStatsRange(days){
+  statsRange = days;
+  ['7','30','All'].forEach(t=>{
+    const el=document.getElementById('statsTab'+t);
+    if(el){el.style.background='var(--bg3)';el.style.color='var(--t3)';el.style.borderColor='var(--b)';}
+  });
+  const key = days===7?'7':days===30?'30':'All';
+  const el=document.getElementById('statsTab'+key);
+  if(el){el.style.background='var(--red)';el.style.color='#fff';el.style.borderColor='var(--red)';}
+  renderStats();
 }
+
+function filteredSessions(){
+  if(statsRange===0) return S.sessions;
+  const cutoff=new Date();cutoff.setDate(cutoff.getDate()-statsRange);
+  return S.sessions.filter(s=>new Date(s.date)>=cutoff);
+}
+
+function calc1RM(w,r){return r===1?w:Math.round(w*(1+r/30)/2.5)*2.5;}
+
+function getMuscleVolume(sessions){
+  // Map exercises to muscle groups
+  const muscleMap={};
+  const exToMuscle={
+    "Bench Press":"Pectoraux","Incline Bench Press":"Pectoraux","Cable Fly":"Pectoraux","Dips Lestés":"Pectoraux",
+    "Pendlay Row":"Dos","Pull-Up Lesté":"Dos","Meadows Row":"Dos","Seated Cable Row":"Dos","Lat Pulldown":"Dos","Face Pull câble":"Dos",
+    "Barbell OHP":"Épaules","Arnold Press":"Épaules","Lateral Raise câble 1 bras":"Épaules","Rear Delt Fly câble":"Épaules",
+    "Cable Curl":"Biceps","Barbell Curl":"Biceps","Hammer Curl":"Biceps",
+    "Overhead Triceps Rope":"Triceps","Dips étroits":"Triceps","Skull Crusher":"Triceps",
+    "Back Squat":"Quadriceps","Bulgarian Split Squat":"Quadriceps","Leg Extension":"Quadriceps","Hack Squat":"Quadriceps",
+    "Romanian Deadlift":"Ischio","Nordic Leg Curl":"Ischio","Leg Curl couché":"Ischio",
+    "Barbell Hip Thrust":"Fessiers","Hip Thrust Unilatéral":"Fessiers","Glute Bridge":"Fessiers",
+    "Seated Calf Raise":"Mollets","Standing Calf Raise":"Mollets",
+    "Ab Wheel Rollout":"Core","Farmer Walk":"Core","Plank":"Core",
+    "Deadlift Conventionnel":"Full Body","Incline Bench Press":"Full Body",
+  };
+  sessions.forEach(s=>s.exercises?.forEach(ex=>{
+    const muscle=exToMuscle[ex.name]||'Autre';
+    if(!muscleMap[muscle])muscleMap[muscle]=0;
+    ex.sets?.forEach(set=>{if(set.w&&set.r&&set.type!=='warmup')muscleMap[muscle]+=set.w*set.r;});
+  }));
+  return muscleMap;
+}
+
+function renderStats(){
+  const sess=filteredSessions();
+  const allSess=S.sessions;
+  const label=statsRange===0?'Tout le temps':statsRange===7?'7 derniers jours':'30 derniers jours';
+  document.getElementById('statsDateRange').textContent=label;
+
+  // ── TOTALS ──
+  let totalVol=0,totalSets=0,totalReps=0,totalTime=0,prCount=0;
+  sess.forEach(s=>{
+    totalTime+=s.duration||0;
+    s.exercises?.forEach(ex=>{
+      ex.sets?.forEach(set=>{
+        if(set.type==='warmup')return;
+        if(set.w&&set.r){totalVol+=set.w*set.r;totalSets++;totalReps+=set.r;}
+        if(set.isPR)prCount++;
+      });
+    });
+  });
+
+  const avgDur=sess.length>0?Math.round(totalTime/sess.length):0;
+  const avgVol=sess.length>0?Math.round(totalVol/sess.length):0;
+
+  // KPIs
+  const kpis=[
+    {l:"Séances",v:sess.length,sub:allSess.length+" total",col:"var(--rs)"},
+    {l:"Volume",v:totalVol>0?(totalVol/1000).toFixed(1)+"k":"0",sub:"lb soulevées",col:"#60A5FA"},
+    {l:"Séries",v:totalSets,sub:totalReps+" reps",col:"#4ADE80"},
+    {l:"Durée moy",v:avgDur+"min",sub:"par séance",col:"#FB923C"},
+    {l:"Vol. moy",v:avgVol>0?(avgVol/1000).toFixed(1)+"k":"0",sub:"lb/séance",col:"#A78BFA"},
+    {l:"PRs",v:prCount,sub:"records battus",col:"var(--gold)"},
+  ];
+  document.getElementById('kpiGrid').innerHTML=kpis.map(k=>`
+    <div style="background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:11px 10px">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:5px">${k.l}</div>
+      <div style="font-size:22px;font-weight:900;color:${k.col};line-height:1">${k.v}</div>
+      <div style="font-size:9px;color:var(--t3);margin-top:3px">${k.sub}</div>
+    </div>`).join('');
+
+  // ── BODY MAP SVG ──
+  const muscVol=getMuscleVolume(sess);
+  const maxMV=Math.max(1,...Object.values(muscVol));
+  
+  function muscColor(muscle,alpha){
+    const vol=muscVol[muscle]||0;
+    const int=vol/maxMV;
+    if(int===0)return`rgba(40,40,40,${alpha})`;
+    const r=Math.round(30+int*198);const g=Math.round(20+int*16);const b=Math.round(20+int*10);
+    return`rgba(${r},${g},${b},${alpha})`;
+  }
+
+  document.getElementById('bodyMapWrap').innerHTML=`
+    <svg viewBox="0 0 120 260" width="100%" style="max-width:140px">
+      <!-- HEAD -->
+      <ellipse cx="60" cy="22" rx="16" ry="19" fill="#252525" stroke="#333" stroke-width="1"/>
+      <!-- NECK -->
+      <rect x="54" y="39" width="12" height="10" rx="3" fill="#252525"/>
+      <!-- SHOULDERS -->
+      <ellipse cx="30" cy="62" rx="17" ry="12" fill="${muscColor('Épaules',.9)}" stroke="#333" stroke-width=".5"/>
+      <ellipse cx="90" cy="62" rx="17" ry="12" fill="${muscColor('Épaules',.9)}" stroke="#333" stroke-width=".5"/>
+      <!-- CHEST / PECTORAUX -->
+      <ellipse cx="45" cy="72" rx="14" ry="16" fill="${muscColor('Pectoraux',.9)}" stroke="#333" stroke-width=".5"/>
+      <ellipse cx="75" cy="72" rx="14" ry="16" fill="${muscColor('Pectoraux',.9)}" stroke="#333" stroke-width=".5"/>
+      <!-- ABS / CORE -->
+      <rect x="46" y="86" width="28" height="38" rx="6" fill="${muscColor('Core',.8)}" stroke="#333" stroke-width=".5"/>
+      <!-- 6-pack lines -->
+      <line x1="60" y1="86" x2="60" y2="124" stroke="#333" stroke-width=".8" opacity=".5"/>
+      <line x1="46" y1="99" x2="74" y2="99" stroke="#333" stroke-width=".8" opacity=".5"/>
+      <line x1="46" y1="112" x2="74" y2="112" stroke="#333" stroke-width=".8" opacity=".5"/>
+      <!-- ARMS -->
+      <!-- Upper arms -->
+      <rect x="12" y="58" width="14" height="38" rx="7" fill="${muscColor('Biceps',.8)}" stroke="#333" stroke-width=".5"/>
+      <rect x="94" y="58" width="14" height="38" rx="7" fill="${muscColor('Biceps',.8)}" stroke="#333" stroke-width=".5"/>
+      <!-- Forearms -->
+      <rect x="14" y="98" width="11" height="30" rx="5" fill="#252525" stroke="#333" stroke-width=".5"/>
+      <rect x="95" y="98" width="11" height="30" rx="5" fill="#252525" stroke="#333" stroke-width=".5"/>
+      <!-- QUADS -->
+      <ellipse cx="45" cy="160" rx="14" ry="28" fill="${muscColor('Quadriceps',.9)}" stroke="#333" stroke-width=".5"/>
+      <ellipse cx="75" cy="160" rx="14" ry="28" fill="${muscColor('Quadriceps',.9)}" stroke="#333" stroke-width=".5"/>
+      <!-- CALVES -->
+      <ellipse cx="45" cy="222" rx="11" ry="20" fill="${muscColor('Mollets',.9)}" stroke="#333" stroke-width=".5"/>
+      <ellipse cx="75" cy="222" rx="11" ry="20" fill="${muscColor('Mollets',.9)}" stroke="#333" stroke-width=".5"/>
+      <!-- KNEES -->
+      <ellipse cx="45" cy="191" rx="9" ry="7" fill="#252525" stroke="#333" stroke-width=".5"/>
+      <ellipse cx="75" cy="191" rx="9" ry="7" fill="#252525" stroke="#333" stroke-width=".5"/>
+      <!-- Label markers -->
+      <text x="60" y="255" text-anchor="middle" font-size="7" fill="#555" font-family="system-ui">AVANT</text>
+    </svg>`;
+
+  // Muscle volume list
+  const muscleColors={
+    "Pectoraux":"#3B82F6","Dos":"#F97316","Épaules":"#8B5CF6",
+    "Biceps":"#22C55E","Triceps":"#EAB308","Quadriceps":"#C8102E",
+    "Ischio":"#EC4899","Fessiers":"#F97316","Mollets":"#14B8A6",
+    "Core":"#22C55E","Full Body":"#D4A520"
+  };
+  const sortedMuscles=Object.entries(muscVol).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const maxVol2=Math.max(1,...sortedMuscles.map(m=>m[1]));
+  document.getElementById('muscleList').innerHTML=sortedMuscles.length?
+    sortedMuscles.map(([muscle,vol])=>{
+      const pct=(vol/maxVol2*100).toFixed(0);
+      const col=muscleColors[muscle]||'#888';
+      return`<div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+          <div style="font-size:11px;font-weight:700;color:var(--t2)">${muscle}</div>
+          <div style="font-size:10px;color:var(--t3)">${Math.round(vol/1000)}k lb</div>
+        </div>
+        <div style="height:5px;background:var(--bg4);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${col};border-radius:3px;transition:width .6s"></div>
+        </div>
+      </div>`;
+    }).join('')
+    :`<div style="font-size:12px;color:var(--t3);text-align:center;padding:20px 0">Commence une séance pour voir tes muscles travaillés</div>`;
+
+  // ── WEEKLY CALENDAR ──
+  const now=new Date();const wd=now.getDay();
+  const sun=new Date(now);sun.setDate(now.getDate()-wd);
+  const dayNames=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  const dayColors={pull:'#3B82F6',legs:'#C8102E',push:'#8B5CF6',full:'#F97316'};
+  let calHtml=`<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:10px">`;
+  for(let i=0;i<7;i++){
+    const d=new Date(sun);d.setDate(sun.getDate()+i);
+    const dDate=d.toLocaleDateString('fr-CA');
+    const sess2=S.sessions.find(s=>s.date===dDate);
+    const isToday=i===wd;
+    const dayId=WD2DAY[i];
+    const progDay=dayId?dayObj(dayId):null;
+    const col=sess2?dayColors[progDay?.type||'']||'#666':'';
+    calHtml+=`<div style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 2px;border-radius:var(--rsm);background:${isToday?'rgba(200,16,46,.1)':'transparent'};border:1px solid ${isToday?'rgba(200,16,46,.3)':'transparent'}">
+      <div style="font-size:8px;font-weight:700;color:var(--t3)">${dayNames[i]}</div>
+      <div style="width:28px;height:28px;border-radius:50%;background:${sess2?col:'var(--bg3)'};border:1.5px solid ${isToday?'var(--red)':sess2?col:'var(--b)'};display:flex;align-items:center;justify-content:center">
+        ${sess2?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':dayId?`<span style="font-size:9px;font-weight:800;color:${isToday?'var(--rs)':'var(--t4)'}">${dayId}</span>`:'<span style="font-size:8px;color:var(--t4)">—</span>'}
+      </div>
+      ${sess2?`<div style="font-size:7px;font-weight:700;color:${col};text-align:center;line-height:1.2">J${sess2.dayId}<br>${sess2.duration}m</div>`:'<div style="height:24px"></div>'}
+    </div>`;
+  }
+  calHtml+=`</div>`;
+  // Weekly stats bar
+  const weekSess=S.sessions.filter(s=>{const d=new Date(s.date);const diff=Math.floor((now-d)/86400000);return diff<=6;});
+  const weekVol=weekSess.reduce((a,s)=>{let v=0;s.exercises?.forEach(ex=>ex.sets?.forEach(set=>{if(set.w&&set.r&&set.type!=='warmup')v+=set.w*set.r;}));return a+v;},0);
+  calHtml+=`<div style="display:flex;justify-content:space-around;padding:10px 14px;background:var(--bg3);border-top:1px solid var(--b)">
+    <div style="text-align:center"><div style="font-size:16px;font-weight:900;color:var(--rs)">${weekSess.length}</div><div style="font-size:9px;color:var(--t3);margin-top:2px">SÉANCES</div></div>
+    <div style="width:1px;background:var(--b)"></div>
+    <div style="text-align:center"><div style="font-size:16px;font-weight:900;color:#60A5FA">${weekVol>0?(weekVol/1000).toFixed(1):'0'}k</div><div style="font-size:9px;color:var(--t3);margin-top:2px">VOLUME lb</div></div>
+    <div style="width:1px;background:var(--b)"></div>
+    <div style="text-align:center"><div style="font-size:16px;font-weight:900;color:#4ADE80">${PROG.days.length-weekSess.length}</div><div style="font-size:9px;color:var(--t3);margin-top:2px">RESTANTES</div></div>
+  </div>`;
+  document.getElementById('weekCalendar').innerHTML=calHtml;
+
+  // ── 1RM TABLE ──
+  const mainLifts=["Bench Press","Back Squat","Deadlift Conventionnel","Barbell OHP","Pendlay Row","Barbell Hip Thrust","Romanian Deadlift","Bulgarian Split Squat"];
+  const baselineRM={"Bench Press":270,"Back Squat":222,"Deadlift Conventionnel":318,"Barbell OHP":140,"Pendlay Row":174,"Barbell Hip Thrust":260};
+  let rmHtml='';
+  mainLifts.forEach(lift=>{
+    const hist=S.hist[lift]||[];
+    const best=hist.reduce((b,e)=>{const rm=calc1RM(e.w,e.r);return rm>b?rm:b;},0);
+    const baseline=baselineRM[lift]||0;
+    const current=best||baseline;
+    const prev=hist.length>1?calc1RM(hist[hist.length-2].w,hist[hist.length-2].r):baseline;
+    const delta=best?current-prev:0;
+    const hasData=hist.length>0;
+    rmHtml+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--b)">
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:700">${lift}</div>
+        ${hasData?`<div style="font-size:9px;color:var(--t3);margin-top:2px">${hist.length} sessions enregistrées</div>`:`<div style="font-size:9px;color:var(--t3);margin-top:2px">Baseline pré-programme</div>`}
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:18px;font-weight:900;color:${hasData?'var(--rs)':'var(--t2)'}">${current} <span style="font-size:10px;font-weight:600;color:var(--t3)">lb</span></div>
+        ${delta!==0?`<div style="font-size:10px;font-weight:700;color:${delta>0?'var(--green)':'var(--rs)'}">${delta>0?'+':''}${delta} lb</div>`:''}
+      </div>
+    </div>`;
+  });
+  document.getElementById('oneRMTable').innerHTML=rmHtml||`<div style="padding:16px;text-align:center;color:var(--t3);font-size:12px">Pas encore de données</div>`;
+
+  // ── LIFT CHART ──
+  renderChart('Bench Press');
+
+  // ── VOLUME BY MUSCLE (horizontal bars) ──
+  const allMuscles=Object.entries(getMuscleVolume(allSess)).sort((a,b)=>b[1]-a[1]);
+  const maxVolM=Math.max(1,...allMuscles.map(m=>m[1]));
+  document.getElementById('volByMuscle').innerHTML=allMuscles.length?
+    allMuscles.slice(0,8).map(([m,v])=>{
+      const pct=(v/maxVolM*100).toFixed(0);
+      const col=muscleColors[m]||'#888';
+      const muscleColors2={"Pectoraux":"#3B82F6","Dos":"#F97316","Épaules":"#8B5CF6","Biceps":"#22C55E","Triceps":"#EAB308","Quadriceps":"#C8102E","Ischio":"#EC4899","Fessiers":"#F97316","Mollets":"#14B8A6","Core":"#22C55E","Full Body":"#D4A520"};
+      const c2=muscleColors2[m]||'#888';
+      return`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="width:80px;font-size:11px;font-weight:600;color:var(--t2);flex-shrink:0">${m}</div>
+        <div style="flex:1;height:20px;background:var(--bg3);border-radius:4px;overflow:hidden;position:relative">
+          <div style="height:100%;width:${pct}%;background:${c2};border-radius:4px;transition:width .8s;display:flex;align-items:center;padding-left:8px">
+            <span style="font-size:10px;font-weight:800;color:rgba(255,255,255,.9)">${Math.round(v/1000)}k lb</span>
+          </div>
+        </div>
+      </div>`;
+    }).join('')
+    :`<div style="text-align:center;padding:16px 0;color:var(--t3);font-size:12px">Lance une séance pour voir les stats</div>`;
+
+  // ── SETS DISTRIBUTION (rep ranges) ──
+  const repRanges={"1–3":0,"4–6":0,"7–10":0,"11–15":0,"15+":0};
+  allSess.forEach(s=>s.exercises?.forEach(ex=>ex.sets?.forEach(set=>{
+    if(!set.r||set.type==='warmup')return;
+    const r=set.r;
+    if(r<=3)repRanges["1–3"]++;
+    else if(r<=6)repRanges["4–6"]++;
+    else if(r<=10)repRanges["7–10"]++;
+    else if(r<=15)repRanges["11–15"]++;
+    else repRanges["15+"]++;
+  })));
+  const totalRep=Object.values(repRanges).reduce((a,b)=>a+b,1);
+  const repColors={"1–3":"#C8102E","4–6":"#F97316","7–10":"#EAB308","11–15":"#22C55E","15+":"#3B82F6"};
+  document.getElementById('setsDist').innerHTML=`
+    <div style="flex:1">
+      <div style="font-size:12px;font-weight:800;margin-bottom:10px">Distribution des reps</div>
+      ${Object.entries(repRanges).map(([range,count])=>{
+        const pct=count/totalRep*100;
+        return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+          <div style="width:32px;font-size:10px;color:var(--t3);font-weight:700;flex-shrink:0">${range}</div>
+          <div style="flex:1;height:14px;background:var(--bg3);border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${pct.toFixed(0)}%;background:${repColors[range]};border-radius:3px;transition:width .6s"></div>
+          </div>
+          <div style="width:28px;font-size:10px;color:var(--t3);text-align:right">${count}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="width:1px;background:var(--b);margin:0 4px"></div>
+    <div style="width:100px">
+      <div style="font-size:12px;font-weight:800;margin-bottom:10px">Intensité</div>
+      <div style="font-size:10px;color:var(--t3);line-height:1.8">
+        Force (1–3):<br><span style="font-size:14px;font-weight:800;color:var(--rs)">${((repRanges["1–3"]/totalRep)*100).toFixed(0)}%</span><br>
+        Hypertrophie:<br><span style="font-size:14px;font-weight:800;color:#4ADE80">${(((repRanges["4–6"]+repRanges["7–10"])/totalRep)*100).toFixed(0)}%</span><br>
+        Endurance:<br><span style="font-size:14px;font-weight:800;color:#60A5FA">${(((repRanges["11–15"]+repRanges["15+"])/totalRep)*100).toFixed(0)}%</span>
+      </div>
+    </div>`;
+
+  // ── RECENT SESSIONS ──
+  const recSess=[...allSess].reverse().slice(0,8);
+  document.getElementById('recentSess').innerHTML=recSess.length?recSess.map(s=>{
+    let sVol=0;s.exercises?.forEach(ex=>ex.sets?.forEach(set=>{if(set.w&&set.r&&set.type!=='warmup')sVol+=set.w*set.r;}));
+    const typeCol={pull:'#3B82F6',legs:'#C8102E',push:'#8B5CF6',full:'#F97316'};
+    const progDay=PROG.days.find(d=>d.id===s.dayId);
+    const col=typeCol[progDay?.type||'']||'#888';
+    return`<div style="margin:0 12px 8px;background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:12px 14px;display:flex;align-items:center;gap:12px">
+      <div style="width:38px;height:38px;border-radius:9px;background:${col}22;border:1.5px solid ${col}44;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span style="font-size:14px;font-weight:900;color:${col}">J${s.dayId}</span>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:800">${s.dayName}</div>
+        <div style="font-size:10px;color:var(--t3);margin-top:2px">${s.date} · Sem. ${s.week} · Bloc ${s.bloc}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:14px;font-weight:800;color:var(--rs)">${s.duration} min</div>
+        <div style="font-size:10px;color:var(--t3)">${sVol>0?(sVol/1000).toFixed(1)+'k lb':''}</div>
+      </div>
+    </div>`;
+  }).join(''):`<div class="card"><div style="text-align:center;padding:12px 0;color:var(--t3);font-size:12px">Lance ton premier workout!</div></div>`;
+
+  // ── RENPHO DATA ──
+  const renpho=[
+    {label:"Poids",      val:"182.6 lb", delta:"+2.2 lb",  trend:"up", date:"Août 2026"},
+    {label:"Graisse",    val:"17.1%",    delta:"+0.3%",    trend:"dn", date:"Août 2026"},
+    {label:"Masse musc.",val:"144.0 lb", delta:"+1.6 lb",  trend:"up", date:"Août 2026"},
+    {label:"Muscle sq.", val:"53.5%",    delta:"-0.2%",    trend:"dn", date:"Août 2026"},
+    {label:"BMR",        val:"1833 kcal",delta:"-22 kcal", trend:"dn", date:"Août 2026"},
+    {label:"Âge métab.", val:"49 ans",   delta:"stable",   trend:"neu",date:"Août 2026"},
+    {label:"Graisse visc","val":"11",    delta:"stable",   trend:"neu",date:"Août 2026"},
+    {label:"Sans graisse","val":"151.4 lb",delta:"+1.4 lb",trend:"up", date:"Août 2026"},
+  ];
+  document.getElementById('renphoPanel').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
+      ${renpho.map((r,i)=>`
+        <div style="padding:11px 14px;border-top:${i>=2?'1px solid var(--b)':'none'};border-right:${i%2===0?'1px solid var(--b)':'none'}">
+          <div style="font-size:9px;color:var(--t3);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px">${r.label}</div>
+          <div style="font-size:17px;font-weight:900;color:var(--t)">${r.val}</div>
+          <div style="font-size:10px;font-weight:700;margin-top:2px;color:${r.trend==='up'?'var(--green)':r.trend==='dn'?'var(--rs)':'var(--t3)'}">${r.delta}</div>
+        </div>`).join('')}
+    </div>
+    <div style="padding:10px 14px;background:var(--bg3);border-top:1px solid var(--b);font-size:10px;color:var(--t3)">
+      📊 RENPHO — Dernière mesure : <strong style="color:var(--t2)">Août 2026</strong> · BIA ±3–8% de variance normale
+    </div>`;
+}
+
 function renderChart(name){
+  const sel=document.getElementById('liftChartSel');
+  if(sel&&sel.value!==name){}
   document.getElementById('chLift').textContent=name;
-  const h=S.hist[name]||[];const bars=document.getElementById('chBars');
-  if(!h.length){bars.innerHTML=`<div style="color:var(--t3);font-size:11px;width:100%;text-align:center;padding:18px 0">Aucune donnée.</div>`;return;}
-  const rec=h.slice(-12);const max=Math.max(...rec.map(e=>e.w));const min=Math.min(...rec.map(e=>e.w));const rng=max-min||1;
-  bars.innerHTML=rec.map((e,i)=>{const pct=12+((e.w-min)/rng*78);const isL=i===rec.length-1;return`<div class="ch-col"><div class="ch-val">${e.w}</div><div class="ch-bar ${isL?'lat':''}" style="height:${pct}%"></div><div class="ch-lbl">${e.date.slice(5)}</div></div>`;}).join('');
+  const h=S.hist[name]||[];
+  const bars=document.getElementById('chBars');
+  if(!bars)return;
+  if(!h.length){
+    bars.innerHTML=`<div style="color:var(--t3);font-size:11px;width:100%;text-align:center;padding:18px 0">Commence à t'entraîner pour voir ta progression</div>`;
+    const stats=document.getElementById('chStats');if(stats)stats.innerHTML='';
+    return;
+  }
+  const rec=h.slice(-16);
+  const maxW=Math.max(...rec.map(e=>e.w));
+  const minW=Math.min(...rec.map(e=>e.w));
+  const rng=maxW-minW||1;
+  const best1RM=Math.max(...rec.map(e=>calc1RM(e.w,e.r)));
+  bars.innerHTML=rec.map((e,i)=>{
+    const pct=10+((e.w-minW)/rng*82);
+    const isLast=i===rec.length-1;
+    const isPR=e.isPR;
+    return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+      ${isPR?`<div style="font-size:7px;color:var(--gold);font-weight:800">PR</div>`:`<div style="font-size:8px;color:var(--t3)">${e.w}</div>`}
+      <div style="width:100%;border-radius:4px 4px 0 0;min-height:4px;
+        background:${isPR?'var(--gold)':isLast?'var(--red)':'rgba(200,16,46,.4)'};
+        height:${pct}%;
+        ${isLast?'box-shadow:0 0 10px rgba(200,16,46,.5)':''}">
+      </div>
+      <div style="font-size:8px;color:var(--t3);text-align:center;line-height:1.1">${e.date.slice(5)}</div>
+    </div>`;
+  }).join('');
+  // Chart stats
+  const firstRM=calc1RM(rec[0].w,rec[0].r);
+  const lastRM=calc1RM(rec[rec.length-1].w,rec[rec.length-1].r);
+  const gain=lastRM-firstRM;
+  const chStats=document.getElementById('chStats');
+  if(chStats)chStats.innerHTML=`
+    <div style="text-align:center;flex:1"><div style="font-size:9px;color:var(--t3);margin-bottom:2px">1RM actuel</div><div style="font-size:16px;font-weight:900;color:var(--rs)">${lastRM} lb</div></div>
+    <div style="text-align:center;flex:1"><div style="font-size:9px;color:var(--t3);margin-bottom:2px">Meilleur 1RM</div><div style="font-size:16px;font-weight:900;color:var(--gold)">${best1RM} lb</div></div>
+    <div style="text-align:center;flex:1"><div style="font-size:9px;color:var(--t3);margin-bottom:2px">Progression</div><div style="font-size:16px;font-weight:900;color:${gain>=0?'var(--green)':'var(--rs)'}">${gain>0?'+':''}${gain} lb</div></div>`;
 }
 
 // PHOTOS
