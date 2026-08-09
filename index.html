@@ -374,7 +374,7 @@ body{
 </div>
 
 <!-- REST OVERLAY -->
-<div class="rest-ov" id="restOv">
+<div class="rest-ov" id="restOv" onclick="if(event.target===this){showRestBubble()}">
   <div class="rest-type-lbl" id="restTypeLbl">REPOS COMPOSÉ</div>
   <div class="rest-ring">
     <svg viewBox="0 0 190 190" fill="none">
@@ -389,7 +389,24 @@ body{
     </div>
   </div>
   <div class="rest-next" id="restNext">Prochaine série</div>
-  <button class="btn btn-ol btn-md" onclick="skipRest()">Passer →</button>
+  <div style="display:flex;gap:10px;margin-top:4px">
+    <button class="btn btn-ol btn-md" onclick="skipRest()" style="min-width:120px">Passer →</button>
+    <button class="btn btn-ghost btn-md" onclick="addRestTime(30)" style="min-width:80px">+30s</button>
+  </div>
+</div>
+
+<!-- FLOATING REST BUBBLE — keeps screen active, shows when rest overlay is closed -->
+<div id="restBubble" style="
+  display:none;position:absolute;bottom:calc(var(--nav) + var(--safe-b) + 12px);
+  right:14px;z-index:400;
+  background:var(--red);border-radius:50px;
+  padding:10px 18px;
+  box-shadow:0 4px 20px rgba(200,16,46,.5);
+  display:none;align-items:center;gap:10px;cursor:pointer;
+  animation:bubblePop .3s cubic-bezier(.16,1,.3,1);
+" onclick="document.getElementById('restOv').classList.add('on')">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+  <span id="bubbleTime" style="font-size:16px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums">1:30</span>
 </div>
 
 <!-- SHEETS -->
@@ -769,23 +786,23 @@ function openPlate(wStr, exName){
 }
 
 // REST
-// ── WAKE LOCK — keeps screen on during rest ──
+// ── WAKE LOCK — keeps screen on ──
 let wakeLock=null;
 async function requestWakeLock(){
   try{
     if('wakeLock' in navigator){
       wakeLock=await navigator.wakeLock.request('screen');
-      wakeLock.addEventListener('release',()=>{wakeLock=null;});
+      wakeLock.addEventListener('release',()=>{
+        wakeLock=null;
+        // Re-request if timer still running
+        if(S.restEndTs && S.restEndTs > Date.now()) requestWakeLock();
+      });
     }
-  }catch(e){/* not supported or denied — silent fail */}
+  }catch(e){}
 }
 async function releaseWakeLock(){
   try{if(wakeLock){await wakeLock.release();wakeLock=null;}}catch(e){}
 }
-// Re-acquire on visibility change (iOS releases it when screen dims)
-document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='visible'&&S.rRem>0)requestWakeLock();
-});
 
 // ── AUDIO BEEP — no audio file needed, Web Audio API ──
 let audioCtx=null;
@@ -839,6 +856,7 @@ function startRest(sec,type,next){
   document.getElementById('restTypeLbl').textContent = type;
   document.getElementById('restNext').textContent    = next||'Prochaine série';
   document.getElementById('restOv').classList.add('on');
+  document.getElementById('restBubble').style.display='none';
   requestWakeLock();
   vibrate([100]);
 
@@ -859,11 +877,15 @@ function tickRest(){
     if(t) t.textContent = rem;
     const arc = document.getElementById('restArc');
     if(arc) arc.style.strokeDashoffset = 547*(1 - rem/S.rTotal);
+    // Update bubble too
+    const bt = document.getElementById('bubbleTime');
+    if(bt) bt.textContent = fmt(rem);
     if(rem<=3 && rem>0) playTick();
     if(rem<=0){
       clearInterval(S.restInt);
       S.restEndTs = null; save();
       document.getElementById('restOv').classList.remove('on');
+      document.getElementById('restBubble').style.display='none';
       playDone();
       vibrate([200,100,200,100,400]);
       releaseWakeLock();
@@ -903,10 +925,27 @@ document.addEventListener('visibilitychange',()=>{
   }
 });
 
+function showRestBubble(){
+  // Hide overlay, show floating bubble — screen stays active via wakeLock
+  if(!S.restEndTs || S.restEndTs <= Date.now()) return;
+  document.getElementById('restOv').classList.remove('on');
+  const bubble = document.getElementById('restBubble');
+  bubble.style.display='flex';
+  bubble.style.animation='none';
+  void bubble.offsetWidth; // force reflow
+  bubble.style.animation='';
+}
+function addRestTime(sec){
+  if(!S.restEndTs) return;
+  S.restEndTs += sec*1000;
+  S.rTotal += sec;
+  save();
+}
 function skipRest(){
   if(S.restInt) clearInterval(S.restInt);
   S.restEndTs=null; save();
   document.getElementById('restOv').classList.remove('on');
+  document.getElementById('restBubble').style.display='none';
   releaseWakeLock();
 }
 
@@ -1136,14 +1175,19 @@ function renderWo(){
             <div class="set-prev">${pSet?pSet.w+'lb':wStr}</div>
             <input class="sinp${set.done?' sd':''}" type="number" inputmode="decimal"
               value="${set.w||''}" placeholder="${wNum||0}"
+              onfocus="this.select()"
               oninput="updS('${ex.name}',${si},'w',this.value)"
               style="color:${set.w?'#fff':'var(--t3)'}">
             <div class="set-unit" style="font-size:8px">${wUnit}</div>
             <input class="sinp${set.done?' sd':''}" type="number" inputmode="numeric"
               value="${set.r||''}" placeholder="${parseTargetRepsInline(ex.r)}"
+              onfocus="this.select()"
               oninput="updS('${ex.name}',${si},'r',this.value)"
               style="color:${set.r?'#fff':'var(--t3)'}">
             <button class="chk${set.done?' on':''}" onclick="chkSet('${ex.name}',${ei},${si})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></button>
+            <button onclick="delSet('${ex.name}',${si})" style="width:28px;height:28px;border:none;background:none;color:var(--t4);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:all .15s" ontouchstart="this.style.color='var(--rs)'" ontouchend="this.style.color='var(--t4)'">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
           </div>`;
         }).join('')}
       </div>
@@ -1187,7 +1231,17 @@ function getExIdx(exName){
   const actId=activeDay();const day=dayObj(actId);
   return day.exercises.findIndex(ex=>ex.name===exName);
 }
-function addSet(n){if(!S.sets[n])return;const l=S.sets[n].slice(-1)[0];S.sets[n].push({w:l?.w||0,r:l?.r||0,done:false,type:'working'});save();renderWo();}
+function addSet(n){
+  if(!S.sets[n])return;
+  const l=S.sets[n].slice(-1)[0];
+  S.sets[n].push({w:l?.w||0,r:l?.r||0,done:false,type:'working'});
+  save();renderWo();
+}
+function delSet(n,si){
+  if(!S.sets[n]||S.sets[n].length<=1)return; // keep at least 1
+  S.sets[n].splice(si,1);
+  save();renderWo();
+}
 
 function chkSet(exName,ei,si){
   const actId=activeDay();const day=dayObj(actId);const ex=day.exercises[ei];
