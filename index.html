@@ -684,6 +684,9 @@ body::before {
 
 
 
+
+
+
 // ════════════════════════════════════════════════════════════
 // PROGRAMME DATA
 // SEMAINE : Dim=J1, Lun=J2, Mar=J3, Mer=J4, Jeu=J5, Ven=REPOS, Sam=REPOS
@@ -1364,10 +1367,16 @@ let pickerSecVal = 30;
 function buildPickerCol(elId, values, selected){
   const list = document.getElementById(elId);
   if(!list) return;
-  list.innerHTML = values.map(v=>'<div style="height:'+ITEM_H+'px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;flex-shrink:0;width:36px">'+String(v).padStart(2,'0')+'</div>').join('');
+  const pad = (66 - ITEM_H) / 2;
+  var html = '<div style="height:'+pad+'px;flex-shrink:0"></div>';
+  html += values.map(function(v){
+    return '<div style="height:'+ITEM_H+'px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;flex-shrink:0;width:36px">'+String(v).padStart(2,'0')+'</div>';
+  }).join('');
+  html += '<div style="height:'+pad+'px;flex-shrink:0"></div>';
+  list.innerHTML = html;
   const idx = values.indexOf(selected);
   const wrapper = list.parentElement;
-  wrapper.scrollTop = idx * ITEM_H;
+  wrapper.scrollTop = Math.max(0,idx) * ITEM_H;
   attachPickerScroll(wrapper, values, elId==='pickerMinList'?'min':'sec');
 }
 
@@ -1390,8 +1399,7 @@ function openRestEdit(e){
   pickerMinVal = Math.floor(S.rRem/60);
   pickerSecVal = S.rRem % 60;
   const mins = [];for(let i=0;i<10;i++)mins.push(i);
-  const secs = [];for(let i=0;i<60;i+=5)secs.push(i);
-  if(secs.indexOf(pickerSecVal)===-1) pickerSecVal = Math.round(pickerSecVal/5)*5;
+  const secs = [];for(let i=0;i<60;i++)secs.push(i);
 
   buildPickerCol('pickerMinList', mins, pickerMinVal);
   buildPickerCol('pickerSecList', secs, pickerSecVal);
@@ -1426,9 +1434,13 @@ let restPresetTargetEx = null;
 function buildBigPickerCol(elId, values, selected){
   const list = document.getElementById(elId);
   if(!list) return;
-  list.innerHTML = values.map(function(v){
+  const pad = (150 - BIG_ITEM_H) / 2; // center padding so first/last item can align under band
+  var html = '<div style="height:'+pad+'px;flex-shrink:0"></div>';
+  html += values.map(function(v){
     return '<div style="height:'+BIG_ITEM_H+'px;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;color:#fff;flex-shrink:0;width:80px">'+String(v).padStart(2,'0')+'</div>';
   }).join('');
+  html += '<div style="height:'+pad+'px;flex-shrink:0"></div>';
+  list.innerHTML = html;
   const idx = values.indexOf(selected);
   const wrapper = list.parentElement;
   wrapper.scrollTop = Math.max(0, idx) * BIG_ITEM_H;
@@ -1443,9 +1455,11 @@ function attachBigPickerScroll(wrapper, values, type){
       const idx = Math.round(wrapper.scrollTop / BIG_ITEM_H);
       const clamped = Math.max(0, Math.min(values.length-1, idx));
       wrapper.scrollTo({top: clamped*BIG_ITEM_H, behavior:'smooth'});
-      if(type==='min') bigPickerMinVal = values[clamped];
-      else bigPickerSecVal = values[clamped];
-    }, 80);
+      const newVal = values[clamped];
+      if(type==='min') bigPickerMinVal = newVal;
+      else bigPickerSecVal = newVal;
+      try{ if(navigator.vibrate) navigator.vibrate(8); }catch(e){}
+    }, 100);
   };
 }
 
@@ -1454,13 +1468,14 @@ function openRestPresetPicker(exName, currentSec){
   bigPickerMinVal = Math.floor(currentSec/60);
   bigPickerSecVal = currentSec % 60;
   const mins = [];for(let i=0;i<10;i++)mins.push(i);
-  const secs = [];for(let i=0;i<60;i+=5)secs.push(i);
-  if(secs.indexOf(bigPickerSecVal)===-1) bigPickerSecVal = Math.round(bigPickerSecVal/5)*5;
-
-  buildBigPickerCol('bigPickerMinList', mins, bigPickerMinVal);
-  buildBigPickerCol('bigPickerSecList', secs, bigPickerSecVal);
+  const secs = [];for(let i=0;i<60;i++)secs.push(i);
 
   document.getElementById('restPresetSh').classList.add('on');
+  // Build + position AFTER sheet is visible so scrollTop takes effect
+  setTimeout(function(){
+    buildBigPickerCol('bigPickerMinList', mins, bigPickerMinVal);
+    buildBigPickerCol('bigPickerSecList', secs, bigPickerSecVal);
+  }, 50);
 }
 
 function setBigPickerPreset(sec){
@@ -1542,6 +1557,9 @@ save();
 renderToday();
 renderProg();
 setTimeout(()=>{const sp=document.getElementById('spl');if(sp){sp.classList.add('out');setTimeout(()=>sp.remove(),500);}},1600);
+
+
+
 
 
 
