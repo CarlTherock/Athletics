@@ -155,7 +155,7 @@ body{
 
 /* ─── SHEET ─── */
 
-.sh{width:100%;background:#191919;border-radius:20px 20px 0 0;border-top:1px solid var(--b2);padding:0 0 calc(20px + var(--safe));max-height:88%;overflow-y:auto;animation:sup .26s cubic-bezier(.16,1,.3,1)}
+.sh{width:100%;max-width:100vw;box-sizing:border-box;background:#191919;border-radius:20px 20px 0 0;border-top:1px solid var(--b2);padding:0 0 calc(20px + var(--safe));max-height:88%;overflow-y:auto;overflow-x:hidden;animation:sup .26s cubic-bezier(.16,1,.3,1)}
 @keyframes sup{from{transform:translateY(100%)}to{transform:translateY(0)}}
 .sh-handle{width:36px;height:4px;background:var(--b2);border-radius:2px;margin:12px auto 16px}
 .sh-title{font-size:17px;font-weight:800;padding:0 18px 13px}
@@ -468,7 +468,7 @@ body::before {
           style="width:100%;background:var(--bg3);border:1px solid var(--b);border-radius:20px;padding:9px 14px 9px 36px;color:var(--t);font-size:14px;outline:none">
       </div>
     </div>
-    <div style="display:flex;gap:6px;overflow-x:auto;padding:0 20px 12px;scrollbar-width:none" id="exLibTabs"></div>
+    <div style="display:flex;align-items:center;gap:6px;overflow-x:auto;overflow-y:hidden;padding:0 20px 12px;min-height:32px;scrollbar-width:none" id="exLibTabs"></div>
     <div style="overflow-y:auto;flex:1;padding:0 14px 20px" id="exLibGrid"></div>
   </div>
 </div>
@@ -694,6 +694,7 @@ body::before {
 
 
 <script>
+
 
 
 
@@ -2355,8 +2356,8 @@ function renderExLibTabs(muscles){
   var html = '';
   muscles.forEach(function(m){
     var active = (m === exLibActiveTab);
-    html += '<div onclick="switchExLibTab(\''+m.replace(/'/g,"\\'")+'\')" style="flex-shrink:0;padding:7px 14px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer;'
-      + (active ? 'background:var(--red);color:#fff;' : 'background:var(--bg3);color:var(--t2);border:1px solid var(--b);')
+    html += '<div onclick="switchExLibTab(\''+m.replace(/'/g,"\\'")+'\')" style="flex-shrink:0;display:flex;align-items:center;justify-content:center;height:32px;padding:0 14px;border-radius:20px;font-size:12px;font-weight:700;line-height:1;white-space:nowrap;cursor:pointer;box-sizing:border-box;'
+      + (active ? 'background:var(--red);color:#fff;border:1px solid var(--red);' : 'background:var(--bg3);color:var(--t2);border:1px solid var(--b);')
       + '">' + m + '</div>';
   });
   document.getElementById('exLibTabs').innerHTML = html;
@@ -2529,6 +2530,7 @@ save();
 renderToday();
 renderProg();
 setTimeout(()=>{const sp=document.getElementById('spl');if(sp){sp.classList.add('out');setTimeout(()=>sp.remove(),500);}},1600);
+
 
 
 
