@@ -107,7 +107,7 @@ body{
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
   transition:opacity .5s;
 }
-#spl.out{opacity:0;pointer-events:none}
+#spl.out{opacity:0;pointer-events:none;transition:opacity .5s}
 .sp-brand{font-size:10px;font-weight:800;letter-spacing:.3em;color:var(--rs);text-transform:uppercase}
 .sp-n{font-size:100px;font-weight:900;color:#fff;line-height:1;letter-spacing:-.04em;text-shadow:0 0 80px var(--rg)}
 .sp-sub{font-size:11px;color:var(--t3);font-weight:600;letter-spacing:.15em;text-transform:uppercase}
@@ -2705,7 +2705,8 @@ function lightenColor(hex, amt){
 
 function showOnboarding(){
   const ob=document.getElementById('onboarding');
-  if(ob) ob.style.display='block';
+  if(!ob){ go('today'); return; } // fallback — skip onboarding if element missing
+  ob.style.cssText='display:block;position:absolute;inset:0;z-index:9998;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch';
 }
 
 function finishOnboarding(){
@@ -2720,7 +2721,10 @@ function finishOnboarding(){
   // Update logo
   updateBranding();
   // Hide onboarding
-  document.getElementById('onboarding').style.display='none';
+  const ob=document.getElementById('onboarding');
+  if(ob) ob.style.display='none';
+  updateBranding();
+  go('today');
 }
 
 function updateBranding(){
@@ -2931,19 +2935,21 @@ function processImportedRows(rows){
 // ════════════════════════════════════════════════════════
 // INIT
 load();S.curWeek=calcWeek();
-// Apply saved accent color
 if(S.profile?.accent) applyAccent(S.profile.accent);
 save();
 renderToday();renderProg();
-// Show onboarding on first launch
-if(!S.profile){
-  setTimeout(()=>{
-    const sp=document.getElementById('spl');
-    if(sp){sp.classList.add('out');setTimeout(()=>{sp.remove();showOnboarding();},500);}
-  },1800);
-} else {
-  updateBranding();
-}
+
+// Always dismiss splash after 1.6s, then show onboarding or app
+setTimeout(()=>{
+  const sp=document.getElementById('spl');
+  if(sp){ sp.classList.add('out'); setTimeout(()=>{ sp.remove(); }, 500); }
+  // Show onboarding only if no profile yet
+  if(!S.profile){
+    setTimeout(()=>showOnboarding(), 600);
+  } else {
+    updateBranding();
+  }
+}, 1600);
 // Resync rest timer if it was running before page reload
 if(S.restEndTs && S.restEndTs > Date.now()){
   document.getElementById('restTypeLbl').textContent = S.restType||'REPOS';
