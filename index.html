@@ -710,6 +710,7 @@ body::before {
 
 
 
+
 // ════════════════════════════════════════════════════════════
 // PROGRAMME DATA
 // SEMAINE : Dim=J1, Lun=J2, Mar=J3, Mer=J4, Jeu=J5, Ven=REPOS, Sam=REPOS
@@ -1527,200 +1528,152 @@ const EX_LIBRARY = {
   "Poitrine": {
     color: "#3B82F6",
     exercises: [
-      {name:"Bench Press",equip:"Barre",icon:"barbell"},
-      {name:"Incline Bench Press",equip:"Barre",icon:"barbell"},
-      {name:"Decline Bench Press",equip:"Barre",icon:"barbell"},
-      {name:"Dumbbell Bench Press",equip:"Haltères",icon:"dumbbell"},
-      {name:"Incline Dumbbell Press",equip:"Haltères",icon:"dumbbell"},
-      {name:"Decline Dumbbell Press",equip:"Haltères",icon:"dumbbell"},
-      {name:"Cable Fly",equip:"Câble",icon:"cable"},
-      {name:"Low Cable Fly",equip:"Câble",icon:"cable"},
-      {name:"High Cable Fly",equip:"Câble",icon:"cable"},
-      {name:"Dumbbell Fly",equip:"Haltères",icon:"dumbbell"},
-      {name:"Pec Deck Machine",equip:"Machine",icon:"machine"},
-      {name:"Chest Press Machine",equip:"Machine",icon:"machine"},
-      {name:"Dips Lestés",equip:"Poids corps",icon:"bodyweight"},
-      {name:"Push-Up",equip:"Poids corps",icon:"bodyweight"},
-      {name:"Diamond Push-Up",equip:"Poids corps",icon:"bodyweight"},
-      {name:"Incline Push-Up",equip:"Poids corps",icon:"bodyweight"},
-      {name:"Smith Machine Bench Press",equip:"Smith",icon:"machine"},
-      {name:"Landmine Press",equip:"Barre",icon:"barbell"},
-      {name:"Svend Press",equip:"Disques",icon:"plate"},
-      {name:"Guillotine Press",equip:"Barre",icon:"barbell"},
+      {name:"Barbell Bench Press - Medium Grip",equip:"barbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Bench_Press_-_Medium_Grip/0.jpg"},
+      {name:"Incline Dumbbell Press",equip:"dumbbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Incline_Dumbbell_Press/0.jpg"},
+      {name:"Decline Barbell Bench Press",equip:"barbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Decline_Barbell_Bench_Press/0.jpg"},
+      {name:"Dumbbell Bench Press",equip:"dumbbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Bench_Press/0.jpg"},
+      {name:"Dumbbell Flyes",equip:"dumbbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Flyes/0.jpg"},
+      {name:"Incline Cable Flye",equip:"cable",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Incline_Cable_Flye/0.jpg"},
+      {name:"Flat Bench Cable Flyes",equip:"cable",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Flat_Bench_Cable_Flyes/0.jpg"},
+      {name:"Cable Crossover",equip:"cable",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Cable_Crossover/0.jpg"},
+      {name:"Machine Bench Press",equip:"machine",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Machine_Bench_Press/0.jpg"},
+      {name:"Dips - Chest Version",equip:"other",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dips_-_Chest_Version/0.jpg"},
+      {name:"Smith Machine Bench Press",equip:"machine",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Smith_Machine_Bench_Press/0.jpg"},
+      {name:"Wide-Grip Decline Barbell Bench Press",equip:"barbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Wide-Grip_Decline_Barbell_Bench_Press/0.jpg"},
+      {name:"Barbell Guillotine Bench Press",equip:"barbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Guillotine_Bench_Press/0.jpg"},
+      {name:"Push Up to Side Plank",equip:"body only",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Push_Up_to_Side_Plank/0.jpg"},
+      {name:"Incline Dumbbell Bench With Palms Facing In",equip:"dumbbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Incline_Dumbbell_Bench_With_Palms_Facing_In/0.jpg"},
     ]
   },
   "Dos": {
     color: "#F97316",
     exercises: [
-      {name:"Pendlay Row",equip:"Barre",icon:"barbell"},
-      {name:"Barbell Row",equip:"Barre",icon:"barbell"},
-      {name:"Pull-Up Lesté",equip:"Poids corps",icon:"bodyweight"},
-      {name:"Pull-Up",equip:"Poids corps",icon:"bodyweight"},
-      {name:"Chin-Up",equip:"Poids corps",icon:"bodyweight"},
-      {name:"Lat Pulldown",equip:"Câble",icon:"cable"},
-      {name:"Close Grip Lat Pulldown",equip:"Câble",icon:"cable"},
-      {name:"Seated Cable Row",equip:"Câble",icon:"cable"},
-      {name:"Meadows Row",equip:"Barre",icon:"barbell"},
-      {name:"T-Bar Row",equip:"Barre",icon:"barbell"},
-      {name:"Single Arm Dumbbell Row",equip:"Haltère",icon:"dumbbell"},
-      {name:"Chest Supported Row",equip:"Haltères",icon:"dumbbell"},
-      {name:"Face Pull câble",equip:"Câble",icon:"cable"},
-      {name:"Straight Arm Pulldown",equip:"Câble",icon:"cable"},
-      {name:"Cable Pullover",equip:"Câble",icon:"cable"},
-      {name:"Deadlift Conventionnel",equip:"Barre",icon:"barbell"},
-      {name:"Sumo Deadlift",equip:"Barre",icon:"barbell"},
-      {name:"Romanian Deadlift",equip:"Barre",icon:"barbell"},
-      {name:"Rack Pull",equip:"Barre",icon:"barbell"},
-      {name:"Inverted Row",equip:"Poids corps",icon:"bodyweight"},
-      {name:"Machine Row",equip:"Machine",icon:"machine"},
-      {name:"Hyperextension",equip:"Poids corps",icon:"bodyweight"},
-      {name:"Good Morning",equip:"Barre",icon:"barbell"},
+      {name:"Bent Over Barbell Row",equip:"barbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Bent_Over_Barbell_Row/0.jpg"},
+      {name:"Wide-Grip Lat Pulldown",equip:"cable",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Wide-Grip_Lat_Pulldown/0.jpg"},
+      {name:"Pullups",equip:"body only",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Pullups/0.jpg"},
+      {name:"Chin-Up",equip:"body only",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Chin-Up/0.jpg"},
+      {name:"Seated Cable Rows",equip:"cable",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Seated_Cable_Rows/0.jpg"},
+      {name:"T-Bar Row with Handle",equip:"barbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/T-Bar_Row_with_Handle/0.jpg"},
+      {name:"One-Arm Dumbbell Row",equip:"dumbbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/One-Arm_Dumbbell_Row/0.jpg"},
+      {name:"Straight-Arm Pulldown",equip:"cable",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Straight-Arm_Pulldown/0.jpg"},
+      {name:"Barbell Deadlift",equip:"barbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Deadlift/0.jpg"},
+      {name:"Romanian Deadlift",equip:"barbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Romanian_Deadlift/0.jpg"},
+      {name:"Rack Pulls",equip:"barbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Rack_Pulls/0.jpg"},
+      {name:"Bent Over Two-Dumbbell Row",equip:"dumbbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Bent_Over_Two-Dumbbell_Row/0.jpg"},
+      {name:"Wide-Grip Rear Pull-Up",equip:"body only",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Wide-Grip_Rear_Pull-Up/0.jpg"},
+      {name:"Face Pull",equip:"cable",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Face_Pull/0.jpg"},
+      {name:"Reverse Grip Bent-Over Rows",equip:"barbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Reverse_Grip_Bent-Over_Rows/0.jpg"},
+      {name:"Cable Rear Delt Fly",equip:"cable",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Cable_Rear_Delt_Fly/0.jpg"},
     ]
   },
   "Épaules": {
     color: "#EAB308",
     exercises: [
-      {name:"Barbell OHP",equip:"Barre",icon:"barbell"},
-      {name:"Dumbbell Shoulder Press",equip:"Haltères",icon:"dumbbell"},
-      {name:"Arnold Press",equip:"Haltères",icon:"dumbbell"},
-      {name:"Seated Barbell Press",equip:"Barre",icon:"barbell"},
-      {name:"Push Press",equip:"Barre",icon:"barbell"},
-      {name:"Lateral Raise câble 1 bras",equip:"Câble",icon:"cable"},
-      {name:"Lateral Raise Dumbbell",equip:"Haltères",icon:"dumbbell"},
-      {name:"Cable Lateral Raise",equip:"Câble",icon:"cable"},
-      {name:"Front Raise",equip:"Haltères",icon:"dumbbell"},
-      {name:"Rear Delt Fly câble",equip:"Câble",icon:"cable"},
-      {name:"Rear Delt Fly Machine",equip:"Machine",icon:"machine"},
-      {name:"Bent-Over Reverse Fly",equip:"Haltères",icon:"dumbbell"},
-      {name:"Upright Row",equip:"Barre",icon:"barbell"},
-      {name:"Shrugs",equip:"Haltères",icon:"dumbbell"},
-      {name:"Barbell Shrugs",equip:"Barre",icon:"barbell"},
-      {name:"Machine Shoulder Press",equip:"Machine",icon:"machine"},
-      {name:"Cable Y-Raise",equip:"Câble",icon:"cable"},
-      {name:"Handstand Push-Up",equip:"Poids corps",icon:"bodyweight"},
+      {name:"Seated Barbell Military Press",equip:"barbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Seated_Barbell_Military_Press/0.jpg"},
+      {name:"Dumbbell Shoulder Press",equip:"dumbbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Shoulder_Press/0.jpg"},
+      {name:"Kettlebell Arnold Press",equip:"kettlebells",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Kettlebell_Arnold_Press/0.jpg"},
+      {name:"Side Lateral Raise",equip:"dumbbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Side_Lateral_Raise/0.jpg"},
+      {name:"Front Dumbbell Raise",equip:"dumbbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Front_Dumbbell_Raise/0.jpg"},
+      {name:"Bent Over Dumbbell Rear Delt Raise With Head On Bench",equip:"dumbbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Bent_Over_Dumbbell_Rear_Delt_Raise_With_Head_On_Bench/0.jpg"},
+      {name:"Upright Barbell Row",equip:"barbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Upright_Barbell_Row/0.jpg"},
+      {name:"Standing Dumbbell Upright Row",equip:"dumbbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Standing_Dumbbell_Upright_Row/0.jpg"},
+      {name:"Barbell Shrug",equip:"barbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Shrug/0.jpg"},
+      {name:"Smith Machine Overhead Shoulder Press",equip:"machine",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Smith_Machine_Overhead_Shoulder_Press/0.jpg"},
+      {name:"Push Press",equip:"barbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Push_Press/0.jpg"},
+      {name:"Cable Seated Lateral Raise",equip:"cable",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Cable_Seated_Lateral_Raise/0.jpg"},
     ]
   },
   "Biceps": {
     color: "#22C55E",
     exercises: [
-      {name:"Cable Curl",equip:"Câble",icon:"cable"},
-      {name:"Barbell Curl",equip:"Barre",icon:"barbell"},
-      {name:"Dumbbell Curl",equip:"Haltères",icon:"dumbbell"},
-      {name:"Hammer Curl",equip:"Haltères",icon:"dumbbell"},
-      {name:"Incline Dumbbell Curl",equip:"Haltères",icon:"dumbbell"},
-      {name:"Preacher Curl",equip:"Barre EZ",icon:"ezbar"},
-      {name:"Concentration Curl",equip:"Haltère",icon:"dumbbell"},
-      {name:"EZ Bar Curl",equip:"Barre EZ",icon:"ezbar"},
-      {name:"Spider Curl",equip:"Barre EZ",icon:"ezbar"},
-      {name:"Cable Hammer Curl",equip:"Câble",icon:"cable"},
-      {name:"21s Curl",equip:"Barre",icon:"barbell"},
-      {name:"Reverse Curl",equip:"Barre",icon:"barbell"},
-      {name:"Machine Bicep Curl",equip:"Machine",icon:"machine"},
-      {name:"Drag Curl",equip:"Barre",icon:"barbell"},
+      {name:"Barbell Curl",equip:"barbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Curl/0.jpg"},
+      {name:"Standing Biceps Cable Curl",equip:"cable",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Standing_Biceps_Cable_Curl/0.jpg"},
+      {name:"Hammer Curls",equip:"dumbbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Hammer_Curls/0.jpg"},
+      {name:"Preacher Curl",equip:"barbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Preacher_Curl/0.jpg"},
+      {name:"Concentration Curls",equip:"dumbbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Concentration_Curls/0.jpg"},
+      {name:"EZ-Bar Curl",equip:"e-z curl bar",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/EZ-Bar_Curl/0.jpg"},
+      {name:"Incline Dumbbell Curl",equip:"dumbbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Incline_Dumbbell_Curl/0.jpg"},
+      {name:"Spider Curl",equip:"e-z curl bar",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Spider_Curl/0.jpg"},
+      {name:"Cable Hammer Curls - Rope Attachment",equip:"cable",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Cable_Hammer_Curls_-_Rope_Attachment/0.jpg"},
+      {name:"Zottman Curl",equip:"dumbbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Zottman_Curl/0.jpg"},
     ]
   },
   "Triceps": {
     color: "#14B8A6",
     exercises: [
-      {name:"Overhead Triceps Rope",equip:"Câble",icon:"cable"},
-      {name:"Tricep Pushdown",equip:"Câble",icon:"cable"},
-      {name:"Rope Pushdown",equip:"Câble",icon:"cable"},
-      {name:"Close Grip Bench Press",equip:"Barre",icon:"barbell"},
-      {name:"Skull Crusher",equip:"Barre EZ",icon:"ezbar"},
-      {name:"Overhead Dumbbell Extension",equip:"Haltère",icon:"dumbbell"},
-      {name:"Dips étroits",equip:"Poids corps",icon:"bodyweight"},
-      {name:"Tricep Kickback",equip:"Haltère",icon:"dumbbell"},
-      {name:"Diamond Push-Up Triceps",equip:"Poids corps",icon:"bodyweight"},
-      {name:"JM Press",equip:"Barre",icon:"barbell"},
-      {name:"Machine Tricep Extension",equip:"Machine",icon:"machine"},
-      {name:"Single Arm Overhead Extension",equip:"Haltère",icon:"dumbbell"},
+      {name:"Triceps Pushdown",equip:"cable",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Triceps_Pushdown/0.jpg"},
+      {name:"Cable Rope Overhead Triceps Extension",equip:"cable",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Cable_Rope_Overhead_Triceps_Extension/0.jpg"},
+      {name:"Close-Grip Barbell Bench Press",equip:"barbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Close-Grip_Barbell_Bench_Press/0.jpg"},
+      {name:"Lying Triceps Press",equip:"e-z curl bar",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Lying_Triceps_Press/0.jpg"},
+      {name:"Seated Triceps Press",equip:"dumbbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Seated_Triceps_Press/0.jpg"},
+      {name:"Standing Dumbbell Triceps Extension",equip:"dumbbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Standing_Dumbbell_Triceps_Extension/0.jpg"},
+      {name:"Bench Dips",equip:"body only",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Bench_Dips/0.jpg"},
+      {name:"Dips - Triceps Version",equip:"body only",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dips_-_Triceps_Version/0.jpg"},
+      {name:"Triceps Overhead Extension with Rope",equip:"cable",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Triceps_Overhead_Extension_with_Rope/0.jpg"},
     ]
   },
   "Quadriceps": {
     color: "#EF4444",
     exercises: [
-      {name:"Back Squat",equip:"Barre",icon:"barbell"},
-      {name:"Front Squat",equip:"Barre",icon:"barbell"},
-      {name:"Goblet Squat",equip:"Haltère",icon:"dumbbell"},
-      {name:"Bulgarian Split Squat",equip:"Haltères",icon:"dumbbell"},
-      {name:"Leg Press",equip:"Machine",icon:"machine"},
-      {name:"Leg Extension",equip:"Machine",icon:"machine"},
-      {name:"Hack Squat",equip:"Machine",icon:"machine"},
-      {name:"Walking Lunge",equip:"Haltères",icon:"dumbbell"},
-      {name:"Reverse Lunge",equip:"Haltères",icon:"dumbbell"},
-      {name:"Step-Up",equip:"Haltères",icon:"dumbbell"},
-      {name:"Smith Machine Squat",equip:"Smith",icon:"machine"},
-      {name:"Sissy Squat",equip:"Poids corps",icon:"bodyweight"},
-      {name:"Zercher Squat",equip:"Barre",icon:"barbell"},
-      {name:"Box Squat",equip:"Barre",icon:"barbell"},
+      {name:"Barbell Squat",equip:"barbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Squat/0.jpg"},
+      {name:"Barbell Full Squat",equip:"barbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Full_Squat/0.jpg"},
+      {name:"Leg Press",equip:"machine",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Leg_Press/0.jpg"},
+      {name:"Leg Extensions",equip:"machine",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Leg_Extensions/0.jpg"},
+      {name:"Split Squats",equip:"Poids corps",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Split_Squats/0.jpg"},
+      {name:"Barbell Walking Lunge",equip:"barbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Walking_Lunge/0.jpg"},
+      {name:"Hack Squat",equip:"machine",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Hack_Squat/0.jpg"},
+      {name:"Goblet Squat",equip:"kettlebells",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Goblet_Squat/0.jpg"},
+      {name:"Bodyweight Walking Lunge",equip:"Poids corps",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Bodyweight_Walking_Lunge/0.jpg"},
+      {name:"Smith Machine Squat",equip:"machine",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Smith_Machine_Squat/0.jpg"},
+      {name:"Front Squat (Clean Grip)",equip:"barbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Front_Squat_Clean_Grip/0.jpg"},
+      {name:"Weighted Sissy Squat",equip:"barbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Weighted_Sissy_Squat/0.jpg"},
     ]
   },
   "Ischio-jambiers": {
     color: "#EC4899",
     exercises: [
-      {name:"Romanian Deadlift IJ",equip:"Barre",icon:"barbell"},
-      {name:"Nordic Leg Curl",equip:"Poids corps",icon:"bodyweight"},
-      {name:"Leg Curl couché",equip:"Machine",icon:"machine"},
-      {name:"Seated Leg Curl",equip:"Machine",icon:"machine"},
-      {name:"Stiff Leg Deadlift",equip:"Barre",icon:"barbell"},
-      {name:"Single Leg Romanian Deadlift",equip:"Haltère",icon:"dumbbell"},
-      {name:"Glute Ham Raise",equip:"Poids corps",icon:"bodyweight"},
-      {name:"Cable Pull-Through",equip:"Câble",icon:"cable"},
-      {name:"Kettlebell Swing",equip:"Kettlebell",icon:"kettlebell"},
+      {name:"Romanian Deadlift",equip:"barbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Romanian_Deadlift/0.jpg"},
+      {name:"Lying Leg Curls",equip:"machine",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Lying_Leg_Curls/0.jpg"},
+      {name:"Seated Leg Curl",equip:"machine",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Seated_Leg_Curl/0.jpg"},
+      {name:"Standing Leg Curl",equip:"machine",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Standing_Leg_Curl/0.jpg"},
+      {name:"Stiff-Legged Barbell Deadlift",equip:"barbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Stiff-Legged_Barbell_Deadlift/0.jpg"},
+      {name:"Floor Glute-Ham Raise",equip:"Poids corps",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Floor_Glute-Ham_Raise/0.jpg"},
+      {name:"Good Morning",equip:"barbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Good_Morning/0.jpg"},
     ]
   },
   "Fessiers": {
     color: "#A855F7",
     exercises: [
-      {name:"Barbell Hip Thrust",equip:"Barre",icon:"barbell"},
-      {name:"Glute Bridge",equip:"Poids corps",icon:"bodyweight"},
-      {name:"Cable Kickback",equip:"Câble",icon:"cable"},
-      {name:"Single Leg Hip Thrust",equip:"Poids corps",icon:"bodyweight"},
-      {name:"Sumo Squat",equip:"Haltère",icon:"dumbbell"},
-      {name:"Curtsy Lunge",equip:"Haltères",icon:"dumbbell"},
-      {name:"Hip Abduction Machine",equip:"Machine",icon:"machine"},
-      {name:"Banded Glute Bridge",equip:"Bande",icon:"band"},
+      {name:"Barbell Hip Thrust",equip:"barbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Hip_Thrust/0.jpg"},
+      {name:"Cable Hip Adduction",equip:"cable",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Cable_Hip_Adduction/0.jpg"},
+      {name:"Single Leg Glute Bridge",equip:"body only",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Single_Leg_Glute_Bridge/0.jpg"},
+      {name:"Butt Lift (Bridge)",equip:"body only",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Butt_Lift_Bridge/0.jpg"},
+      {name:"Barbell Glute Bridge",equip:"barbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Glute_Bridge/0.jpg"},
     ]
   },
   "Mollets": {
     color: "#06B6D4",
     exercises: [
-      {name:"Standing Calf Raise",equip:"Machine",icon:"machine"},
-      {name:"Seated Calf Raise",equip:"Machine",icon:"machine"},
-      {name:"Leg Press Calf Raise",equip:"Machine",icon:"machine"},
-      {name:"Donkey Calf Raise",equip:"Machine",icon:"machine"},
-      {name:"Single Leg Calf Raise",equip:"Poids corps",icon:"bodyweight"},
-      {name:"Smith Machine Calf Raise",equip:"Smith",icon:"machine"},
+      {name:"Standing Calf Raises",equip:"machine",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Standing_Calf_Raises/0.jpg"},
+      {name:"Seated Calf Raise",equip:"machine",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Seated_Calf_Raise/0.jpg"},
+      {name:"Donkey Calf Raises",equip:"other",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Donkey_Calf_Raises/0.jpg"},
+      {name:"Barbell Seated Calf Raise",equip:"barbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Seated_Calf_Raise/0.jpg"},
+      {name:"Calf Raise On A Dumbbell",equip:"dumbbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Calf_Raise_On_A_Dumbbell/0.jpg"},
     ]
   },
   "Abdominaux": {
     color: "#84CC16",
     exercises: [
-      {name:"Ab Wheel Rollout",equip:"Poids corps",icon:"bodyweight"},
-      {name:"Plank",equip:"Poids corps",icon:"bodyweight"},
-      {name:"Hanging Leg Raise",equip:"Poids corps",icon:"bodyweight"},
-      {name:"Cable Crunch",equip:"Câble",icon:"cable"},
-      {name:"Russian Twist",equip:"Poids corps",icon:"bodyweight"},
-      {name:"Sit-Up",equip:"Poids corps",icon:"bodyweight"},
-      {name:"Bicycle Crunch",equip:"Poids corps",icon:"bodyweight"},
-      {name:"Weighted Sit-Up",equip:"Disque",icon:"plate"},
-      {name:"Side Plank",equip:"Poids corps",icon:"bodyweight"},
-      {name:"V-Up",equip:"Poids corps",icon:"bodyweight"},
-      {name:"Dragon Flag",equip:"Poids corps",icon:"bodyweight"},
-      {name:"Pallof Press",equip:"Câble",icon:"cable"},
-    ]
-  },
-  "Full Body / Fonctionnel": {
-    color: "#6366F1",
-    exercises: [
-      {name:"Farmer Walk",equip:"Haltères",icon:"dumbbell"},
-      {name:"Clean and Press",equip:"Barre",icon:"barbell"},
-      {name:"Thruster",equip:"Barre",icon:"barbell"},
-      {name:"Turkish Get-Up",equip:"Kettlebell",icon:"kettlebell"},
-      {name:"Battle Ropes",equip:"Cordes",icon:"other"},
-      {name:"Box Jump",equip:"Poids corps",icon:"bodyweight"},
-      {name:"Burpee",equip:"Poids corps",icon:"bodyweight"},
-      {name:"Sled Push",equip:"Traîneau",icon:"other"},
+      {name:"Ab Roller",equip:"other",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Ab_Roller/0.jpg"},
+      {name:"Plank",equip:"body only",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Plank/0.jpg"},
+      {name:"Hanging Leg Raise",equip:"body only",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Hanging_Leg_Raise/0.jpg"},
+      {name:"Cable Crunch",equip:"cable",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Cable_Crunch/0.jpg"},
+      {name:"Crunches",equip:"body only",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Crunches/0.jpg"},
+      {name:"Russian Twist",equip:"body only",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Russian_Twist/0.jpg"},
+      {name:"Sit-Up",equip:"body only",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Sit-Up/0.jpg"},
+      {name:"Side Bridge",equip:"body only",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Side_Bridge/0.jpg"},
+      {name:"Barbell Ab Rollout",equip:"barbell",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Ab_Rollout/0.jpg"},
+      {name:"Weighted Sit-Ups - With Bands",equip:"other",img:"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Weighted_Sit-Ups_-_With_Bands/0.jpg"},
     ]
   },
 };
@@ -1779,14 +1732,16 @@ function renderExLibGrid(muscle){
   data.exercises.forEach(function(ex){
     var isCurrent = (ex.name === exLibTargetName);
     html += '<div onclick="selectReplacementExercise(\''+ex.name.replace(/'/g,"\\'")+'\')" style="'
-      + 'background:var(--bg3);border:1.5px solid '+(isCurrent?'var(--red)':'var(--b)')+';border-radius:var(--r);padding:14px 10px;'
-      + 'display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;text-align:center;position:relative">'
-      + (isCurrent ? '<div style="position:absolute;top:6px;right:6px;width:16px;height:16px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>' : '')
-      + '<div style="width:44px;height:44px;border-radius:50%;background:'+color+'22;display:flex;align-items:center;justify-content:center">'
-      + svgForIcon(ex.icon, color).replace('viewBox="0 0 24 24"','viewBox="0 0 24 24" width="24" height="24"')
+      + 'background:var(--bg3);border:1.5px solid '+(isCurrent?'var(--red)':'var(--b)')+';border-radius:var(--r);overflow:hidden;'
+      + 'cursor:pointer;position:relative;display:flex;flex-direction:column">'
+      + (isCurrent ? '<div style="position:absolute;top:6px;right:6px;width:18px;height:18px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;z-index:2"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>' : '')
+      + '<div style="width:100%;aspect-ratio:4/3;background:'+color+'15;overflow:hidden">'
+      + '<img src="'+ex.img+'" loading="lazy" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.style.display=\'none\'">'
       + '</div>'
-      + '<div style="font-size:12px;font-weight:700;color:var(--t);line-height:1.25">'+ex.name+'</div>'
+      + '<div style="padding:9px 10px 11px">'
+      + '<div style="font-size:12px;font-weight:700;color:var(--t);line-height:1.25;margin-bottom:2px">'+ex.name+'</div>'
       + '<div style="font-size:10px;color:var(--t3)">'+ex.equip+'</div>'
+      + '</div>'
       + '</div>';
   });
   html += '</div>';
@@ -1889,6 +1844,7 @@ save();
 renderToday();
 renderProg();
 setTimeout(()=>{const sp=document.getElementById('spl');if(sp){sp.classList.add('out');setTimeout(()=>sp.remove(),500);}},1600);
+
 
 
 
