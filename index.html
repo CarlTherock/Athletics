@@ -1135,104 +1135,195 @@ function buildExHeroHTML(ex, wStr){
 // EXERCISE LIBRARY — Bibliothèque complète par groupe musculaire
 // ════════════════════════════════════════════════════════════
 const EX_LIBRARY = [
-  // ── PECTORAUX ──
-  {name:"Bench Press",           muscle:"Pectoraux",   code:"BENCH", g1:"#1A0A2A",g2:"#3A1A5A", eq:"Barre",    diff:3, desc:"Composé · Pectoraux moyens"},
-  {name:"Incline Bench Press",   muscle:"Pectoraux",   code:"INC",   g1:"#1A0A2A",g2:"#3A1A5A", eq:"Barre",    diff:3, desc:"Composé · Pectoraux hauts"},
-  {name:"Decline Bench Press",   muscle:"Pectoraux",   code:"DEC",   g1:"#1A0A2A",g2:"#3A1A5A", eq:"Barre",    diff:3, desc:"Composé · Pectoraux bas"},
-  {name:"Dumbbell Bench Press",  muscle:"Pectoraux",   code:"DBP",   g1:"#1A0A2A",g2:"#3A1A5A", eq:"Haltères", diff:2, desc:"Composé · Amplitude supérieure"},
-  {name:"Cable Fly",             muscle:"Pectoraux",   code:"FLY",   g1:"#1A0A2A",g2:"#3A1A5A", eq:"Câble",    diff:1, desc:"Isolation · Tension constante"},
-  {name:"Dips Lestés",           muscle:"Pectoraux",   code:"DIPS",  g1:"#1A0A2A",g2:"#3A1A5A", eq:"Barre",    diff:2, desc:"Composé · Pec bas · Triceps"},
-  {name:"Pec Deck",              muscle:"Pectoraux",   code:"DEC",   g1:"#1A0A2A",g2:"#3A1A5A", eq:"Machine",  diff:1, desc:"Isolation · Machine"},
-  {name:"Push-Up Lesté",         muscle:"Pectoraux",   code:"PU",    g1:"#1A0A2A",g2:"#3A1A5A", eq:"Poids corps",diff:1,desc:"Composé · Poids corps"},
+  // ══ PECTORAUX (18) ══
+  {name:"Bench Press",              muscle:"Pectoraux",  code:"BP",   g1:"#1A0A2A",g2:"#3A1A5A",eq:"Barre",     diff:3,desc:"Composé · Pectoraux moyens"},
+  {name:"Incline Bench Press",      muscle:"Pectoraux",  code:"IBP",  g1:"#1A0A2A",g2:"#3A1A5A",eq:"Barre",     diff:3,desc:"Composé · Pectoraux hauts"},
+  {name:"Decline Bench Press",      muscle:"Pectoraux",  code:"DBP",  g1:"#1A0A2A",g2:"#3A1A5A",eq:"Barre",     diff:2,desc:"Composé · Pectoraux bas"},
+  {name:"Dumbbell Bench Press",     muscle:"Pectoraux",  code:"DBBP", g1:"#1A0A2A",g2:"#3A1A5A",eq:"Haltères",  diff:2,desc:"Composé · Amplitude supérieure"},
+  {name:"Incline DB Bench Press",   muscle:"Pectoraux",  code:"IDB",  g1:"#1A0A2A",g2:"#3A1A5A",eq:"Haltères",  diff:2,desc:"Composé · Pec haut · Haltères"},
+  {name:"Cable Fly",                muscle:"Pectoraux",  code:"FLY",  g1:"#1A0A2A",g2:"#3A1A5A",eq:"Câble",     diff:1,desc:"Isolation · Tension constante"},
+  {name:"Low Cable Fly",            muscle:"Pectoraux",  code:"LCF",  g1:"#1A0A2A",g2:"#3A1A5A",eq:"Câble",     diff:1,desc:"Isolation · Pec haut"},
+  {name:"High Cable Fly",           muscle:"Pectoraux",  code:"HCF",  g1:"#1A0A2A",g2:"#3A1A5A",eq:"Câble",     diff:1,desc:"Isolation · Pec bas"},
+  {name:"Dips Lestés",              muscle:"Pectoraux",  code:"DIPS", g1:"#1A0A2A",g2:"#3A1A5A",eq:"Poids corps",diff:2,desc:"Composé · Pec bas · Triceps"},
+  {name:"Pec Deck",                 muscle:"Pectoraux",  code:"PD",   g1:"#1A0A2A",g2:"#3A1A5A",eq:"Machine",   diff:1,desc:"Isolation · Machine"},
+  {name:"Push-Up",                  muscle:"Pectoraux",  code:"PU",   g1:"#1A0A2A",g2:"#3A1A5A",eq:"Poids corps",diff:1,desc:"Composé · Poids corps"},
+  {name:"Push-Up Lesté",            muscle:"Pectoraux",  code:"WPU",  g1:"#1A0A2A",g2:"#3A1A5A",eq:"Poids corps",diff:2,desc:"Composé · Lesté"},
+  {name:"Landmine Press",           muscle:"Pectoraux",  code:"LMP",  g1:"#1A0A2A",g2:"#3A1A5A",eq:"Barre",     diff:2,desc:"Composé · Pec haut · Fonctionnel"},
+  {name:"Smith Machine Bench",      muscle:"Pectoraux",  code:"SMB",  g1:"#1A0A2A",g2:"#3A1A5A",eq:"Smith",     diff:1,desc:"Composé · Smith · Sécurité"},
+  {name:"Chest Press Machine",      muscle:"Pectoraux",  code:"CPM",  g1:"#1A0A2A",g2:"#3A1A5A",eq:"Machine",   diff:1,desc:"Composé · Machine · Débutant"},
+  {name:"DB Pullover",              muscle:"Pectoraux",  code:"DPO",  g1:"#1A0A2A",g2:"#3A1A5A",eq:"Haltère",   diff:1,desc:"Grand dorsal · Pec · Étirement"},
+  {name:"Svend Press",              muscle:"Pectoraux",  code:"SVP",  g1:"#1A0A2A",g2:"#3A1A5A",eq:"Disques",   diff:1,desc:"Isolation · Serrage médial"},
+  {name:"Crossover Cable",          muscle:"Pectoraux",  code:"CC",   g1:"#1A0A2A",g2:"#3A1A5A",eq:"Câble",     diff:1,desc:"Isolation · Crossover"},
 
-  // ── DOS ──
-  {name:"Pendlay Row",           muscle:"Dos",         code:"ROW",   g1:"#0D1B2A",g2:"#1A3A5A", eq:"Barre",    diff:3, desc:"Composé · Explosif · Dos épais"},
-  {name:"Barbell Row",           muscle:"Dos",         code:"BRow",  g1:"#0D1B2A",g2:"#1A3A5A", eq:"Barre",    diff:2, desc:"Composé · Dos épais"},
-  {name:"Pull-Up Lesté",         muscle:"Dos",         code:"PUP",   g1:"#0D1B2A",g2:"#1A3A5A", eq:"Barre",    diff:3, desc:"Composé · Grand dorsal"},
-  {name:"Lat Pulldown",          muscle:"Dos",         code:"LAT",   g1:"#0D1B2A",g2:"#1A3A5A", eq:"Câble",    diff:1, desc:"Composé · Grand dorsal machine"},
-  {name:"Seated Cable Row",      muscle:"Dos",         code:"SCR",   g1:"#0D1B2A",g2:"#1A3A5A", eq:"Câble",    diff:1, desc:"Composé · Dos épais câble"},
-  {name:"Meadows Row",           muscle:"Dos",         code:"MR",    g1:"#0D1B2A",g2:"#1A3A5A", eq:"Barre",    diff:2, desc:"Unilatéral · Dos épais"},
-  {name:"T-Bar Row",             muscle:"Dos",         code:"TBR",   g1:"#0D1B2A",g2:"#1A3A5A", eq:"Barre",    diff:2, desc:"Composé · Dos épais"},
-  {name:"Single Arm DB Row",     muscle:"Dos",         code:"1AR",   g1:"#0D1B2A",g2:"#1A3A5A", eq:"Haltère",  diff:1, desc:"Unilatéral · Haltère"},
-  {name:"Chest-Supported Row",   muscle:"Dos",         code:"CSR",   g1:"#0D1B2A",g2:"#1A3A5A", eq:"Haltères", diff:1, desc:"Composé · Isolé du bas du dos"},
-  {name:"Face Pull câble",       muscle:"Dos",         code:"FP",    g1:"#0D1B2A",g2:"#1A3A5A", eq:"Câble",    diff:1, desc:"Isolation · Deltoïde post · Coiffe"},
+  // ══ DOS (22) ══
+  {name:"Pendlay Row",              muscle:"Dos",        code:"PR",   g1:"#0D1B2A",g2:"#1A3A5A",eq:"Barre",     diff:3,desc:"Composé · Explosif · Dos épais"},
+  {name:"Barbell Row",              muscle:"Dos",        code:"BR",   g1:"#0D1B2A",g2:"#1A3A5A",eq:"Barre",     diff:2,desc:"Composé · Dos épais"},
+  {name:"Pull-Up Lesté",            muscle:"Dos",        code:"PUP",  g1:"#0D1B2A",g2:"#1A3A5A",eq:"Barre",     diff:3,desc:"Composé · Grand dorsal"},
+  {name:"Pull-Up",                  muscle:"Dos",        code:"PU",   g1:"#0D1B2A",g2:"#1A3A5A",eq:"Poids corps",diff:2,desc:"Composé · Poids corps"},
+  {name:"Chin-Up",                  muscle:"Dos",        code:"CU",   g1:"#0D1B2A",g2:"#1A3A5A",eq:"Poids corps",diff:2,desc:"Supination · Biceps + Dos"},
+  {name:"Lat Pulldown",             muscle:"Dos",        code:"LAT",  g1:"#0D1B2A",g2:"#1A3A5A",eq:"Câble",     diff:1,desc:"Composé · Grand dorsal machine"},
+  {name:"Close Grip Pulldown",      muscle:"Dos",        code:"CGP",  g1:"#0D1B2A",g2:"#1A3A5A",eq:"Câble",     diff:1,desc:"Composé · Dos épais · Pronation"},
+  {name:"Seated Cable Row",         muscle:"Dos",        code:"SCR",  g1:"#0D1B2A",g2:"#1A3A5A",eq:"Câble",     diff:1,desc:"Composé · Dos épais câble"},
+  {name:"Meadows Row",              muscle:"Dos",        code:"MR",   g1:"#0D1B2A",g2:"#1A3A5A",eq:"Barre",     diff:2,desc:"Unilatéral · Dos épais"},
+  {name:"T-Bar Row",                muscle:"Dos",        code:"TBR",  g1:"#0D1B2A",g2:"#1A3A5A",eq:"Barre",     diff:2,desc:"Composé · Dos épais"},
+  {name:"Single Arm DB Row",        muscle:"Dos",        code:"1AR",  g1:"#0D1B2A",g2:"#1A3A5A",eq:"Haltère",   diff:1,desc:"Unilatéral · Haltère"},
+  {name:"Chest-Supported Row",      muscle:"Dos",        code:"CSR",  g1:"#0D1B2A",g2:"#1A3A5A",eq:"Haltères",  diff:1,desc:"Composé · Isolé bas du dos"},
+  {name:"Face Pull câble",          muscle:"Dos",        code:"FP",   g1:"#0D1B2A",g2:"#1A3A5A",eq:"Câble",     diff:1,desc:"Deltoïde post · Coiffe rotateurs"},
+  {name:"Cable Pullover",           muscle:"Dos",        code:"CPO",  g1:"#0D1B2A",g2:"#1A3A5A",eq:"Câble",     diff:1,desc:"Grand dorsal · Tension constante"},
+  {name:"Straight Arm Pulldown",    muscle:"Dos",        code:"SAP",  g1:"#0D1B2A",g2:"#1A3A5A",eq:"Câble",     diff:1,desc:"Isolation · Grand dorsal"},
+  {name:"Rack Pull",                muscle:"Dos",        code:"RP",   g1:"#0D1B2A",g2:"#1A3A5A",eq:"Barre",     diff:2,desc:"Composé · Dos épais · DL partiel"},
+  {name:"Snatch Grip Row",          muscle:"Dos",        code:"SGR",  g1:"#0D1B2A",g2:"#1A3A5A",eq:"Barre",     diff:3,desc:"Composé · Trapèzes · Prise large"},
+  {name:"Machine Row",              muscle:"Dos",        code:"MRW",  g1:"#0D1B2A",g2:"#1A3A5A",eq:"Machine",   diff:1,desc:"Composé · Machine · Sécurité"},
+  {name:"Inverted Row",             muscle:"Dos",        code:"IR",   g1:"#0D1B2A",g2:"#1A3A5A",eq:"Barre",     diff:1,desc:"Poids corps · Dos horizontal"},
+  {name:"Seal Row",                 muscle:"Dos",        code:"SR",   g1:"#0D1B2A",g2:"#1A3A5A",eq:"Haltères",  diff:2,desc:"Isolation · Élimine momentum"},
+  {name:"Kroc Row",                 muscle:"Dos",        code:"KR",   g1:"#0D1B2A",g2:"#1A3A5A",eq:"Haltère",   diff:2,desc:"Masse · Prise large · Intensité"},
+  {name:"Wide Grip Row",            muscle:"Dos",        code:"WGR",  g1:"#0D1B2A",g2:"#1A3A5A",eq:"Câble",     diff:1,desc:"Composé · Grand dorsal large"},
 
-  // ── ÉPAULES ──
-  {name:"Barbell OHP",           muscle:"Épaules",     code:"OHP",   g1:"#2A0A1A",g2:"#5A1A3A", eq:"Barre",    diff:3, desc:"Composé · Épaules 3D"},
-  {name:"Arnold Press",          muscle:"Épaules",     code:"ARN",   g1:"#2A0A1A",g2:"#5A1A3A", eq:"Haltères", diff:2, desc:"Composé · Épaules 3D rotation"},
-  {name:"Dumbbell OHP",          muscle:"Épaules",     code:"DOHP",  g1:"#2A0A1A",g2:"#5A1A3A", eq:"Haltères", diff:2, desc:"Composé · Stabilisateurs"},
-  {name:"Lateral Raise câble 1 bras",muscle:"Épaules", code:"LAT",   g1:"#2A0A1A",g2:"#5A1A3A", eq:"Câble",    diff:1, desc:"Isolation · Deltoïde médial"},
-  {name:"Lateral Raise DB",      muscle:"Épaules",     code:"LRD",   g1:"#2A0A1A",g2:"#5A1A3A", eq:"Haltères", diff:1, desc:"Isolation · Deltoïde médial"},
-  {name:"Rear Delt Fly câble",   muscle:"Épaules",     code:"RDF",   g1:"#2A0A1A",g2:"#5A1A3A", eq:"Câble",    diff:1, desc:"Isolation · Deltoïde postérieur"},
-  {name:"Upright Row",           muscle:"Épaules",     code:"UR",    g1:"#2A0A1A",g2:"#5A1A3A", eq:"Barre",    diff:2, desc:"Composé · Épaules · Trapèzes"},
-  {name:"Machine Shoulder Press",muscle:"Épaules",     code:"MSP",   g1:"#2A0A1A",g2:"#5A1A3A", eq:"Machine",  diff:1, desc:"Composé · Machine"},
+  // ══ ÉPAULES (16) ══
+  {name:"Barbell OHP",              muscle:"Épaules",    code:"OHP",  g1:"#2A0A1A",g2:"#5A1A3A",eq:"Barre",     diff:3,desc:"Composé · Épaules 3D"},
+  {name:"Arnold Press",             muscle:"Épaules",    code:"ARN",  g1:"#2A0A1A",g2:"#5A1A3A",eq:"Haltères",  diff:2,desc:"Composé · Rotation complète"},
+  {name:"Dumbbell OHP",             muscle:"Épaules",    code:"DOHP", g1:"#2A0A1A",g2:"#5A1A3A",eq:"Haltères",  diff:2,desc:"Composé · Stabilisateurs"},
+  {name:"Seated DB Press",          muscle:"Épaules",    code:"SDP",  g1:"#2A0A1A",g2:"#5A1A3A",eq:"Haltères",  diff:1,desc:"Composé · Assis · Stable"},
+  {name:"Smith Machine OHP",        muscle:"Épaules",    code:"SMO",  g1:"#2A0A1A",g2:"#5A1A3A",eq:"Smith",     diff:1,desc:"Composé · Smith · Guidé"},
+  {name:"Lateral Raise câble 1 bras",muscle:"Épaules",  code:"CLR",  g1:"#2A0A1A",g2:"#5A1A3A",eq:"Câble",     diff:1,desc:"Isolation · Deltoïde médial"},
+  {name:"Lateral Raise DB",         muscle:"Épaules",    code:"LRD",  g1:"#2A0A1A",g2:"#5A1A3A",eq:"Haltères",  diff:1,desc:"Isolation · Deltoïde médial"},
+  {name:"Rear Delt Fly câble",      muscle:"Épaules",    code:"RDF",  g1:"#2A0A1A",g2:"#5A1A3A",eq:"Câble",     diff:1,desc:"Isolation · Deltoïde postérieur"},
+  {name:"Rear Delt DB Fly",         muscle:"Épaules",    code:"RDF2", g1:"#2A0A1A",g2:"#5A1A3A",eq:"Haltères",  diff:1,desc:"Isolation · Deltoïde post · DB"},
+  {name:"Face Pull",                muscle:"Épaules",    code:"FPL",  g1:"#2A0A1A",g2:"#5A1A3A",eq:"Câble",     diff:1,desc:"Santé coiffe · Épaule post"},
+  {name:"Upright Row",              muscle:"Épaules",    code:"UR",   g1:"#2A0A1A",g2:"#5A1A3A",eq:"Barre",     diff:2,desc:"Composé · Trapèzes · Épaules"},
+  {name:"Machine Shoulder Press",   muscle:"Épaules",    code:"MSP",  g1:"#2A0A1A",g2:"#5A1A3A",eq:"Machine",   diff:1,desc:"Composé · Machine guidée"},
+  {name:"Cable Y-Raise",            muscle:"Épaules",    code:"CYR",  g1:"#2A0A1A",g2:"#5A1A3A",eq:"Câble",     diff:1,desc:"Isolation · Deltoïde antérieur"},
+  {name:"Front Raise",              muscle:"Épaules",    code:"FR",   g1:"#2A0A1A",g2:"#5A1A3A",eq:"Haltères",  diff:1,desc:"Isolation · Deltoïde antérieur"},
+  {name:"Lu Raises",                muscle:"Épaules",    code:"LU",   g1:"#2A0A1A",g2:"#5A1A3A",eq:"Haltères",  diff:1,desc:"Isolation · Capsule · Coiffe"},
+  {name:"Bradford Press",           muscle:"Épaules",    code:"BFP",  g1:"#2A0A1A",g2:"#5A1A3A",eq:"Barre",     diff:2,desc:"Composé · Épaules 360°"},
 
-  // ── BICEPS ──
-  {name:"Cable Curl",            muscle:"Biceps",      code:"CC",    g1:"#0A1A2A",g2:"#1A3A4A", eq:"Câble",    diff:1, desc:"Isolation · Tension constante"},
-  {name:"Barbell Curl",          muscle:"Biceps",      code:"BC",    g1:"#0A1A2A",g2:"#1A3A4A", eq:"Barre",    diff:1, desc:"Isolation · Surcharge maximale"},
-  {name:"Dumbbell Curl",         muscle:"Biceps",      code:"DC",    g1:"#0A1A2A",g2:"#1A3A4A", eq:"Haltères", diff:1, desc:"Isolation · Supination"},
-  {name:"Hammer Curl",           muscle:"Biceps",      code:"HC",    g1:"#0A1A2A",g2:"#1A3A4A", eq:"Haltères", diff:1, desc:"Isolation · Brachial · Long chef"},
-  {name:"Incline DB Curl",       muscle:"Biceps",      code:"IDC",   g1:"#0A1A2A",g2:"#1A3A4A", eq:"Haltères", diff:1, desc:"Isolation · Étirement maximum"},
-  {name:"Concentration Curl",    muscle:"Biceps",      code:"CON",   g1:"#0A1A2A",g2:"#1A3A4A", eq:"Haltère",  diff:1, desc:"Isolation · Peak contraction"},
-  {name:"EZ Bar Curl",           muscle:"Biceps",      code:"EZ",    g1:"#0A1A2A",g2:"#1A3A4A", eq:"Barre EZ", diff:1, desc:"Isolation · Confort poignets"},
+  // ══ BICEPS (14) ══
+  {name:"Cable Curl",               muscle:"Biceps",     code:"CC",   g1:"#0A1A2A",g2:"#1A3A4A",eq:"Câble",     diff:1,desc:"Isolation · Tension constante"},
+  {name:"Barbell Curl",             muscle:"Biceps",     code:"BC",   g1:"#0A1A2A",g2:"#1A3A4A",eq:"Barre",     diff:1,desc:"Isolation · Surcharge maximale"},
+  {name:"Dumbbell Curl",            muscle:"Biceps",     code:"DC",   g1:"#0A1A2A",g2:"#1A3A4A",eq:"Haltères",  diff:1,desc:"Isolation · Supination"},
+  {name:"Hammer Curl",              muscle:"Biceps",     code:"HC",   g1:"#0A1A2A",g2:"#1A3A4A",eq:"Haltères",  diff:1,desc:"Brachial · Long chef"},
+  {name:"Incline DB Curl",          muscle:"Biceps",     code:"IDC",  g1:"#0A1A2A",g2:"#1A3A4A",eq:"Haltères",  diff:1,desc:"Étirement maximum long chef"},
+  {name:"Concentration Curl",       muscle:"Biceps",     code:"CON",  g1:"#0A1A2A",g2:"#1A3A4A",eq:"Haltère",   diff:1,desc:"Isolation · Peak contraction"},
+  {name:"EZ Bar Curl",              muscle:"Biceps",     code:"EZ",   g1:"#0A1A2A",g2:"#1A3A4A",eq:"Barre EZ",  diff:1,desc:"Isolation · Confort poignets"},
+  {name:"Preacher Curl",            muscle:"Biceps",     code:"PC",   g1:"#0A1A2A",g2:"#1A3A4A",eq:"Barre EZ",  diff:1,desc:"Isolation · Élimine momentum"},
+  {name:"Cable Hammer Curl",        muscle:"Biceps",     code:"CHC",  g1:"#0A1A2A",g2:"#1A3A4A",eq:"Câble",     diff:1,desc:"Brachial · Câble"},
+  {name:"Reverse Curl",             muscle:"Biceps",     code:"RC",   g1:"#0A1A2A",g2:"#1A3A4A",eq:"Barre",     diff:1,desc:"Brachioradial · Avant-bras"},
+  {name:"Spider Curl",              muscle:"Biceps",     code:"SC",   g1:"#0A1A2A",g2:"#1A3A4A",eq:"Haltères",  diff:1,desc:"Isolation · Court chef"},
+  {name:"Machine Curl",             muscle:"Biceps",     code:"MC",   g1:"#0A1A2A",g2:"#1A3A4A",eq:"Machine",   diff:1,desc:"Isolation · Machine"},
+  {name:"21s Curl",                 muscle:"Biceps",     code:"21",   g1:"#0A1A2A",g2:"#1A3A4A",eq:"Barre",     diff:2,desc:"Technique · 7+7+7 reps"},
+  {name:"Cross Body Curl",          muscle:"Biceps",     code:"CBC",  g1:"#0A1A2A",g2:"#1A3A4A",eq:"Haltères",  diff:1,desc:"Long chef · Croisé"},
 
-  // ── TRICEPS ──
-  {name:"Overhead Triceps Rope", muscle:"Triceps",     code:"OTR",   g1:"#1A1A0A",g2:"#3A3A1A", eq:"Câble",    diff:1, desc:"Isolation · Long chef étirement"},
-  {name:"Tricep Pushdown",       muscle:"Triceps",     code:"PD",    g1:"#1A1A0A",g2:"#3A3A1A", eq:"Câble",    diff:1, desc:"Isolation · Chef latéral"},
-  {name:"Close Grip Bench",      muscle:"Triceps",     code:"CGB",   g1:"#1A1A0A",g2:"#3A3A1A", eq:"Barre",    diff:2, desc:"Composé · Triceps · Pectoraux"},
-  {name:"Skull Crusher",         muscle:"Triceps",     code:"SK",    g1:"#1A1A0A",g2:"#3A3A1A", eq:"Barre EZ", diff:2, desc:"Isolation · Long chef"},
-  {name:"Diamond Push-Up",       muscle:"Triceps",     code:"DPU",   g1:"#1A1A0A",g2:"#3A3A1A", eq:"Poids corps",diff:1,desc:"Isolation · Poids corps"},
-  {name:"Dips étroits",          muscle:"Triceps",     code:"DIPs",  g1:"#1A1A0A",g2:"#3A3A1A", eq:"Poids corps",diff:2,desc:"Composé · Triceps emphasis"},
+  // ══ TRICEPS (14) ══
+  {name:"Overhead Triceps Rope",    muscle:"Triceps",    code:"OTR",  g1:"#1A1A0A",g2:"#3A3A1A",eq:"Câble",     diff:1,desc:"Isolation · Long chef étirement"},
+  {name:"Tricep Pushdown",          muscle:"Triceps",    code:"TPD",  g1:"#1A1A0A",g2:"#3A3A1A",eq:"Câble",     diff:1,desc:"Isolation · Chef latéral"},
+  {name:"Close Grip Bench",         muscle:"Triceps",    code:"CGB",  g1:"#1A1A0A",g2:"#3A3A1A",eq:"Barre",     diff:2,desc:"Composé · Triceps · Pectoraux"},
+  {name:"Skull Crusher",            muscle:"Triceps",    code:"SK",   g1:"#1A1A0A",g2:"#3A3A1A",eq:"Barre EZ",  diff:2,desc:"Isolation · Long chef"},
+  {name:"Dips Triceps",             muscle:"Triceps",    code:"DT",   g1:"#1A1A0A",g2:"#3A3A1A",eq:"Poids corps",diff:2,desc:"Composé · Triceps emphasis"},
+  {name:"Overhead DB Extension",    muscle:"Triceps",    code:"ODE",  g1:"#1A1A0A",g2:"#3A3A1A",eq:"Haltère",   diff:1,desc:"Long chef · Étirement"},
+  {name:"Cable Overhead Extension", muscle:"Triceps",    code:"COE",  g1:"#1A1A0A",g2:"#3A3A1A",eq:"Câble",     diff:1,desc:"Long chef · Câble"},
+  {name:"V-Bar Pushdown",           muscle:"Triceps",    code:"VBP",  g1:"#1A1A0A",g2:"#3A3A1A",eq:"Câble",     diff:1,desc:"Isolation · V-bar"},
+  {name:"Rope Pushdown",            muscle:"Triceps",    code:"RPD",  g1:"#1A1A0A",g2:"#3A3A1A",eq:"Câble",     diff:1,desc:"Isolation · Corde séparation"},
+  {name:"JM Press",                 muscle:"Triceps",    code:"JMP",  g1:"#1A1A0A",g2:"#3A3A1A",eq:"Barre",     diff:3,desc:"Composé · Powerlifting"},
+  {name:"Machine Tricep Extension", muscle:"Triceps",    code:"MTE",  g1:"#1A1A0A",g2:"#3A3A1A",eq:"Machine",   diff:1,desc:"Isolation · Machine"},
+  {name:"Diamond Push-Up",          muscle:"Triceps",    code:"DPU",  g1:"#1A1A0A",g2:"#3A3A1A",eq:"Poids corps",diff:1,desc:"Isolation · Poids corps"},
+  {name:"Tate Press",               muscle:"Triceps",    code:"TP",   g1:"#1A1A0A",g2:"#3A3A1A",eq:"Haltères",  diff:2,desc:"Isolation · Court chef"},
+  {name:"Kickback",                 muscle:"Triceps",    code:"KB",   g1:"#1A1A0A",g2:"#3A3A1A",eq:"Haltère",   diff:1,desc:"Isolation · Chef latéral"},
 
-  // ── QUADRICEPS ──
-  {name:"Back Squat",            muscle:"Quadriceps",  code:"SQ",    g1:"#2A0A0A",g2:"#5A1A1A", eq:"Barre",    diff:3, desc:"Composé · Roi des jambes"},
-  {name:"Front Squat",           muscle:"Quadriceps",  code:"FSQ",   g1:"#2A0A0A",g2:"#5A1A1A", eq:"Barre",    diff:3, desc:"Composé · Quad dominant"},
-  {name:"Leg Press",             muscle:"Quadriceps",  code:"LP",    g1:"#2A0A0A",g2:"#5A1A1A", eq:"Machine",  diff:1, desc:"Composé · Machine"},
-  {name:"Bulgarian Split Squat", muscle:"Quadriceps",  code:"BSS",   g1:"#2A0A0A",g2:"#5A1A1A", eq:"Haltères", diff:2, desc:"Unilatéral · Quad · Fessier"},
-  {name:"Leg Extension",         muscle:"Quadriceps",  code:"LE",    g1:"#2A0A0A",g2:"#5A1A1A", eq:"Machine",  diff:1, desc:"Isolation · Quadriceps"},
-  {name:"Hack Squat",            muscle:"Quadriceps",  code:"HS",    g1:"#2A0A0A",g2:"#5A1A1A", eq:"Machine",  diff:2, desc:"Composé · Quad dominant"},
-  {name:"Walking Lunge",         muscle:"Quadriceps",  code:"LUN",   g1:"#2A0A0A",g2:"#5A1A1A", eq:"Haltères", diff:2, desc:"Unilatéral · Fonctionnel"},
+  // ══ QUADRICEPS (14) ══
+  {name:"Back Squat",               muscle:"Quadriceps", code:"BSQ",  g1:"#2A0A0A",g2:"#5A1A1A",eq:"Barre",     diff:3,desc:"Composé · Roi des jambes"},
+  {name:"Front Squat",              muscle:"Quadriceps", code:"FSQ",  g1:"#2A0A0A",g2:"#5A1A1A",eq:"Barre",     diff:3,desc:"Composé · Quad dominant"},
+  {name:"Leg Press",                muscle:"Quadriceps", code:"LP",   g1:"#2A0A0A",g2:"#5A1A1A",eq:"Machine",   diff:1,desc:"Composé · Machine"},
+  {name:"Bulgarian Split Squat",    muscle:"Quadriceps", code:"BSS",  g1:"#2A0A0A",g2:"#5A1A1A",eq:"Haltères",  diff:2,desc:"Unilatéral · Quad · Fessier"},
+  {name:"Leg Extension",            muscle:"Quadriceps", code:"LE",   g1:"#2A0A0A",g2:"#5A1A1A",eq:"Machine",   diff:1,desc:"Isolation · Quadriceps"},
+  {name:"Hack Squat",               muscle:"Quadriceps", code:"HS",   g1:"#2A0A0A",g2:"#5A1A1A",eq:"Machine",   diff:2,desc:"Composé · Quad dominant"},
+  {name:"Walking Lunge",            muscle:"Quadriceps", code:"WL",   g1:"#2A0A0A",g2:"#5A1A1A",eq:"Haltères",  diff:2,desc:"Unilatéral · Fonctionnel"},
+  {name:"Goblet Squat",             muscle:"Quadriceps", code:"GS",   g1:"#2A0A0A",g2:"#5A1A1A",eq:"Kettlebell",diff:1,desc:"Composé · Mobilité · Débutant"},
+  {name:"Sissy Squat",              muscle:"Quadriceps", code:"SS",   g1:"#2A0A0A",g2:"#5A1A1A",eq:"Poids corps",diff:2,desc:"Isolation · Quad extrême"},
+  {name:"Smith Machine Squat",      muscle:"Quadriceps", code:"SMS",  g1:"#2A0A0A",g2:"#5A1A1A",eq:"Smith",     diff:1,desc:"Composé · Smith · Guidé"},
+  {name:"Step-Up Lesté",            muscle:"Quadriceps", code:"SU",   g1:"#2A0A0A",g2:"#5A1A1A",eq:"Haltères",  diff:2,desc:"Unilatéral · Fonctionnel"},
+  {name:"Leg Press Pied haut",      muscle:"Quadriceps", code:"LPH",  g1:"#2A0A0A",g2:"#5A1A1A",eq:"Machine",   diff:1,desc:"Leg press · Fessiers emphasis"},
+  {name:"Cyclist Squat",            muscle:"Quadriceps", code:"CS",   g1:"#2A0A0A",g2:"#5A1A1A",eq:"Barre",     diff:2,desc:"Quad isolation · Talons surélevés"},
+  {name:"Narrow Leg Press",         muscle:"Quadriceps", code:"NLP",  g1:"#2A0A0A",g2:"#5A1A1A",eq:"Machine",   diff:1,desc:"Leg press · Pieds rapprochés"},
 
-  // ── ISCHIO-JAMBIERS ──
-  {name:"Romanian Deadlift",     muscle:"Ischio",      code:"RDL",   g1:"#1A0A0A",g2:"#4A1A1A", eq:"Barre",    diff:2, desc:"Composé · IJ · Fessiers"},
-  {name:"Nordic Leg Curl",       muscle:"Ischio",      code:"NLC",   g1:"#1A0A0A",g2:"#4A1A1A", eq:"Poids corps",diff:3,desc:"Excentrique · IJ priorité"},
-  {name:"Leg Curl couché",       muscle:"Ischio",      code:"LC",    g1:"#1A0A0A",g2:"#4A1A1A", eq:"Machine",  diff:1, desc:"Isolation · Machine"},
-  {name:"Seated Leg Curl",       muscle:"Ischio",      code:"SLC",   g1:"#1A0A0A",g2:"#4A1A1A", eq:"Machine",  diff:1, desc:"Isolation · Angle différent"},
-  {name:"Stiff Leg Deadlift",    muscle:"Ischio",      code:"SLD",   g1:"#1A0A0A",g2:"#4A1A1A", eq:"Barre",    diff:2, desc:"Composé · IJ emphasis"},
-  {name:"Good Morning",          muscle:"Ischio",      code:"GM",    g1:"#1A0A0A",g2:"#4A1A1A", eq:"Barre",    diff:2, desc:"Composé · IJ · Bas du dos"},
+  // ══ ISCHIO-JAMBIERS (12) ══
+  {name:"Romanian Deadlift",        muscle:"Ischio",     code:"RDL",  g1:"#1A0A0A",g2:"#4A1A1A",eq:"Barre",     diff:2,desc:"Composé · IJ · Fessiers"},
+  {name:"Nordic Leg Curl",          muscle:"Ischio",     code:"NLC",  g1:"#1A0A0A",g2:"#4A1A1A",eq:"Poids corps",diff:3,desc:"Excentrique · IJ priorité"},
+  {name:"Leg Curl couché",          muscle:"Ischio",     code:"LC",   g1:"#1A0A0A",g2:"#4A1A1A",eq:"Machine",   diff:1,desc:"Isolation · Machine"},
+  {name:"Seated Leg Curl",          muscle:"Ischio",     code:"SLC",  g1:"#1A0A0A",g2:"#4A1A1A",eq:"Machine",   diff:1,desc:"Isolation · Angle différent"},
+  {name:"Stiff Leg Deadlift",       muscle:"Ischio",     code:"SLD",  g1:"#1A0A0A",g2:"#4A1A1A",eq:"Barre",     diff:2,desc:"Composé · IJ emphasis"},
+  {name:"Good Morning",             muscle:"Ischio",     code:"GM",   g1:"#1A0A0A",g2:"#4A1A1A",eq:"Barre",     diff:2,desc:"Composé · IJ · Bas du dos"},
+  {name:"DB Romanian Deadlift",     muscle:"Ischio",     code:"DBRD", g1:"#1A0A0A",g2:"#4A1A1A",eq:"Haltères",  diff:2,desc:"Composé · IJ · Haltères"},
+  {name:"Single Leg RDL",           muscle:"Ischio",     code:"SLRD", g1:"#1A0A0A",g2:"#4A1A1A",eq:"Haltère",   diff:2,desc:"Unilatéral · Équilibre · IJ"},
+  {name:"Cable Pull-Through",       muscle:"Ischio",     code:"CPT",  g1:"#1A0A0A",g2:"#4A1A1A",eq:"Câble",     diff:1,desc:"Hip hinge · Chaîne post"},
+  {name:"Swiss Ball Leg Curl",      muscle:"Ischio",     code:"SBC",  g1:"#1A0A0A",g2:"#4A1A1A",eq:"Médecine",  diff:2,desc:"Isolation · Instabilité"},
+  {name:"Snatch Grip RDL",          muscle:"Ischio",     code:"SGRD", g1:"#1A0A0A",g2:"#4A1A1A",eq:"Barre",     diff:3,desc:"IJ · Amplitude extrême"},
+  {name:"Glute Ham Raise",          muscle:"Ischio",     code:"GHR",  g1:"#1A0A0A",g2:"#4A1A1A",eq:"Machine",   diff:3,desc:"Composé · IJ · Fessiers intense"},
 
-  // ── FESSIERS ──
-  {name:"Barbell Hip Thrust",    muscle:"Fessiers",    code:"HT",    g1:"#2A0A0A",g2:"#5A1A0A", eq:"Barre",    diff:2, desc:"Isolation · Fessiers priorité"},
-  {name:"Hip Thrust Unilatéral", muscle:"Fessiers",    code:"1HT",   g1:"#2A0A0A",g2:"#5A1A0A", eq:"Poids corps",diff:2,desc:"Unilatéral · Correction asymétrie"},
-  {name:"Glute Bridge",          muscle:"Fessiers",    code:"GB",    g1:"#2A0A0A",g2:"#5A1A0A", eq:"Barre",    diff:1, desc:"Isolation · Débutant convivial"},
-  {name:"Cable Kickback",        muscle:"Fessiers",    code:"CK",    g1:"#2A0A0A",g2:"#5A1A0A", eq:"Câble",    diff:1, desc:"Isolation · Fessier câble"},
-  {name:"Sumo Deadlift",         muscle:"Fessiers",    code:"SD",    g1:"#2A0A0A",g2:"#5A1A0A", eq:"Barre",    diff:3, desc:"Composé · Fessiers · Adducteurs"},
-  {name:"Step-Up Lesté",         muscle:"Fessiers",    code:"SU",    g1:"#2A0A0A",g2:"#5A1A0A", eq:"Haltères", diff:2, desc:"Unilatéral · Fonctionnel"},
+  // ══ FESSIERS (12) ══
+  {name:"Barbell Hip Thrust",       muscle:"Fessiers",   code:"HT",   g1:"#2A0A0A",g2:"#5A2A0A",eq:"Barre",     diff:2,desc:"Isolation · Fessiers priorité"},
+  {name:"Hip Thrust Unilatéral",    muscle:"Fessiers",   code:"1HT",  g1:"#2A0A0A",g2:"#5A2A0A",eq:"Poids corps",diff:2,desc:"Unilatéral · Asymétrie"},
+  {name:"Glute Bridge",             muscle:"Fessiers",   code:"GB",   g1:"#2A0A0A",g2:"#5A2A0A",eq:"Barre",     diff:1,desc:"Isolation · Débutant"},
+  {name:"Cable Kickback",           muscle:"Fessiers",   code:"CK",   g1:"#2A0A0A",g2:"#5A2A0A",eq:"Câble",     diff:1,desc:"Isolation · Fessier câble"},
+  {name:"Sumo Deadlift",            muscle:"Fessiers",   code:"SD",   g1:"#2A0A0A",g2:"#5A2A0A",eq:"Barre",     diff:3,desc:"Composé · Fessiers · Adducteurs"},
+  {name:"Donkey Kick",              muscle:"Fessiers",   code:"DK",   g1:"#2A0A0A",g2:"#5A2A0A",eq:"Câble",     diff:1,desc:"Isolation · Extension hanche"},
+  {name:"Clamshell",                muscle:"Fessiers",   code:"CL",   g1:"#2A0A0A",g2:"#5A2A0A",eq:"Élastique", diff:1,desc:"Activation · Fessier médian"},
+  {name:"Fire Hydrant",             muscle:"Fessiers",   code:"FH",   g1:"#2A0A0A",g2:"#5A2A0A",eq:"Poids corps",diff:1,desc:"Activation · Abducteur"},
+  {name:"Smith Hip Thrust",         muscle:"Fessiers",   code:"SHT",  g1:"#2A0A0A",g2:"#5A2A0A",eq:"Smith",     diff:1,desc:"Hip thrust · Smith · Guidé"},
+  {name:"Single Leg Hip Thrust",    muscle:"Fessiers",   code:"SLH",  g1:"#2A0A0A",g2:"#5A2A0A",eq:"Poids corps",diff:2,desc:"Unilatéral · Poids corps"},
+  {name:"Cable Hip Abduction",      muscle:"Fessiers",   code:"CHA",  g1:"#2A0A0A",g2:"#5A2A0A",eq:"Câble",     diff:1,desc:"Fessier médian · Câble"},
+  {name:"Banded Hip Thrust",        muscle:"Fessiers",   code:"BHT",  g1:"#2A0A0A",g2:"#5A2A0A",eq:"Élastique", diff:1,desc:"Hip thrust · Élastique résistance"},
 
-  // ── MOLLETS ──
-  {name:"Standing Calf Raise",   muscle:"Mollets",     code:"SCR",   g1:"#0A2A1A",g2:"#1A5A3A", eq:"Machine",  diff:1, desc:"Gastrocnémien · Debout"},
-  {name:"Seated Calf Raise",     muscle:"Mollets",     code:"SeCR",  g1:"#0A2A1A",g2:"#1A5A3A", eq:"Machine",  diff:1, desc:"Soléaire · Assis"},
-  {name:"Donkey Calf Raise",     muscle:"Mollets",     code:"DCR",   g1:"#0A2A1A",g2:"#1A5A3A", eq:"Machine",  diff:1, desc:"Gastrocnémien · Amplitude max"},
-  {name:"Single Leg Calf Raise", muscle:"Mollets",     code:"1CR",   g1:"#0A2A1A",g2:"#1A5A3A", eq:"Poids corps",diff:1,desc:"Unilatéral · Progression naturelle"},
+  // ══ MOLLETS (8) ══
+  {name:"Standing Calf Raise",      muscle:"Mollets",    code:"SCR",  g1:"#0A2A1A",g2:"#1A5A3A",eq:"Machine",   diff:1,desc:"Gastrocnémien · Debout"},
+  {name:"Seated Calf Raise",        muscle:"Mollets",    code:"SeCR", g1:"#0A2A1A",g2:"#1A5A3A",eq:"Machine",   diff:1,desc:"Soléaire · Assis"},
+  {name:"Donkey Calf Raise",        muscle:"Mollets",    code:"DCR",  g1:"#0A2A1A",g2:"#1A5A3A",eq:"Machine",   diff:1,desc:"Gastrocnémien · Amplitude max"},
+  {name:"Single Leg Calf Raise",    muscle:"Mollets",    code:"1CR",  g1:"#0A2A1A",g2:"#1A5A3A",eq:"Poids corps",diff:1,desc:"Unilatéral · Progression"},
+  {name:"Leg Press Calf Raise",     muscle:"Mollets",    code:"LPC",  g1:"#0A2A1A",g2:"#1A5A3A",eq:"Machine",   diff:1,desc:"Mollets · Leg press"},
+  {name:"Smith Calf Raise",         muscle:"Mollets",    code:"SMC",  g1:"#0A2A1A",g2:"#1A5A3A",eq:"Smith",     diff:1,desc:"Mollets · Smith stable"},
+  {name:"Jump Rope",                muscle:"Mollets",    code:"JR",   g1:"#0A2A1A",g2:"#1A5A3A",eq:"Corde",     diff:1,desc:"Cardio · Mollets · Coordination"},
+  {name:"Box Jump",                 muscle:"Mollets",    code:"BJ",   g1:"#0A2A1A",g2:"#1A5A3A",eq:"Box",       diff:2,desc:"Pliométrique · Explosivité"},
 
-  // ── CORE ──
-  {name:"Ab Wheel Rollout",      muscle:"Core",        code:"ABW",   g1:"#0A2A0A",g2:"#1A5A1A", eq:"Roue",     diff:3, desc:"Anti-extension · Core profond"},
-  {name:"Plank",                 muscle:"Core",        code:"PLK",   g1:"#0A2A0A",g2:"#1A5A1A", eq:"Poids corps",diff:1,desc:"Isométrique · Gainage"},
-  {name:"Hanging Leg Raise",     muscle:"Core",        code:"HLR",   g1:"#0A2A0A",g2:"#1A5A1A", eq:"Barre",    diff:2, desc:"Abdominaux inférieurs"},
-  {name:"Cable Crunch",          muscle:"Core",        code:"CC",    g1:"#0A2A0A",g2:"#1A5A1A", eq:"Câble",    diff:1, desc:"Isolation · Flexion rachis"},
-  {name:"Russian Twist",         muscle:"Core",        code:"RT",    g1:"#0A2A0A",g2:"#1A5A1A", eq:"Disque",   diff:1, desc:"Rotation · Obliques"},
-  {name:"Pallof Press",          muscle:"Core",        code:"PP",    g1:"#0A2A0A",g2:"#1A5A1A", eq:"Câble",    diff:1, desc:"Anti-rotation · Core fonctionnel"},
+  // ══ CORE (16) ══
+  {name:"Ab Wheel Rollout",         muscle:"Core",       code:"ABW",  g1:"#0A2A0A",g2:"#1A5A1A",eq:"Roue",      diff:3,desc:"Anti-extension · Core profond"},
+  {name:"Plank",                    muscle:"Core",       code:"PLK",  g1:"#0A2A0A",g2:"#1A5A1A",eq:"Poids corps",diff:1,desc:"Isométrique · Gainage"},
+  {name:"Hanging Leg Raise",        muscle:"Core",       code:"HLR",  g1:"#0A2A0A",g2:"#1A5A1A",eq:"Barre",     diff:2,desc:"Abdominaux inférieurs"},
+  {name:"Cable Crunch",             muscle:"Core",       code:"CC",   g1:"#0A2A0A",g2:"#1A5A1A",eq:"Câble",     diff:1,desc:"Isolation · Flexion rachis"},
+  {name:"Russian Twist",            muscle:"Core",       code:"RT",   g1:"#0A2A0A",g2:"#1A5A1A",eq:"Disque",    diff:1,desc:"Rotation · Obliques"},
+  {name:"Pallof Press",             muscle:"Core",       code:"PP",   g1:"#0A2A0A",g2:"#1A5A1A",eq:"Câble",     diff:1,desc:"Anti-rotation · Core fonctionnel"},
+  {name:"Dead Bug",                 muscle:"Core",       code:"DB",   g1:"#0A2A0A",g2:"#1A5A1A",eq:"Poids corps",diff:1,desc:"Anti-extension · Coordination"},
+  {name:"Hollow Body Hold",         muscle:"Core",       code:"HBH",  g1:"#0A2A0A",g2:"#1A5A1A",eq:"Poids corps",diff:2,desc:"Isométrique · Gymnique"},
+  {name:"Dragon Flag",              muscle:"Core",       code:"DF",   g1:"#0A2A0A",g2:"#1A5A1A",eq:"Banc",      diff:3,desc:"Extrême · Core complet"},
+  {name:"Landmine Twist",           muscle:"Core",       code:"LT",   g1:"#0A2A0A",g2:"#1A5A1A",eq:"Barre",     diff:2,desc:"Rotation · Obliques lourds"},
+  {name:"Windshield Wiper",         muscle:"Core",       code:"WW",   g1:"#0A2A0A",g2:"#1A5A1A",eq:"Poids corps",diff:3,desc:"Rotation · Suspendu"},
+  {name:"Crunch",                   muscle:"Core",       code:"CR",   g1:"#0A2A0A",g2:"#1A5A1A",eq:"Poids corps",diff:1,desc:"Abdominaux · Flexion"},
+  {name:"Decline Crunch",           muscle:"Core",       code:"DC",   g1:"#0A2A0A",g2:"#1A5A1A",eq:"Banc",      diff:1,desc:"Abdominaux · Décliné"},
+  {name:"Side Plank",               muscle:"Core",       code:"SP",   g1:"#0A2A0A",g2:"#1A5A1A",eq:"Poids corps",diff:1,desc:"Obliques · Latéral"},
+  {name:"Farmer Walk",              muscle:"Core",       code:"FW",   g1:"#0A2A0A",g2:"#1A5A1A",eq:"Haltères",  diff:1,desc:"Fonctionnel · Core · Prise"},
+  {name:"Suitcase Carry",           muscle:"Core",       code:"SC",   g1:"#0A2A0A",g2:"#1A5A1A",eq:"Haltère",   diff:1,desc:"Unilatéral · Anti-flexion latérale"},
 
-  // ── CHAÎNE POSTÉRIEURE / FULL BODY ──
-  {name:"Deadlift Conventionnel",muscle:"Full Body",   code:"DL",    g1:"#1A1A0A",g2:"#3A3A1A", eq:"Barre",    diff:3, desc:"Composé · Roi des exercices"},
-  {name:"Trap Bar Deadlift",     muscle:"Full Body",   code:"TBD",   g1:"#1A1A0A",g2:"#3A3A1A", eq:"Trap Bar", diff:2, desc:"Composé · Genoux · Dos"},
-  {name:"Farmer Walk",           muscle:"Full Body",   code:"FW",    g1:"#1A1A0A",g2:"#3A3A1A", eq:"Haltères", diff:1, desc:"Fonctionnel · Prise · Core"},
-  {name:"Rack Pull",             muscle:"Full Body",   code:"RP",    g1:"#1A1A0A",g2:"#3A3A1A", eq:"Barre",    diff:2, desc:"Composé · Dos épais · DL partiel"},
-  {name:"Power Clean",           muscle:"Full Body",   code:"PC",    g1:"#1A1A0A",g2:"#3A3A1A", eq:"Barre",    diff:3, desc:"Olympique · Explosivité"},
-  {name:"Kettlebell Swing",      muscle:"Full Body",   code:"KB",    g1:"#1A1A0A",g2:"#3A3A1A", eq:"Kettlebell",diff:2,desc:"Balistique · Chaîne post."},
+  // ══ FULL BODY (14) ══
+  {name:"Deadlift Conventionnel",   muscle:"Full Body",  code:"DL",   g1:"#1A1A0A",g2:"#3A3A1A",eq:"Barre",     diff:3,desc:"Composé · Roi des exercices"},
+  {name:"Trap Bar Deadlift",        muscle:"Full Body",  code:"TBD",  g1:"#1A1A0A",g2:"#3A3A1A",eq:"Trap Bar",  diff:2,desc:"Composé · Genoux · Dos"},
+  {name:"Power Clean",              muscle:"Full Body",  code:"PC",   g1:"#1A1A0A",g2:"#3A3A1A",eq:"Barre",     diff:3,desc:"Olympique · Explosivité"},
+  {name:"Hang Clean",               muscle:"Full Body",  code:"HC",   g1:"#1A1A0A",g2:"#3A3A1A",eq:"Barre",     diff:3,desc:"Olympique · Depuis hanche"},
+  {name:"Push Press",               muscle:"Full Body",  code:"PP",   g1:"#1A1A0A",g2:"#3A3A1A",eq:"Barre",     diff:2,desc:"Explosif · OHP assisté jambes"},
+  {name:"Thruster",                 muscle:"Full Body",  code:"THR",  g1:"#1A1A0A",g2:"#3A3A1A",eq:"Barre",     diff:3,desc:"Squat + OHP · Cardio force"},
+  {name:"Kettlebell Swing",         muscle:"Full Body",  code:"KBS",  g1:"#1A1A0A",g2:"#3A3A1A",eq:"Kettlebell",diff:2,desc:"Balistique · Chaîne post"},
+  {name:"Kettlebell Clean",         muscle:"Full Body",  code:"KBC",  g1:"#1A1A0A",g2:"#3A3A1A",eq:"Kettlebell",diff:2,desc:"Balistique · Full body"},
+  {name:"Farmers Walk",             muscle:"Full Body",  code:"FW",   g1:"#1A1A0A",g2:"#3A3A1A",eq:"Haltères",  diff:1,desc:"Fonctionnel · Prise · Core"},
+  {name:"Prowler Push",             muscle:"Full Body",  code:"PRW",  g1:"#1A1A0A",g2:"#3A3A1A",eq:"Traîneau",  diff:2,desc:"Cardio force · Jambes"},
+  {name:"Battle Rope",              muscle:"Full Body",  code:"BR",   g1:"#1A1A0A",g2:"#3A3A1A",eq:"Corde",     diff:2,desc:"Cardio · Épaules · Core"},
+  {name:"Snatch",                   muscle:"Full Body",  code:"SN",   g1:"#1A1A0A",g2:"#3A3A1A",eq:"Barre",     diff:3,desc:"Olympique · Technique avancée"},
+  {name:"Clean and Jerk",           muscle:"Full Body",  code:"CJ",   g1:"#1A1A0A",g2:"#3A3A1A",eq:"Barre",     diff:3,desc:"Olympique · Compétition"},
+  {name:"Tire Flip",                muscle:"Full Body",  code:"TF",   g1:"#1A1A0A",g2:"#3A3A1A",eq:"Pneu",      diff:3,desc:"Fonctionnel · Force brute"},
 ];
 
 // Group by muscle
+const MUSCLES_ORDER=["Pectoraux","Dos","Épaules","Biceps","Triceps","Quadriceps","Ischio","Fessiers","Mollets","Core","Full Body"];
+const EX_BY_MUSCLE={};
+MUSCLES_ORDER.forEach(m=>EX_BY_MUSCLE[m]=[]);
+EX_LIBRARY.forEach(ex=>{if(EX_BY_MUSCLE[ex.muscle])EX_BY_MUSCLE[ex.muscle].push(ex);});
+
 const MUSCLES_ORDER=["Pectoraux","Dos","Épaules","Biceps","Triceps","Quadriceps","Ischio","Fessiers","Mollets","Core","Full Body"];
 const EX_BY_MUSCLE={};
 MUSCLES_ORDER.forEach(m=>EX_BY_MUSCLE[m]=[]);
@@ -1388,7 +1479,9 @@ function renderWo(){
     }
     const sets=S.sets[ex.name];
     const prevLast=S.hist[ex.name]?.slice(-1)[0];
-    const doneC=sets.filter(s=>s.done).length;
+    const workSets=sets.filter(s=>s.type!=='warmup');
+    const doneC=workSets.filter(s=>s.done).length;
+    const totalC=workSets.length;
 
     html+=`<div class="ex-blk">
       ${buildExHeroHTML(ex,wStr)}
@@ -1396,7 +1489,7 @@ function renderWo(){
         <div class="ex-act" onclick="openHist('${ex.name}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Historique</div>
         ${isBar?`<div class="ex-act" onclick="openPlate(document.querySelector('#sr-${ei}-0 .sinp')?.value||'${wNum}','${ex.name}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 5v14M18 5v14M4 9h4M16 9h4M4 15h4M16 15h4"/></svg>Plaques</div>`:''}
         <div class="ex-act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${rInfo.type} · ${rInfo.fmt}</div>
-        <div class="ex-act ${doneC===ex.s?'on':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>${doneC}/${ex.s} série${ex.s>1?'s':''}</div>
+        <div class="ex-act ${doneC===ex.s?'on':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>${doneC}/${totalC} série${totalC>1?'s':''}</div>
         <div class="ex-act" onclick="openExLibrary('${ex.name}',${ei})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Remplacer</div>
       </div>
       <div class="ex-note">${ex.note}</div>
@@ -1513,7 +1606,11 @@ function chkSet(exName,ei,si){
 
 function updProg(){
   const actId=activeDay();const day=dayObj(actId);
-  let d=0,t=0;day.exercises.forEach(ex=>(S.sets[ex.name]||[]).forEach(s=>{t++;if(s.done)d++;}));
+  let d=0,t=0;
+  day.exercises.forEach(ex=>(S.sets[ex.name]||[]).forEach(s=>{
+    if(s.type==='warmup')return; // warmup not counted
+    t++;if(s.done)d++;
+  }));
   const p=document.getElementById('woProg');if(p)p.style.width=(t>0?d/t*100:0)+'%';
 }
 
