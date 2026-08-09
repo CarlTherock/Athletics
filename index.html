@@ -8,11 +8,10 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="CTR Athletics">
 <title>CTR Athletics</title>
-<style>
-/* ── RESET ── */
+<style>/* RESET */
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 
-/* ── DESIGN TOKENS ── */
+/* TOKENS */
 :root{
   --bg:#0A0A0A;--bg2:#141414;--bg3:#1C1C1C;--bg4:#252525;--bg5:#2E2E2E;
   --b:#2A2A2A;--b2:#363636;
@@ -23,12 +22,13 @@
   --r:14px;--rsm:10px;
 }
 
-/* ── LAYOUT — mobile first, plein écran ── */
+/* LAYOUT — mobile + PWA + Android */
 html{height:100%}
 body{
   font-family:-apple-system,'SF Pro Text','Helvetica Neue',Arial,sans-serif;
   color:#fff;background:#0A0A0A;
-  position:fixed;top:0;left:0;right:0;bottom:0;
+  position:fixed;
+  top:0;left:0;right:0;bottom:0;
   overflow:hidden;
 }
 .screens{
@@ -39,11 +39,9 @@ body{
 }
 .scr{
   position:absolute;inset:0;
-  overflow-y:auto;
-  -webkit-overflow-scrolling:touch;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
   overscroll-behavior-y:contain;
-  display:none;
-  padding-bottom:20px;
+  display:none;padding-bottom:20px;
 }
 .scr.on{display:block}
 .bnav{
@@ -52,26 +50,25 @@ body{
   padding-bottom:env(safe-area-inset-bottom,0px);
   background:rgba(10,10,10,.97);
   backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-  border-top:1px solid #272727;
+  border-top:1px solid var(--b);
   display:flex;z-index:10;
 }
 .sh-bg{position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.75);display:none;align-items:flex-end}
 .sh-bg.on{display:flex}
 .rest-ov{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.97);display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px}
 .rest-ov.on{display:flex}
+
+/* SPLASH */
+#spl{position:fixed;inset:0;z-index:9999;background:#0A0A0A;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;animation:splashGo 2.4s ease forwards}
+@keyframes splashGo{0%,65%{opacity:1;pointer-events:auto}90%,100%{opacity:0;pointer-events:none;visibility:hidden}}
+
+/* COMPONENTS */
 #spl{position:fixed;inset:0;z-index:9999;background:#0A0A0A;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;animation:splashGo 2.4s ease forwards}
 @keyframes splashGo{0%,65%{opacity:1;pointer-events:auto}90%,100%{opacity:0;pointer-events:none;visibility:hidden}}
 
 /* ── COMPONENTS ── */
 /* ─── RESET ─── */
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html{height:100%;background:#0A0A0A}
-body{
-  font-family:-apple-system,'SF Pro Text','Helvetica Neue',Arial,sans-serif;
-  background:#0A0A0A;color:#fff;
-  /* Mobile: fixed fullscreen. Web: centered card */
-  min-height:100vh;
-}
 
 /* ─── WEB WRAPPER ─── */
 .app-shell{
@@ -106,8 +103,6 @@ body{
 }
 
 /* ─── SCREENS ─── */
-
-
 
 /* ─── SPLASH ─── */
 #spl{
@@ -179,16 +174,14 @@ body{
 .card{background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:14px;margin:0 12px 10px}
 
 /* ─── SHEET ─── */
-.sh-bg{position:absolute;inset:0;z-index:800;background:rgba(0,0,0,.75);display:none;align-items:flex-end}
-.sh-bg.on{display:flex}
+
 .sh{width:100%;background:#191919;border-radius:20px 20px 0 0;border-top:1px solid var(--b2);padding:0 0 calc(20px + var(--safe));max-height:88%;overflow-y:auto;animation:sup .26s cubic-bezier(.16,1,.3,1)}
 @keyframes sup{from{transform:translateY(100%)}to{transform:translateY(0)}}
 .sh-handle{width:36px;height:4px;background:var(--b2);border-radius:2px;margin:12px auto 16px}
 .sh-title{font-size:17px;font-weight:800;padding:0 18px 13px}
 
 /* ─── REST OVERLAY ─── */
-.rest-ov{position:absolute;inset:0;z-index:1000;background:rgba(0,0,0,.97);display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px}
-.rest-ov.on{display:flex}
+
 .rest-ring{position:relative;width:190px;height:190px}
 .rest-ring svg{position:absolute;inset:0;width:100%;height:100%}
 .rest-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
@@ -393,59 +386,6 @@ body{
 #spl{position:fixed;inset:0;z-index:9999;background:#0A0A0A;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;animation:splashGo 2.4s ease forwards}
 @keyframes splashGo{0%,65%{opacity:1;pointer-events:auto}90%,100%{opacity:0;pointer-events:none;visibility:hidden}}
 
-
-
-
-.sh-bg{position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.75);display:none;align-items:flex-end}
-.sh-bg.on{display:flex}
-.rest-ov{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.97);display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px}
-.rest-ov.on{display:flex}
-
-/* Layout — works in Safari web + PWA + Android */
-
-
-
-
-
-/* ── FULL SCREEN LAYOUT (Safari + PWA + Android) ── */
-html,body{width:100%;height:100%;overflow:hidden}
-body{position:fixed;top:0;left:0;right:0;bottom:0}
-
-
-.rest-ov{position:fixed !important;inset:0 !important;z-index:1000 !important}
-.sh-bg{position:fixed !important;inset:0 !important}
-
-/* ── LAYOUT UNIQUE ── */
-html,body{width:100%;height:100%;overflow:hidden}
-body{position:fixed;top:0;left:0;right:0;bottom:0;overflow:hidden}
-.screens{position:fixed;top:0;left:0;right:0;bottom:calc(54px + env(safe-area-inset-bottom,0px));overflow:hidden}
-.scr{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;display:none;padding-bottom:20px}
-.scr.on{display:block}
-.bnav{position:fixed;bottom:0;left:0;right:0;height:calc(54px + env(safe-area-inset-bottom,0px));padding-bottom:env(safe-area-inset-bottom,0px);background:rgba(10,10,10,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid #272727;display:flex;z-index:10}
-.rest-ov{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.97);display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px}
-.rest-ov.on{display:flex}
-.sh-bg{position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.75);display:none;align-items:flex-end}
-.sh-bg.on{display:flex}
-
-:root{ --app-height: 100dvh; }
-html,body{ height: var(--app-height) !important; }
-body{ 
-  position:fixed;top:0;left:0;right:0;
-  height: var(--app-height) !important;
-  overflow:hidden;
-}
-.screens{
-  position:fixed;top:0;left:0;right:0;
-  bottom:54px;
-  overflow:hidden;
-}
-@supports(padding-bottom: env(safe-area-inset-bottom)){
-  .screens{ bottom: calc(54px + env(safe-area-inset-bottom,0px)); }
-  .bnav{ 
-    height: calc(54px + env(safe-area-inset-bottom,0px)) !important;
-    padding-bottom: env(safe-area-inset-bottom,0px) !important;
-  }
-}
 </style>
 </head>
 <body>
@@ -1378,14 +1318,6 @@ function playDone(){
   }catch(e){}
 }
 
-
-// Fix layout height dynamically (Safari address bar issue)
-function fixLayout(){
-  var h = window.innerHeight;
-  document.documentElement.style.setProperty('--app-height', h+'px');
-}
-fixLayout();
-window.addEventListener('resize', fixLayout);
 
 load();
 S.curWeek=calcWeek();
