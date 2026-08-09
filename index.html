@@ -652,7 +652,7 @@ const MUSCLES=[
 ];
 
 // STATE
-let S={curDay:1,curWeek:1,ovDay:null,woStart:null,woInt:null,restInt:null,rRem:0,rTotal:0,sets:{},sessions:[],photos:[],hist:{}};
+let S={curDay:1,curWeek:1,ovDay:null,woStart:null,woInt:null,restInt:null,rRem:0,rTotal:0,restEndTs:null,restType:'',restNext:'',sets:{},sessions:[],photos:[],hist:{}};
 const KEY="ctr300v6";
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function load(){try{const d=localStorage.getItem(KEY);if(d)Object.assign(S,JSON.parse(d))}catch(e){}}
@@ -853,32 +853,87 @@ function vibrate(pattern){
   try{if(navigator.vibrate)navigator.vibrate(pattern);}catch(e){}
 }
 
+// ── REST TIMER — timestamp-based so it survives background ──
+// Instead of counting down, we store the END time.
+// When app returns from background, we calculate remaining from real clock.
+
 function startRest(sec,type,next){
-  S.rRem=sec;S.rTotal=sec;
-  document.getElementById('restT').textContent=sec;
-  document.getElementById('restTypeLbl').textContent=type;
-  document.getElementById('restNext').textContent=next||'Prochaine série';
+  S.restEndTs = Date.now() + sec*1000; // absolute end timestamp
+  S.rTotal    = sec;
+  S.restType  = type||'REPOS';
+  S.restNext  = next||'Prochaine série';
+  save(); // persist so we survive navigation
+
+  document.getElementById('restTypeLbl').textContent = type;
+  document.getElementById('restNext').textContent    = next||'Prochaine série';
   document.getElementById('restOv').classList.add('on');
-  requestWakeLock(); // Keep screen on
-  vibrate([100]); // Short buzz when rest starts
-  if(S.restInt)clearInterval(S.restInt);
-  S.restInt=setInterval(()=>{
-    S.rRem--;
-    const t=document.getElementById('restT');if(t)t.textContent=S.rRem;
-    const arc=document.getElementById('restArc');if(arc)arc.style.strokeDashoffset=547*(1-S.rRem/S.rTotal);
-    // Tick sound for last 3 seconds
-    if(S.rRem<=3&&S.rRem>0) playTick();
-    if(S.rRem<=0){
-      clearInterval(S.restInt);
-      document.getElementById('restOv').classList.remove('on');
-      playDone();           // 3-beep when done
-      vibrate([200,100,200,100,400]); // Buzz buzz buzz
-      releaseWakeLock();    // Allow screen to sleep again
-    }
-  },1000);
+  requestWakeLock();
+  vibrate([100]);
+
+  // Request notification permission for background alert
+  if(Notification && Notification.permission==='default'){
+    Notification.requestPermission();
+  }
+
+  tickRest();
 }
+
+function tickRest(){
+  if(S.restInt) clearInterval(S.restInt);
+  S.restInt = setInterval(()=>{
+    if(!S.restEndTs){ clearInterval(S.restInt); return; }
+    const rem = Math.max(0, Math.round((S.restEndTs - Date.now())/1000));
+    const t   = document.getElementById('restT');
+    if(t) t.textContent = rem;
+    const arc = document.getElementById('restArc');
+    if(arc) arc.style.strokeDashoffset = 547*(1 - rem/S.rTotal);
+    if(rem<=3 && rem>0) playTick();
+    if(rem<=0){
+      clearInterval(S.restInt);
+      S.restEndTs = null; save();
+      document.getElementById('restOv').classList.remove('on');
+      playDone();
+      vibrate([200,100,200,100,400]);
+      releaseWakeLock();
+      // Show browser notification if app was in background
+      if(Notification && Notification.permission==='granted'){
+        new Notification('CTR 300 — Repos terminé 🏋️',{
+          body: S.restNext||'Prochaine série',
+          icon: '/Athletics/icon.png',
+          vibrate:[200,100,400],
+          tag:'ctr-rest', // replace previous notification
+        });
+      }
+    }
+  },500); // 500ms interval = twice per second for accuracy
+}
+
+// On visibility change — if app comes back, resync timer
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'){
+    if(S.restEndTs && S.restEndTs > Date.now()){
+      // Timer still running — show overlay and resync
+      document.getElementById('restTypeLbl').textContent = S.restType||'REPOS';
+      document.getElementById('restNext').textContent    = S.restNext||'Prochaine série';
+      document.getElementById('restOv').classList.add('on');
+      requestWakeLock();
+      tickRest(); // restart interval with correct remaining
+    } else if(S.restEndTs && S.restEndTs <= Date.now()){
+      // Timer finished while in background
+      S.restEndTs=null; save();
+      document.getElementById('restOv').classList.remove('on');
+      playDone();
+      vibrate([200,100,200,100,400]);
+    }
+  } else {
+    // Going to background — clear interval (JS suspends anyway)
+    if(S.restInt) clearInterval(S.restInt);
+  }
+});
+
 function skipRest(){
-  if(S.restInt)clearInterval(S.restInt);
+  if(S.restInt) clearInterval(S.restInt);
+  S.restEndTs=null; save();
   document.getElementById('restOv').classList.remove('on');
   releaseWakeLock();
 }
@@ -1231,6 +1286,15 @@ function importData(){const j=prompt('Colle le JSON exporté :');if(!j)return;tr
 // INIT
 load();S.curWeek=calcWeek();save();
 renderToday();renderProg();
+// Resync rest timer if it was running before page reload
+if(S.restEndTs && S.restEndTs > Date.now()){
+  document.getElementById('restTypeLbl').textContent = S.restType||'REPOS';
+  document.getElementById('restNext').textContent    = S.restNext||'Prochaine série';
+  document.getElementById('restOv').classList.add('on');
+  tickRest();
+} else if(S.restEndTs){
+  S.restEndTs=null; save(); // expired while away
+}
 // Start banner timer if workout was running
 if(S.woStart){
   S.woInt=setInterval(()=>{const el=Math.floor((Date.now()-S.woStart)/1000);const bt=document.getElementById('bannerTimer');if(bt)bt.textContent=fmt(el);},1000);
