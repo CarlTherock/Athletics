@@ -59,10 +59,12 @@ body{
 
 /* ── SCREENS: fill remaining space, scroll inside ── */
 .screens{
-  flex:1;
-  position:relative;
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  bottom:calc(var(--nav) + var(--safe-b));
   overflow:hidden;
-  min-height:0;
 }
 .scr{
   position:absolute;
@@ -78,7 +80,8 @@ body{
 
 /* ── BOTTOM NAV ── */
 .bnav{
-  flex-shrink:0;
+  position:absolute;
+  bottom:0;left:0;right:0;
   height:calc(var(--nav) + var(--safe-b));
   padding-bottom:var(--safe-b);
   background:rgba(10,10,10,.97);
