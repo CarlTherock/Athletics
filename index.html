@@ -575,6 +575,7 @@ body{
 <script>
 
 
+
 // ════════════════════════════════════════════════════════════
 // PROGRAMME DATA
 // SEMAINE : Dim=J1, Lun=J2, Mar=J3, Mer=J4, Jeu=J5, Ven=REPOS, Sam=REPOS
@@ -1056,6 +1057,7 @@ function renderWo(){
             <button class="chk${set.done?' on':''}" onclick="chkSet('${ex.name}',${ei},${si})">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
             </button>
+            <button onclick="delSet('${ex.name}',${si})" style="width:20px;height:20px;border-radius:50%;border:none;background:rgba(200,16,46,.15);color:var(--rs);font-size:11px;font-weight:900;cursor:pointer;flex-shrink:0">✕</button>
           </div>`;
         }).join('')}
       </div>
@@ -1237,6 +1239,7 @@ save();
 renderToday();
 renderProg();
 setTimeout(()=>{const sp=document.getElementById('spl');if(sp){sp.classList.add('out');setTimeout(()=>sp.remove(),500);}},1600);
+
 
 
 </script>
