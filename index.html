@@ -400,6 +400,28 @@ body{
   border-top:1px solid #272727;
   display:flex;z-index:10;
 }
+
+/* ── FULL SCREEN LAYOUT (Safari + PWA + Android) ── */
+html,body{width:100%;height:100%;overflow:hidden}
+body{position:fixed;top:0;left:0;right:0;bottom:0}
+.screens{
+  position:fixed !important;
+  top:0 !important;
+  left:0 !important;
+  right:0 !important;
+  bottom:calc(54px + env(safe-area-inset-bottom,0px)) !important;
+  overflow:hidden !important;
+}
+.bnav{
+  position:fixed !important;
+  bottom:0 !important;
+  left:0 !important;
+  right:0 !important;
+  height:calc(54px + env(safe-area-inset-bottom,0px)) !important;
+  padding-bottom:env(safe-area-inset-bottom,0px) !important;
+}
+.rest-ov{position:fixed !important;inset:0 !important;z-index:1000 !important}
+.sh-bg{position:fixed !important;inset:0 !important}
 </style>
 </head>
 <body>
@@ -607,6 +629,7 @@ body{
 
 
 <script>
+
 
 
 
@@ -1288,35 +1311,59 @@ document.addEventListener('visibilitychange', function(){
   if(document.visibilityState==='visible' && S.woStart) reqWakeLock();
 });
 
-// ── AUDIO BEEPS ──
-var audioCtx = null;
-function getAudioCtx(){
-  if(!audioCtx) try{ audioCtx=new(window.AudioContext||window.webkitAudioContext)(); }catch(e){}
-  if(audioCtx && audioCtx.state==='suspended') audioCtx.resume().catch(function(){});
-  return audioCtx;
-}
-// Unlock audio on first tap anywhere
-document.addEventListener('touchstart', function unlockAudio(){
-  getAudioCtx();
-  document.removeEventListener('touchstart', unlockAudio);
-}, {once:true, passive:true});
-function playBeep(freq, dur, vol){
+// ── AUDIO — using HTMLAudioElement (works without user gesture on iOS) ──
+var _audioUnlocked = false;
+var _audioCtx = null;
+
+function unlockAudio(){
+  if(_audioUnlocked) return;
+  _audioUnlocked = true;
+  // Create and immediately suspend a context to unlock
   try{
-    var ctx=getAudioCtx(); if(!ctx) return;
-    var osc=ctx.createOscillator();
-    var gain=ctx.createGain();
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.frequency.value=freq; osc.type='sine';
-    gain.gain.setValueAtTime(vol||0.3, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+dur);
-    osc.start(ctx.currentTime); osc.stop(ctx.currentTime+dur);
+    _audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    // Play a silent buffer to unlock
+    var buf = _audioCtx.createBuffer(1,1,22050);
+    var src = _audioCtx.createBufferSource();
+    src.buffer = buf;
+    src.connect(_audioCtx.destination);
+    src.start(0);
   }catch(e){}
 }
+
+// Unlock on ANY user interaction
+document.addEventListener('touchstart', unlockAudio, {once:true, passive:true});
+document.addEventListener('touchend', unlockAudio, {once:true, passive:true});
+
+function playTone(freq, startTime, dur, vol){
+  if(!_audioCtx) return;
+  try{
+    if(_audioCtx.state==='suspended') _audioCtx.resume();
+    var osc = _audioCtx.createOscillator();
+    var gain = _audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(_audioCtx.destination);
+    osc.frequency.value = freq;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(vol||0.4, startTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, startTime + dur);
+    osc.start(startTime);
+    osc.stop(startTime + dur);
+  }catch(e){}
+}
+
 function playDone(){
-  playBeep(440,0.15,0.4);
-  setTimeout(function(){playBeep(550,0.15,0.4);},180);
-  setTimeout(function(){playBeep(660,0.25,0.5);},360);
-  try{navigator.vibrate&&navigator.vibrate([100,50,100,50,200]);}catch(e){}
+  // Schedule 3 beeps using AudioContext time (works in background)
+  if(_audioCtx){
+    try{
+      if(_audioCtx.state==='suspended') _audioCtx.resume();
+      var now = _audioCtx.currentTime;
+      playTone(440, now,       0.15, 0.5);
+      playTone(550, now+0.2,   0.15, 0.5);
+      playTone(660, now+0.4,   0.25, 0.6);
+    }catch(e){}
+  }
+  // Vibration as backup
+  try{ navigator.vibrate && navigator.vibrate([150,80,150,80,300]); }catch(e){}
 }
 
 load();
@@ -1325,6 +1372,7 @@ save();
 renderToday();
 renderProg();
 setTimeout(()=>{const sp=document.getElementById('spl');if(sp){sp.classList.add('out');setTimeout(()=>sp.remove(),500);}},1600);
+
 
 
 
