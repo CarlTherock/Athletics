@@ -797,21 +797,91 @@ function openPlate(wStr, exName){
 }
 
 // REST
+// ── WAKE LOCK — keeps screen on during rest ──
+let wakeLock=null;
+async function requestWakeLock(){
+  try{
+    if('wakeLock' in navigator){
+      wakeLock=await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release',()=>{wakeLock=null;});
+    }
+  }catch(e){/* not supported or denied — silent fail */}
+}
+async function releaseWakeLock(){
+  try{if(wakeLock){await wakeLock.release();wakeLock=null;}}catch(e){}
+}
+// Re-acquire on visibility change (iOS releases it when screen dims)
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'&&S.rRem>0)requestWakeLock();
+});
+
+// ── AUDIO BEEP — no audio file needed, Web Audio API ──
+let audioCtx=null;
+function getAudioCtx(){
+  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
+}
+function playBeep(freq=880,dur=0.12,vol=0.7){
+  try{
+    const ctx=getAudioCtx();
+    const osc=ctx.createOscillator();
+    const gain=ctx.createGain();
+    osc.connect(gain);gain.connect(ctx.destination);
+    osc.frequency.value=freq;
+    osc.type='sine';
+    gain.gain.setValueAtTime(vol,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime+dur);
+  }catch(e){}
+}
+function playDone(){
+  // 3-beep pattern — classic gym timer sound
+  playBeep(660,0.1,0.6);
+  setTimeout(()=>playBeep(660,0.1,0.6),150);
+  setTimeout(()=>playBeep(880,0.25,0.8),300);
+}
+function playTick(){
+  playBeep(440,0.04,0.2);
+}
+// Unlock audio on first user interaction (required by browsers)
+document.addEventListener('touchstart',()=>{try{getAudioCtx().resume();}catch(e){}},{once:false});
+document.addEventListener('click',()=>{try{getAudioCtx().resume();}catch(e){}},{once:false});
+
+// ── VIBRATION ──
+function vibrate(pattern){
+  try{if(navigator.vibrate)navigator.vibrate(pattern);}catch(e){}
+}
+
 function startRest(sec,type,next){
   S.rRem=sec;S.rTotal=sec;
   document.getElementById('restT').textContent=sec;
   document.getElementById('restTypeLbl').textContent=type;
   document.getElementById('restNext').textContent=next||'Prochaine série';
   document.getElementById('restOv').classList.add('on');
+  requestWakeLock(); // Keep screen on
+  vibrate([100]); // Short buzz when rest starts
   if(S.restInt)clearInterval(S.restInt);
   S.restInt=setInterval(()=>{
     S.rRem--;
     const t=document.getElementById('restT');if(t)t.textContent=S.rRem;
     const arc=document.getElementById('restArc');if(arc)arc.style.strokeDashoffset=547*(1-S.rRem/S.rTotal);
-    if(S.rRem<=0){clearInterval(S.restInt);document.getElementById('restOv').classList.remove('on');}
+    // Tick sound for last 3 seconds
+    if(S.rRem<=3&&S.rRem>0) playTick();
+    if(S.rRem<=0){
+      clearInterval(S.restInt);
+      document.getElementById('restOv').classList.remove('on');
+      playDone();           // 3-beep when done
+      vibrate([200,100,200,100,400]); // Buzz buzz buzz
+      releaseWakeLock();    // Allow screen to sleep again
+    }
   },1000);
 }
-function skipRest(){if(S.restInt)clearInterval(S.restInt);document.getElementById('restOv').classList.remove('on');}
+function skipRest(){
+  if(S.restInt)clearInterval(S.restInt);
+  document.getElementById('restOv').classList.remove('on');
+  releaseWakeLock();
+}
 
 // NAV
 function go(name){
