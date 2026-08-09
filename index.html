@@ -574,6 +574,7 @@ body{
 
 <script>
 
+
 // ════════════════════════════════════════════════════════════
 // PROGRAMME DATA
 // SEMAINE : Dim=J1, Lun=J2, Mar=J3, Mer=J4, Jeu=J5, Ven=REPOS, Sam=REPOS
@@ -791,6 +792,12 @@ function startRest(sec,type,next){
     if(arc)arc.style.strokeDashoffset=547*(1-S.rRem/S.rTotal);
     if(S.rRem<=0){clearInterval(S.restInt);document.getElementById('restOv').classList.remove('on');}
   },1000);
+}
+function addRestTime(sec){
+  if(!S.restEndTs) return;
+  S.restEndTs += sec*1000;
+  S.rTotal = Math.max(5, S.rTotal + sec);
+  save();
 }
 function skipRest(){if(S.restInt)clearInterval(S.restInt);document.getElementById('restOv').classList.remove('on');}
 
@@ -1065,6 +1072,11 @@ function renderWo(){
 
 function cycleT(n,si){const s=S.sets[n]?.[si];if(!s)return;s.type={working:'warmup',warmup:'drop',drop:'working'}[s.type];save();renderWo();}
 function updS(n,si,f,v){const s=S.sets[n]?.[si];if(!s)return;s[f]=f==='w'?parseFloat(v)||0:parseInt(v)||0;save();}
+function delSet(name, si){
+  if(!S.sets[name]) return;
+  S.sets[name].splice(si, 1);
+  save(); renderWo();
+}
 function addSet(n){if(!S.sets[n])return;const l=S.sets[n].slice(-1)[0];S.sets[n].push({w:l?.w||0,r:l?.r||0,done:false,type:'working'});save();renderWo();}
 
 function chkSet(exName,ei,si){
@@ -1225,6 +1237,7 @@ save();
 renderToday();
 renderProg();
 setTimeout(()=>{const sp=document.getElementById('spl');if(sp){sp.classList.add('out');setTimeout(()=>sp.remove(),500);}},1600);
+
 
 </script>
 </body>
