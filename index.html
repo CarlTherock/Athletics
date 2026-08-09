@@ -376,7 +376,7 @@ body{
 <!-- REST OVERLAY -->
 <div class="rest-ov" id="restOv" onclick="if(event.target===this){showRestBubble()}">
   <div class="rest-type-lbl" id="restTypeLbl">REPOS COMPOSÉ</div>
-  <div class="rest-ring">
+  <div class="rest-ring" onclick="openRestEdit(event)">
     <svg viewBox="0 0 190 190" fill="none">
       <circle cx="95" cy="95" r="87" stroke="#1C1C1C" stroke-width="8"/>
       <circle id="restArc" cx="95" cy="95" r="87" stroke="#C8102E" stroke-width="8"
@@ -384,14 +384,36 @@ body{
         transform="rotate(-90 95 95)" style="transition:stroke-dashoffset 1s linear"/>
     </svg>
     <div class="rest-inner">
-      <div class="rest-t" id="restT">120</div>
-      <div class="rest-lbl">repos</div>
+      <!-- Tap the time to edit -->
+      <div id="restDisplayWrap" style="display:flex;flex-direction:column;align-items:center;cursor:pointer">
+        <div class="rest-t" id="restT" style="text-shadow:0 0 20px rgba(200,16,46,.4)">120</div>
+        <div class="rest-lbl">repos · ✏️</div>
+      </div>
+      <!-- Edit mode (hidden by default) -->
+      <div id="restEditWrap" style="display:none;flex-direction:column;align-items:center;gap:4px">
+        <div style="font-size:10px;font-weight:800;letter-spacing:.12em;color:var(--rs);text-transform:uppercase;margin-bottom:4px">MODIFIER (sec)</div>
+        <input id="restEditInp" type="number" inputmode="numeric"
+          style="width:110px;font-size:38px;font-weight:900;text-align:center;background:rgba(255,255,255,.08);border:2px solid var(--red);border-radius:var(--r);color:#fff;font-family:inherit;outline:none;padding:6px 8px"
+          onfocus="this.select()"
+          onkeydown="if(event.key==='Enter')confirmRestEdit()">
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <button onclick="setRestPreset(60)" style="padding:5px 10px;border-radius:20px;border:1px solid var(--b);background:var(--bg3);color:var(--t2);font-size:11px;font-weight:700;cursor:pointer">1:00</button>
+          <button onclick="setRestPreset(90)" style="padding:5px 10px;border-radius:20px;border:1px solid var(--b);background:var(--bg3);color:var(--t2);font-size:11px;font-weight:700;cursor:pointer">1:30</button>
+          <button onclick="setRestPreset(120)" style="padding:5px 10px;border-radius:20px;border:1px solid var(--b);background:var(--bg3);color:var(--t2);font-size:11px;font-weight:700;cursor:pointer">2:00</button>
+          <button onclick="setRestPreset(180)" style="padding:5px 10px;border-radius:20px;border:1px solid var(--b);background:var(--bg3);color:var(--t2);font-size:11px;font-weight:700;cursor:pointer">3:00</button>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button onclick="confirmRestEdit()" style="padding:7px 20px;border-radius:20px;border:none;background:var(--red);color:#fff;font-size:13px;font-weight:800;cursor:pointer">✓ OK</button>
+          <button onclick="cancelRestEdit()" style="padding:7px 16px;border-radius:20px;border:1px solid var(--b);background:var(--bg3);color:var(--t2);font-size:13px;font-weight:700;cursor:pointer">Annuler</button>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="rest-next" id="restNext">Prochaine série</div>
-  <div style="display:flex;gap:10px;margin-top:4px">
+  <div class="rest-next" id="restNext" style="transition:opacity .2s">Prochaine série</div>
+  <div style="display:flex;gap:10px;margin-top:4px" id="restBtns">
     <button class="btn btn-ol btn-md" onclick="skipRest()" style="min-width:120px">Passer →</button>
     <button class="btn btn-ghost btn-md" onclick="addRestTime(30)" style="min-width:80px">+30s</button>
+    <button class="btn btn-ghost btn-md" onclick="addRestTime(-30)" style="min-width:80px">-30s</button>
   </div>
 </div>
 
@@ -1001,8 +1023,46 @@ function showRestBubble(){
 function addRestTime(sec){
   if(!S.restEndTs) return;
   S.restEndTs += sec*1000;
-  S.rTotal += sec;
+  S.rTotal = Math.max(1, S.rTotal + sec);
   save();
+}
+
+function openRestEdit(e){
+  e.stopPropagation();
+  // Show edit mode
+  const rem=Math.max(0,Math.round((S.restEndTs-Date.now())/1000));
+  document.getElementById('restDisplayWrap').style.display='none';
+  document.getElementById('restEditWrap').style.display='flex';
+  document.getElementById('restNext').style.opacity='0';
+  document.getElementById('restBtns').style.opacity='0';
+  const inp=document.getElementById('restEditInp');
+  inp.value=rem;
+  setTimeout(()=>{inp.focus();inp.select();},50);
+}
+
+function cancelRestEdit(){
+  document.getElementById('restDisplayWrap').style.display='flex';
+  document.getElementById('restEditWrap').style.display='none';
+  document.getElementById('restNext').style.opacity='1';
+  document.getElementById('restBtns').style.opacity='1';
+}
+
+function setRestPreset(sec){
+  document.getElementById('restEditInp').value=sec;
+  confirmRestEdit();
+}
+
+function confirmRestEdit(){
+  const val=parseInt(document.getElementById('restEditInp').value)||0;
+  if(val<=0){cancelRestEdit();return;}
+  // Reset timer to new value
+  S.restEndTs=Date.now()+val*1000;
+  S.rTotal=val;
+  save();
+  cancelRestEdit();
+  // Force immediate UI update
+  const t=document.getElementById('restT');if(t)t.textContent=val;
+  const arc=document.getElementById('restArc');if(arc)arc.style.strokeDashoffset=0;
 }
 function skipRest(){
   if(S.restInt) clearInterval(S.restInt);
