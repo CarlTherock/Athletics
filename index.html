@@ -204,12 +204,13 @@ body{
 .chg-btn:active{border-color:var(--red)}
 
 /* Day mini cards */
-.dcard{margin:0 12px 8px;border-radius:var(--r);background:var(--bg2);border:1px solid var(--b);cursor:pointer;transition:all .15s;overflow:hidden}
-.dcard:active{transform:scale(.97);border-color:var(--red)}
-.dcard-h{display:flex;align-items:center;gap:11px;padding:12px 13px 9px}
-.dnum{width:40px;height:40px;border-radius:9px;background:var(--red);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0}
-.dnum-j{font-size:7px;font-weight:800;color:rgba(255,255,255,.6);text-transform:uppercase}
-.dnum-n{font-size:20px;font-weight:900;color:#fff;line-height:1}
+.dcard{margin:0 12px 8px;border-radius:var(--r);background:var(--bg2);border:1px solid var(--b);transition:box-shadow .15s,opacity .15s;overflow:visible;touch-action:pan-y}
+.dcard-h{display:flex;align-items:center;gap:11px;padding:12px 13px 9px;cursor:pointer}
+.dcard-dragging{box-shadow:0 10px 24px rgba(0,0,0,.5);z-index:50;position:relative;opacity:.96;background:var(--bg3);touch-action:none}
+.dcard-dragging .dcard-h{cursor:grabbing}
+.dnum-img{width:40px;height:40px;border-radius:9px;overflow:hidden;flex-shrink:0;background:var(--bg3)}
+.dnum-img img{width:100%;height:100%;object-fit:cover;display:block}
+.dcard-grip{flex-shrink:0;color:var(--t4);display:flex;align-items:center;padding:6px 2px 6px 6px;touch-action:none}
 .dcard-info{flex:1}
 .dcard-name{font-size:14px;font-weight:800}
 .dcard-sub{font-size:10px;color:var(--t3);margin-top:2px}
@@ -839,7 +840,7 @@ const MUSCLES=[
 // ════════════════════════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════════════════════════
-let S={curDay:1,curWeek:1,ovDay:null,woStart:null,woInt:null,restInt:null,rRem:0,rTotal:0,sets:{},sessions:[],photos:[],hist:{}};
+let S={curDay:1,curWeek:1,ovDay:null,woStart:null,woInt:null,restInt:null,rRem:0,rTotal:0,sets:{},sessions:[],photos:[],hist:{},dayOrder:{}};
 const KEY="ctr300v4";
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function load(){try{const d=localStorage.getItem(KEY);if(d){const p=JSON.parse(d);Object.assign(S,p);}}catch(e){}}
@@ -978,6 +979,13 @@ function renderToday(){
   const actId=activeDay();
   const day=dayObj(actId);
   const isRest=(WD2DAY[wd]===null)&&!S.ovDay;
+  if(S.dayOrder&&S.dayOrder[actId]){
+    const ord=S.dayOrder[actId];
+    day.exercises.sort((a,b)=>{
+      const ia=ord.indexOf(a.name),ib=ord.indexOf(b.name);
+      return (ia===-1?999:ia)-(ib===-1?999:ib);
+    });
+  }
 
   document.getElementById('todayLbl').textContent=now.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});
   const bpill=document.getElementById('todayBloc');
@@ -1027,17 +1035,19 @@ function renderToday(){
   } else {
     tc.innerHTML=day.exercises.map((ex,i)=>{
       const w=getW(ex,b);
-      return `<div class="dcard" onclick="openDaySh(${actId})">
-        <div class="dcard-h">
-          <div class="dnum"><div class="dnum-j">J${actId}</div><div class="dnum-n">${i+1}</div></div>
+      const img=getExerciseImage(ex.name);
+      return `<div class="dcard" data-name="${ex.name.replace(/"/g,'&quot;')}">
+        <div class="dcard-h" onclick="if(!window.__dcardDragged__)openDaySh(${actId})">
+          <div class="dnum-img"><img src="${img}" loading="lazy" onerror="this.style.display='none'"></div>
           <div class="dcard-info">
             <div class="dcard-name">${ex.new?'★ ':''}${ex.name}</div>
             <div class="dcard-sub">${ex.s} × ${ex.r} · <span style="color:var(--rs);font-weight:700">${w}</span></div>
           </div>
-          ${ex.new?'<span class="pill pg" style="font-size:9px;padding:2px 7px">★ NOUVEAU</span>':''}
+          <div class="dcard-grip"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="8" cy="6" r="1.8"/><circle cx="16" cy="6" r="1.8"/><circle cx="8" cy="12" r="1.8"/><circle cx="16" cy="12" r="1.8"/><circle cx="8" cy="18" r="1.8"/><circle cx="16" cy="18" r="1.8"/></svg></div>
         </div>
       </div>`;
     }).join('');
+    bindDayReorder(actId);
     const sb=document.getElementById('startBtn');
     sb.textContent='Commencer l\'entraînement';sb.onclick=startWo;sb.style.opacity='1';
   }
@@ -2438,6 +2448,77 @@ const PROG_IMG_MAP = {
   "Incline Bench Press": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Incline_Bench_Press_-_Medium_Grip/0.jpg",
   "Rear Delt Fly câble": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Cable_Rear_Delt_Fly/0.jpg",
 };
+
+function bindDayReorder(dayId){
+  const container=document.getElementById('todayCards');
+  const cards=Array.from(container.querySelectorAll('.dcard'));
+  cards.forEach(card=>{
+    let timer=null,sx=0,sy=0,pid=null,dragging=false;
+
+    function preMove(ev){
+      if(Math.abs(ev.clientX-sx)>10||Math.abs(ev.clientY-sy)>10) cancelPress();
+    }
+    function cancelPress(){
+      clearTimeout(timer);
+      window.removeEventListener('pointermove',preMove);
+      window.removeEventListener('pointerup',cancelPress);
+    }
+    function onMove(ev){
+      ev.preventDefault();
+      const dy=ev.clientY-sy;
+      card.style.transform=`translateY(${dy}px)`;
+      const cRect=card.getBoundingClientRect();
+      const next=card.nextElementSibling;
+      const prev=card.previousElementSibling;
+      if(next&&next.classList.contains('dcard')){
+        const nRect=next.getBoundingClientRect();
+        if(cRect.top+cRect.height/2>nRect.top+nRect.height/2){
+          container.insertBefore(next,card);
+          sy=ev.clientY;card.style.transform='translateY(0px)';
+        }
+      }
+      if(prev&&prev.classList.contains('dcard')){
+        const pRect=prev.getBoundingClientRect();
+        if(cRect.top+cRect.height/2<pRect.top+pRect.height/2){
+          container.insertBefore(card,prev);
+          sy=ev.clientY;card.style.transform='translateY(0px)';
+        }
+      }
+    }
+    function onUp(){
+      dragging=false;
+      window.__dcardDragged__=true;
+      setTimeout(()=>{window.__dcardDragged__=false;},250);
+      try{card.releasePointerCapture(pid);}catch(e){}
+      card.classList.remove('dcard-dragging');
+      card.style.transform='';
+      window.removeEventListener('pointermove',onMove);
+      window.removeEventListener('pointerup',onUp);
+      const names=Array.from(container.querySelectorAll('.dcard')).map(c=>c.dataset.name);
+      const day=dayObj(dayId);
+      day.exercises.sort((a,b)=>names.indexOf(a.name)-names.indexOf(b.name));
+      S.dayOrder=S.dayOrder||{};
+      S.dayOrder[dayId]=names;
+      save();
+      if(navigator.vibrate) navigator.vibrate(6);
+    }
+    function startDrag(ev){
+      dragging=true;pid=ev.pointerId;
+      try{card.setPointerCapture(pid);}catch(e){}
+      card.classList.add('dcard-dragging');
+      if(navigator.vibrate) navigator.vibrate(10);
+      window.addEventListener('pointermove',onMove,{passive:false});
+      window.addEventListener('pointerup',onUp,{once:true});
+    }
+    card.addEventListener('pointerdown',(ev)=>{
+      if(ev.pointerType==='mouse'&&ev.button!==0) return;
+      sx=ev.clientX;sy=ev.clientY;
+      window.addEventListener('pointermove',preMove);
+      window.addEventListener('pointerup',cancelPress,{once:true});
+      timer=setTimeout(()=>{cancelPress();startDrag(ev);},420);
+    });
+  });
+}
 
 function getExerciseImage(name){
   // 1. Check explicit program-exercise mapping (verified photos for our exact program names)
