@@ -2934,20 +2934,18 @@ function processImportedRows(rows){
 
 // ════════════════════════════════════════════════════════
 // INIT
-load();S.curWeek=calcWeek();
-if(S.profile?.accent) applyAccent(S.profile.accent);
+load();
+S.curWeek=calcWeek();
 save();
-renderToday();renderProg();
-
-// Always dismiss splash after 1.6s, then show onboarding or app
-setTimeout(()=>{
-  const sp=document.getElementById('spl');
-  if(sp){ sp.classList.add('out'); setTimeout(()=>{ sp.remove(); }, 500); }
-  // Show onboarding only if no profile yet
-  if(!S.profile){
-    setTimeout(()=>showOnboarding(), 600);
-  } else {
-    updateBranding();
+renderToday();
+renderProg();
+// ALWAYS dismiss splash after 1.6s — no conditions
+setTimeout(function(){
+  var sp=document.getElementById('spl');
+  if(sp){
+    sp.style.opacity='0';
+    sp.style.transition='opacity 0.5s';
+    setTimeout(function(){ if(sp.parentNode) sp.parentNode.removeChild(sp); }, 500);
   }
 }, 1600);
 // Resync rest timer if it was running before page reload
