@@ -23,12 +23,13 @@
 }
 
 /* LAYOUT — mobile + PWA + Android */
-html{height:100%}
+html{height:100%;background:#0A0A0A}
 body{
   font-family:-apple-system,'SF Pro Text','Helvetica Neue',Arial,sans-serif;
   color:#fff;background:#0A0A0A;
   position:fixed;
   top:0;left:0;right:0;bottom:0;
+  margin:0;
   overflow:hidden;
 }
 .screens{
@@ -374,6 +375,26 @@ body{
 #spl{position:fixed;inset:0;z-index:9999;background:#0A0A0A;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;animation:splashGo 2.4s ease forwards}
 @keyframes splashGo{0%,65%{opacity:1;pointer-events:auto}90%,100%{opacity:0;pointer-events:none;visibility:hidden}}
 
+
+/* Safe area protection — standalone PWA mode */
+body::before{
+  content:'';
+  position:fixed;
+  top:0;left:0;right:0;
+  height:env(safe-area-inset-top,0px);
+  background:#0A0A0A;
+  z-index:99999;
+  pointer-events:none;
+}
+body::after{
+  content:'';
+  position:fixed;
+  bottom:0;left:0;right:0;
+  height:env(safe-area-inset-bottom,0px);
+  background:#0A0A0A;
+  z-index:99999;
+  pointer-events:none;
+}
 </style>
 </head>
 <body>
