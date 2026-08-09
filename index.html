@@ -456,8 +456,16 @@ body{
   </div>
   <span class="lbl">SÉANCE DU JOUR</span>
   <div id="todayCards"></div>
-  <div style="padding:4px 12px 12px">
-    <button class="btn btn-red btn-lg" id="startBtn" onclick="startWo()">Commencer l'entraînement</button>
+  <!-- Active workout timer banner (visible when workout running) -->
+  <div id="activeBanner" style="display:none;margin:0 12px 8px;background:rgba(200,16,46,.12);border:1px solid rgba(200,16,46,.4);border-radius:var(--r);padding:12px 14px;display:none;align-items:center;justify-content:space-between">
+    <div>
+      <div style="font-size:10px;font-weight:800;letter-spacing:.12em;color:var(--rs);text-transform:uppercase;margin-bottom:3px">ENTRAÎNEMENT EN COURS</div>
+      <div style="font-size:22px;font-weight:900;font-variant-numeric:tabular-nums" id="activeBannerTimer">0:00</div>
+    </div>
+    <button class="btn btn-red btn-md" onclick="go('wo')" style="border-radius:var(--r);padding:0 16px">Reprendre →</button>
+  </div>
+  <div style="padding:8px 12px 8px" id="startBtnWrap">
+    <button class="btn btn-red btn-lg" id="startBtn" onclick="startWo()">▶ Commencer l'entraînement</button>
   </div>
   <span class="lbl">SEMAINE EN COURS</span>
   <div style="background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);margin:0 12px 12px;overflow:hidden" id="weekList"></div>
@@ -847,6 +855,8 @@ function renderToday(){
 
   // Week summary
   const tc2={pull:'#3B82F6',legs:'#C8102E',push:'#8B5CF6',full:'#F97316'};
+  // Show/hide active workout banner
+  showActiveBanner(!!S.woStart);
   document.getElementById('weekList').innerHTML=
     `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 13px;background:var(--bg3)">
       <div style="font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--rs)">SEMAINE ${S.curWeek}/17</div>
@@ -866,8 +876,17 @@ function renderToday(){
 function selectWd(wd){
   S.ovDay=null;
   const d=WD2DAY[wd];
-  if(d!==null&&d!==undefined){S.curDay=d;}
-  save();renderToday();
+  if(d!==null&&d!==undefined){
+    S.curDay=d;
+    save();
+    renderToday();
+    // Show day detail sheet so user can see the exercises for that date
+    openDaySh(d);
+  } else {
+    // Rest day tapped — just update view
+    save();
+    renderToday();
+  }
 }
 
 // Change day
@@ -898,7 +917,28 @@ function startWo(){
   S.woStart=Date.now();S.sets={};
   go('wo');renderWo();
   if(S.woInt)clearInterval(S.woInt);
-  S.woInt=setInterval(()=>{const el=Math.floor((Date.now()-S.woStart)/1000);const t=document.getElementById('woTimer');if(t)t.textContent=fmt(el);},1000);
+  // Timer for workout screen
+  S.woInt=setInterval(()=>{
+    const el=Math.floor((Date.now()-S.woStart)/1000);
+    const t=document.getElementById('woTimer');if(t)t.textContent=fmt(el);
+    // Also update active banner on today screen
+    const bt=document.getElementById('activeBannerTimer');if(bt)bt.textContent=fmt(el);
+  },1000);
+  // Show active banner if user goes back to today
+  showActiveBanner(true);
+}
+
+function showActiveBanner(on){
+  const b=document.getElementById('activeBanner');
+  const sw=document.getElementById('startBtnWrap');
+  if(!b||!sw)return;
+  if(on&&S.woStart){
+    b.style.display='flex';
+    sw.style.display='none';
+  } else {
+    b.style.display='none';
+    sw.style.display='block';
+  }
 }
 
 function renderWo(){
@@ -1034,7 +1074,10 @@ function finishWo(){
   if(S.woInt)clearInterval(S.woInt);
   const actId=activeDay();const day=dayObj(actId);
   S.sessions.push({date:tod(),dayId:actId,dayName:day.name,bloc:bloc(),week:S.curWeek,duration:Math.floor((Date.now()-S.woStart)/60000),exercises:Object.entries(S.sets).map(([n,sets])=>({name:n,sets}))});
-  S.sets={};S.ovDay=null;save();go('today');
+  S.sets={};S.ovDay=null;S.woStart=null;
+  save();
+  showActiveBanner(false);
+  go('today');
 }
 
 // History sheet
