@@ -366,6 +366,13 @@ body{
 .sh-bg.on{display:flex}
 .rest-ov{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.97);display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px}
 .rest-ov.on{display:flex}
+
+/* Layout fixes */
+.screens{bottom:60px !important}
+@supports(padding-bottom: env(safe-area-inset-bottom)){
+  .screens{bottom:calc(60px + env(safe-area-inset-bottom,0px)) !important}
+  .bnav{height:calc(60px + env(safe-area-inset-bottom,0px)) !important;padding-bottom:env(safe-area-inset-bottom,0px) !important}
+}
 </style>
 </head>
 <body>
@@ -573,6 +580,7 @@ body{
 
 
 <script>
+
 
 
 
@@ -802,6 +810,7 @@ function addRestTime(sec){
   save();
 }
 function skipRest(){
+  playDone();
   playDone();if(S.restInt)clearInterval(S.restInt);document.getElementById('restOv').classList.remove('on');}
 
 // ════════════════════════════════════════════════════════════
@@ -1237,12 +1246,52 @@ function importData(){const j=prompt('Colle le JSON exporté :');if(!j)return;tr
 // ════════════════════════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════════════════════════
+// ── WAKE LOCK ──
+var wakeLock = null;
+function reqWakeLock(){
+  if('wakeLock' in navigator){
+    navigator.wakeLock.request('screen').then(function(wl){ wakeLock=wl; }).catch(function(){});
+  }
+}
+function relWakeLock(){
+  if(wakeLock){ wakeLock.release(); wakeLock=null; }
+}
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState==='visible' && S.woStart) reqWakeLock();
+});
+
+// ── AUDIO BEEPS ──
+var audioCtx = null;
+function getAudioCtx(){
+  if(!audioCtx) try{ audioCtx=new(window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+  return audioCtx;
+}
+function playBeep(freq, dur, vol){
+  try{
+    var ctx=getAudioCtx(); if(!ctx) return;
+    var osc=ctx.createOscillator();
+    var gain=ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value=freq; osc.type='sine';
+    gain.gain.setValueAtTime(vol||0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+dur);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime+dur);
+  }catch(e){}
+}
+function playDone(){
+  playBeep(440,0.15,0.4);
+  setTimeout(function(){playBeep(550,0.15,0.4);},180);
+  setTimeout(function(){playBeep(660,0.25,0.5);},360);
+  try{navigator.vibrate&&navigator.vibrate([100,50,100,50,200]);}catch(e){}
+}
+
 load();
 S.curWeek=calcWeek();
 save();
 renderToday();
 renderProg();
 setTimeout(()=>{const sp=document.getElementById('spl');if(sp){sp.classList.add('out');setTimeout(()=>sp.remove(),500);}},1600);
+
 
 
 
