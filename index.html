@@ -435,10 +435,21 @@ body{
     </div>
   </div>
   <div class="rest-next" id="restNext" style="transition:opacity .2s">Prochaine série</div>
-  <div style="display:flex;gap:10px;margin-top:4px" id="restBtns">
-    <button class="btn btn-ol btn-md" onclick="skipRest()" style="min-width:120px">Passer →</button>
-    <button class="btn btn-ghost btn-md" onclick="addRestTime(30)" style="min-width:80px">+30s</button>
-    <button class="btn btn-ghost btn-md" onclick="addRestTime(-30)" style="min-width:80px">-30s</button>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:4px" id="restBtns">
+    <!-- +/- 15s row -->
+    <div style="display:flex;align-items:center;gap:8px">
+      <button onclick="addRestTime(-15)" style="width:44px;height:44px;border-radius:50%;border:1.5px solid var(--b2);background:var(--bg3);color:var(--t2);font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s" ontouchstart="this.style.background='var(--bg4)'" ontouchend="this.style.background='var(--bg3)'">−</button>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div style="font-size:8px;font-weight:700;letter-spacing:.1em;color:var(--t3);text-transform:uppercase">15 sec</div>
+        <div style="display:flex;gap:6px">
+          <button onclick="addRestTime(-30)" style="padding:4px 10px;border-radius:20px;border:1px solid var(--b2);background:var(--bg3);color:var(--t3);font-size:10px;font-weight:700;cursor:pointer">−30s</button>
+          <button onclick="addRestTime(30)" style="padding:4px 10px;border-radius:20px;border:1px solid var(--b2);background:var(--bg3);color:var(--t3);font-size:10px;font-weight:700;cursor:pointer">+30s</button>
+        </div>
+      </div>
+      <button onclick="addRestTime(15)" style="width:44px;height:44px;border-radius:50%;border:1.5px solid var(--b2);background:var(--bg3);color:var(--t2);font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s" ontouchstart="this.style.background='var(--bg4)'" ontouchend="this.style.background='var(--bg3)'">+</button>
+    </div>
+    <!-- Skip button -->
+    <button class="btn btn-ol btn-md" onclick="skipRest()" style="width:160px">Passer →</button>
   </div>
 </div>
 
