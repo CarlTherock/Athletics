@@ -468,7 +468,10 @@ body::before {
           style="width:100%;background:var(--bg3);border:1px solid var(--b);border-radius:20px;padding:9px 14px 9px 36px;color:var(--t);font-size:14px;outline:none">
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:6px;overflow-x:auto;overflow-y:hidden;padding:0 20px 12px;min-height:32px;scrollbar-width:none" id="exLibTabs"></div>
+    <div style="position:relative">
+      <div style="display:flex;align-items:center;gap:9px;overflow-x:auto;overflow-y:hidden;padding:0 28px 12px 20px;min-height:32px;scrollbar-width:none" id="exLibTabs"></div>
+      <div style="position:absolute;top:0;right:0;width:28px;height:32px;background:linear-gradient(to right, transparent, #191919);pointer-events:none"></div>
+    </div>
     <div style="overflow-y:auto;flex:1;padding:0 14px 20px" id="exLibGrid"></div>
   </div>
 </div>
