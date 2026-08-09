@@ -456,6 +456,16 @@ body::before {
   </div>
 </div>
 
+<!-- EXERCISE LIBRARY SHEET (Remplacer) -->
+<div class="sh-bg" id="exLibSh" onclick="if(event.target===this)this.classList.remove('on')">
+  <div class="sh" style="max-height:88vh;display:flex;flex-direction:column">
+    <div class="sh-handle"></div>
+    <div class="sh-title">Remplacer l'exercice</div>
+    <div style="display:flex;gap:6px;overflow-x:auto;padding:0 20px 12px;scrollbar-width:none" id="exLibTabs"></div>
+    <div style="overflow-y:auto;flex:1;padding:0 14px 20px" id="exLibGrid"></div>
+  </div>
+</div>
+
 <!-- REST PRESET PICKER SHEET -->
 <div class="sh-bg" id="restPresetSh" onclick="if(event.target===this)this.classList.remove('on')">
   <div class="sh">
@@ -677,6 +687,9 @@ body::before {
 
 
 <script>
+
+
+
 
 
 
@@ -1111,7 +1124,9 @@ function renderWo(){
   const prevSess=S.sessions.filter(s=>s.dayId===actId).slice(-1)[0];
   let html='';
 
-  day.exercises.forEach((ex,ei)=>{
+  day.exercises.forEach((origEx,ei)=>{
+    var replName = S.exReplacements && S.exReplacements[activeDay()+'-'+ei];
+    var ex = replName ? Object.assign({}, origEx, {name: replName}) : origEx;
     const wStr=getW(ex,b);const wNum=parseFloat(wStr)||0;
     const restInfo=getRestLabel(ex,b);
     const isBar=!ex.bw&&!ex.rpe;
@@ -1141,6 +1156,9 @@ function renderWo(){
       <div class="ex-acts">
         <div class="ex-act" onclick="openHist('${ex.name}')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Historique
+        </div>
+        <div class="ex-act" onclick="openExLibrary('${ex.name}',${ei})">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>Remplacer
         </div>
         ${isBar?`<div class="ex-act" onclick="openPlate('${sets[0].w||wNum}','${ex.name}')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 5v14M18 5v14M4 9h4M16 9h4M4 15h4M16 15h4"/></svg>Plaques
@@ -1503,6 +1521,295 @@ function confirmRestPreset(){
   renderWo();
 }
 
+
+// ── EXERCISE LIBRARY (Remplacer feature) ──
+const EX_LIBRARY = {
+  "Poitrine": {
+    color: "#3B82F6",
+    exercises: [
+      {name:"Bench Press",equip:"Barre",icon:"barbell"},
+      {name:"Incline Bench Press",equip:"Barre",icon:"barbell"},
+      {name:"Decline Bench Press",equip:"Barre",icon:"barbell"},
+      {name:"Dumbbell Bench Press",equip:"Haltères",icon:"dumbbell"},
+      {name:"Incline Dumbbell Press",equip:"Haltères",icon:"dumbbell"},
+      {name:"Decline Dumbbell Press",equip:"Haltères",icon:"dumbbell"},
+      {name:"Cable Fly",equip:"Câble",icon:"cable"},
+      {name:"Low Cable Fly",equip:"Câble",icon:"cable"},
+      {name:"High Cable Fly",equip:"Câble",icon:"cable"},
+      {name:"Dumbbell Fly",equip:"Haltères",icon:"dumbbell"},
+      {name:"Pec Deck Machine",equip:"Machine",icon:"machine"},
+      {name:"Chest Press Machine",equip:"Machine",icon:"machine"},
+      {name:"Dips Lestés",equip:"Poids corps",icon:"bodyweight"},
+      {name:"Push-Up",equip:"Poids corps",icon:"bodyweight"},
+      {name:"Diamond Push-Up",equip:"Poids corps",icon:"bodyweight"},
+      {name:"Incline Push-Up",equip:"Poids corps",icon:"bodyweight"},
+      {name:"Smith Machine Bench Press",equip:"Smith",icon:"machine"},
+      {name:"Landmine Press",equip:"Barre",icon:"barbell"},
+      {name:"Svend Press",equip:"Disques",icon:"plate"},
+      {name:"Guillotine Press",equip:"Barre",icon:"barbell"},
+    ]
+  },
+  "Dos": {
+    color: "#F97316",
+    exercises: [
+      {name:"Pendlay Row",equip:"Barre",icon:"barbell"},
+      {name:"Barbell Row",equip:"Barre",icon:"barbell"},
+      {name:"Pull-Up Lesté",equip:"Poids corps",icon:"bodyweight"},
+      {name:"Pull-Up",equip:"Poids corps",icon:"bodyweight"},
+      {name:"Chin-Up",equip:"Poids corps",icon:"bodyweight"},
+      {name:"Lat Pulldown",equip:"Câble",icon:"cable"},
+      {name:"Close Grip Lat Pulldown",equip:"Câble",icon:"cable"},
+      {name:"Seated Cable Row",equip:"Câble",icon:"cable"},
+      {name:"Meadows Row",equip:"Barre",icon:"barbell"},
+      {name:"T-Bar Row",equip:"Barre",icon:"barbell"},
+      {name:"Single Arm Dumbbell Row",equip:"Haltère",icon:"dumbbell"},
+      {name:"Chest Supported Row",equip:"Haltères",icon:"dumbbell"},
+      {name:"Face Pull câble",equip:"Câble",icon:"cable"},
+      {name:"Straight Arm Pulldown",equip:"Câble",icon:"cable"},
+      {name:"Cable Pullover",equip:"Câble",icon:"cable"},
+      {name:"Deadlift Conventionnel",equip:"Barre",icon:"barbell"},
+      {name:"Sumo Deadlift",equip:"Barre",icon:"barbell"},
+      {name:"Romanian Deadlift",equip:"Barre",icon:"barbell"},
+      {name:"Rack Pull",equip:"Barre",icon:"barbell"},
+      {name:"Inverted Row",equip:"Poids corps",icon:"bodyweight"},
+      {name:"Machine Row",equip:"Machine",icon:"machine"},
+      {name:"Hyperextension",equip:"Poids corps",icon:"bodyweight"},
+      {name:"Good Morning",equip:"Barre",icon:"barbell"},
+    ]
+  },
+  "Épaules": {
+    color: "#EAB308",
+    exercises: [
+      {name:"Barbell OHP",equip:"Barre",icon:"barbell"},
+      {name:"Dumbbell Shoulder Press",equip:"Haltères",icon:"dumbbell"},
+      {name:"Arnold Press",equip:"Haltères",icon:"dumbbell"},
+      {name:"Seated Barbell Press",equip:"Barre",icon:"barbell"},
+      {name:"Push Press",equip:"Barre",icon:"barbell"},
+      {name:"Lateral Raise câble 1 bras",equip:"Câble",icon:"cable"},
+      {name:"Lateral Raise Dumbbell",equip:"Haltères",icon:"dumbbell"},
+      {name:"Cable Lateral Raise",equip:"Câble",icon:"cable"},
+      {name:"Front Raise",equip:"Haltères",icon:"dumbbell"},
+      {name:"Rear Delt Fly câble",equip:"Câble",icon:"cable"},
+      {name:"Rear Delt Fly Machine",equip:"Machine",icon:"machine"},
+      {name:"Bent-Over Reverse Fly",equip:"Haltères",icon:"dumbbell"},
+      {name:"Upright Row",equip:"Barre",icon:"barbell"},
+      {name:"Shrugs",equip:"Haltères",icon:"dumbbell"},
+      {name:"Barbell Shrugs",equip:"Barre",icon:"barbell"},
+      {name:"Machine Shoulder Press",equip:"Machine",icon:"machine"},
+      {name:"Cable Y-Raise",equip:"Câble",icon:"cable"},
+      {name:"Handstand Push-Up",equip:"Poids corps",icon:"bodyweight"},
+    ]
+  },
+  "Biceps": {
+    color: "#22C55E",
+    exercises: [
+      {name:"Cable Curl",equip:"Câble",icon:"cable"},
+      {name:"Barbell Curl",equip:"Barre",icon:"barbell"},
+      {name:"Dumbbell Curl",equip:"Haltères",icon:"dumbbell"},
+      {name:"Hammer Curl",equip:"Haltères",icon:"dumbbell"},
+      {name:"Incline Dumbbell Curl",equip:"Haltères",icon:"dumbbell"},
+      {name:"Preacher Curl",equip:"Barre EZ",icon:"ezbar"},
+      {name:"Concentration Curl",equip:"Haltère",icon:"dumbbell"},
+      {name:"EZ Bar Curl",equip:"Barre EZ",icon:"ezbar"},
+      {name:"Spider Curl",equip:"Barre EZ",icon:"ezbar"},
+      {name:"Cable Hammer Curl",equip:"Câble",icon:"cable"},
+      {name:"21s Curl",equip:"Barre",icon:"barbell"},
+      {name:"Reverse Curl",equip:"Barre",icon:"barbell"},
+      {name:"Machine Bicep Curl",equip:"Machine",icon:"machine"},
+      {name:"Drag Curl",equip:"Barre",icon:"barbell"},
+    ]
+  },
+  "Triceps": {
+    color: "#14B8A6",
+    exercises: [
+      {name:"Overhead Triceps Rope",equip:"Câble",icon:"cable"},
+      {name:"Tricep Pushdown",equip:"Câble",icon:"cable"},
+      {name:"Rope Pushdown",equip:"Câble",icon:"cable"},
+      {name:"Close Grip Bench Press",equip:"Barre",icon:"barbell"},
+      {name:"Skull Crusher",equip:"Barre EZ",icon:"ezbar"},
+      {name:"Overhead Dumbbell Extension",equip:"Haltère",icon:"dumbbell"},
+      {name:"Dips étroits",equip:"Poids corps",icon:"bodyweight"},
+      {name:"Tricep Kickback",equip:"Haltère",icon:"dumbbell"},
+      {name:"Diamond Push-Up Triceps",equip:"Poids corps",icon:"bodyweight"},
+      {name:"JM Press",equip:"Barre",icon:"barbell"},
+      {name:"Machine Tricep Extension",equip:"Machine",icon:"machine"},
+      {name:"Single Arm Overhead Extension",equip:"Haltère",icon:"dumbbell"},
+    ]
+  },
+  "Quadriceps": {
+    color: "#EF4444",
+    exercises: [
+      {name:"Back Squat",equip:"Barre",icon:"barbell"},
+      {name:"Front Squat",equip:"Barre",icon:"barbell"},
+      {name:"Goblet Squat",equip:"Haltère",icon:"dumbbell"},
+      {name:"Bulgarian Split Squat",equip:"Haltères",icon:"dumbbell"},
+      {name:"Leg Press",equip:"Machine",icon:"machine"},
+      {name:"Leg Extension",equip:"Machine",icon:"machine"},
+      {name:"Hack Squat",equip:"Machine",icon:"machine"},
+      {name:"Walking Lunge",equip:"Haltères",icon:"dumbbell"},
+      {name:"Reverse Lunge",equip:"Haltères",icon:"dumbbell"},
+      {name:"Step-Up",equip:"Haltères",icon:"dumbbell"},
+      {name:"Smith Machine Squat",equip:"Smith",icon:"machine"},
+      {name:"Sissy Squat",equip:"Poids corps",icon:"bodyweight"},
+      {name:"Zercher Squat",equip:"Barre",icon:"barbell"},
+      {name:"Box Squat",equip:"Barre",icon:"barbell"},
+    ]
+  },
+  "Ischio-jambiers": {
+    color: "#EC4899",
+    exercises: [
+      {name:"Romanian Deadlift IJ",equip:"Barre",icon:"barbell"},
+      {name:"Nordic Leg Curl",equip:"Poids corps",icon:"bodyweight"},
+      {name:"Leg Curl couché",equip:"Machine",icon:"machine"},
+      {name:"Seated Leg Curl",equip:"Machine",icon:"machine"},
+      {name:"Stiff Leg Deadlift",equip:"Barre",icon:"barbell"},
+      {name:"Single Leg Romanian Deadlift",equip:"Haltère",icon:"dumbbell"},
+      {name:"Glute Ham Raise",equip:"Poids corps",icon:"bodyweight"},
+      {name:"Cable Pull-Through",equip:"Câble",icon:"cable"},
+      {name:"Kettlebell Swing",equip:"Kettlebell",icon:"kettlebell"},
+    ]
+  },
+  "Fessiers": {
+    color: "#A855F7",
+    exercises: [
+      {name:"Barbell Hip Thrust",equip:"Barre",icon:"barbell"},
+      {name:"Glute Bridge",equip:"Poids corps",icon:"bodyweight"},
+      {name:"Cable Kickback",equip:"Câble",icon:"cable"},
+      {name:"Single Leg Hip Thrust",equip:"Poids corps",icon:"bodyweight"},
+      {name:"Sumo Squat",equip:"Haltère",icon:"dumbbell"},
+      {name:"Curtsy Lunge",equip:"Haltères",icon:"dumbbell"},
+      {name:"Hip Abduction Machine",equip:"Machine",icon:"machine"},
+      {name:"Banded Glute Bridge",equip:"Bande",icon:"band"},
+    ]
+  },
+  "Mollets": {
+    color: "#06B6D4",
+    exercises: [
+      {name:"Standing Calf Raise",equip:"Machine",icon:"machine"},
+      {name:"Seated Calf Raise",equip:"Machine",icon:"machine"},
+      {name:"Leg Press Calf Raise",equip:"Machine",icon:"machine"},
+      {name:"Donkey Calf Raise",equip:"Machine",icon:"machine"},
+      {name:"Single Leg Calf Raise",equip:"Poids corps",icon:"bodyweight"},
+      {name:"Smith Machine Calf Raise",equip:"Smith",icon:"machine"},
+    ]
+  },
+  "Abdominaux": {
+    color: "#84CC16",
+    exercises: [
+      {name:"Ab Wheel Rollout",equip:"Poids corps",icon:"bodyweight"},
+      {name:"Plank",equip:"Poids corps",icon:"bodyweight"},
+      {name:"Hanging Leg Raise",equip:"Poids corps",icon:"bodyweight"},
+      {name:"Cable Crunch",equip:"Câble",icon:"cable"},
+      {name:"Russian Twist",equip:"Poids corps",icon:"bodyweight"},
+      {name:"Sit-Up",equip:"Poids corps",icon:"bodyweight"},
+      {name:"Bicycle Crunch",equip:"Poids corps",icon:"bodyweight"},
+      {name:"Weighted Sit-Up",equip:"Disque",icon:"plate"},
+      {name:"Side Plank",equip:"Poids corps",icon:"bodyweight"},
+      {name:"V-Up",equip:"Poids corps",icon:"bodyweight"},
+      {name:"Dragon Flag",equip:"Poids corps",icon:"bodyweight"},
+      {name:"Pallof Press",equip:"Câble",icon:"cable"},
+    ]
+  },
+  "Full Body / Fonctionnel": {
+    color: "#6366F1",
+    exercises: [
+      {name:"Farmer Walk",equip:"Haltères",icon:"dumbbell"},
+      {name:"Clean and Press",equip:"Barre",icon:"barbell"},
+      {name:"Thruster",equip:"Barre",icon:"barbell"},
+      {name:"Turkish Get-Up",equip:"Kettlebell",icon:"kettlebell"},
+      {name:"Battle Ropes",equip:"Cordes",icon:"other"},
+      {name:"Box Jump",equip:"Poids corps",icon:"bodyweight"},
+      {name:"Burpee",equip:"Poids corps",icon:"bodyweight"},
+      {name:"Sled Push",equip:"Traîneau",icon:"other"},
+    ]
+  },
+};
+
+let exLibTargetName = null;
+let exLibTargetIdx = null;
+let exLibActiveTab = null;
+
+function svgForIcon(icon, color){
+  var paths = {
+    barbell: '<rect x="2" y="10" width="4" height="4" rx="1"/><rect x="18" y="10" width="4" height="4" rx="1"/><line x1="6" y1="12" x2="18" y2="12" stroke-width="3"/>',
+    dumbbell: '<rect x="1" y="9" width="4" height="6" rx="1"/><rect x="19" y="9" width="4" height="6" rx="1"/><line x1="6" y1="12" x2="18" y2="12" stroke-width="2"/>',
+    cable: '<circle cx="12" cy="4" r="2"/><line x1="12" y1="6" x2="12" y2="16"/><path d="M8 20h8"/><path d="M10 16l-2 4M14 16l2 4"/>',
+    machine: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 12h8M12 8v8"/>',
+    bodyweight: '<circle cx="12" cy="4" r="2.5"/><path d="M12 6.5v7M12 9l-5 3M12 9l5 3M12 13.5l-4 7M12 13.5l4 7"/>',
+    kettlebell: '<circle cx="12" cy="15" r="7"/><path d="M9 8a3 3 0 0 1 6 0v2H9V8z"/>',
+    ezbar: '<path d="M2 12c2-2 4 2 6 0s4-2 6 0 4 2 6 0" stroke-width="2"/><rect x="1" y="10.5" width="3" height="3" rx="1"/><rect x="20" y="10.5" width="3" height="3" rx="1"/>',
+    band: '<path d="M4 6c4 2 4 10 8 10s4-8 8-10" stroke-width="2"/>',
+    plate: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/>',
+    other: '<circle cx="12" cy="12" r="9"/>'
+  };
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="'+color+'" stroke-width="1.6" stroke-linecap="round">'+(paths[icon]||paths.other)+'</svg>';
+}
+
+function openExLibrary(exName, exIdx){
+  exLibTargetName = exName;
+  exLibTargetIdx = exIdx;
+  var muscles = Object.keys(EX_LIBRARY);
+  exLibActiveTab = muscles[0];
+  renderExLibTabs(muscles);
+  renderExLibGrid(exLibActiveTab);
+  document.getElementById('exLibSh').classList.add('on');
+}
+
+function renderExLibTabs(muscles){
+  var html = '';
+  muscles.forEach(function(m){
+    var active = (m === exLibActiveTab);
+    html += '<div onclick="switchExLibTab(\''+m.replace(/'/g,"\\'")+'\')" style="flex-shrink:0;padding:7px 14px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer;'
+      + (active ? 'background:var(--red);color:#fff;' : 'background:var(--bg3);color:var(--t2);border:1px solid var(--b);')
+      + '">' + m + '</div>';
+  });
+  document.getElementById('exLibTabs').innerHTML = html;
+}
+
+function switchExLibTab(muscle){
+  exLibActiveTab = muscle;
+  renderExLibTabs(Object.keys(EX_LIBRARY));
+  renderExLibGrid(muscle);
+}
+
+function renderExLibGrid(muscle){
+  var data = EX_LIBRARY[muscle];
+  var color = data.color;
+  var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-top:6px">';
+  data.exercises.forEach(function(ex){
+    var isCurrent = (ex.name === exLibTargetName);
+    html += '<div onclick="selectReplacementExercise(\''+ex.name.replace(/'/g,"\\'")+'\')" style="'
+      + 'background:var(--bg3);border:1.5px solid '+(isCurrent?'var(--red)':'var(--b)')+';border-radius:var(--r);padding:14px 10px;'
+      + 'display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;text-align:center;position:relative">'
+      + (isCurrent ? '<div style="position:absolute;top:6px;right:6px;width:16px;height:16px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>' : '')
+      + '<div style="width:44px;height:44px;border-radius:50%;background:'+color+'22;display:flex;align-items:center;justify-content:center">'
+      + svgForIcon(ex.icon, color).replace('viewBox="0 0 24 24"','viewBox="0 0 24 24" width="24" height="24"')
+      + '</div>'
+      + '<div style="font-size:12px;font-weight:700;color:var(--t);line-height:1.25">'+ex.name+'</div>'
+      + '<div style="font-size:10px;color:var(--t3)">'+ex.equip+'</div>'
+      + '</div>';
+  });
+  html += '</div>';
+  document.getElementById('exLibGrid').innerHTML = html;
+}
+
+function selectReplacementExercise(newName){
+  var day = dayObj(activeDay());
+  if(!day || exLibTargetIdx===null) return;
+  var oldName = day.exercises[exLibTargetIdx].name;
+  // Store an override map so the display name changes without mutating PROG
+  if(!S.exReplacements) S.exReplacements = {};
+  S.exReplacements[activeDay()+'-'+exLibTargetIdx] = newName;
+  // migrate any logged sets under the old name/index to the new name for this session
+  if(S.sets && S.sets[oldName]){
+    S.sets[newName] = S.sets[oldName];
+    if(oldName!==newName) delete S.sets[oldName];
+  }
+  save();
+  document.getElementById('exLibSh').classList.remove('on');
+  renderWo();
+}
+
 // INIT
 // ════════════════════════════════════════════════════════════
 // ── WAKE LOCK ──
@@ -1582,6 +1889,9 @@ save();
 renderToday();
 renderProg();
 setTimeout(()=>{const sp=document.getElementById('spl');if(sp){sp.classList.add('out');setTimeout(()=>sp.remove(),500);}},1600);
+
+
+
 
 
 
