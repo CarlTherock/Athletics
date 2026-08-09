@@ -383,6 +383,9 @@ body::before {
 #startBtnFixed{
   bottom:calc(54px + env(safe-area-inset-bottom,0px));
 }
+
+#bigPickerMin::-webkit-scrollbar, #bigPickerSec::-webkit-scrollbar,
+#pickerMin::-webkit-scrollbar, #pickerSec::-webkit-scrollbar { display:none; }
 </style>
 </head>
 <body>
@@ -421,7 +424,7 @@ body::before {
       <div style="display:flex;align-items:center;gap:3px">
         <div style="display:flex;flex-direction:column;align-items:center">
           <div style="font-size:7px;color:var(--t3);font-weight:700">MIN</div>
-          <div id="pickerMin" style="height:66px;overflow:hidden;position:relative;width:36px">
+          <div id="pickerMin" style="height:66px;overflow-y:scroll;-webkit-overflow-scrolling:touch;scrollbar-width:none;position:relative;width:36px">
             <div id="pickerMinList" style="display:flex;flex-direction:column;align-items:center"></div>
             <div style="pointer-events:none;position:absolute;top:22px;left:0;right:0;height:22px;border-top:1px solid var(--red);border-bottom:1px solid var(--red)"></div>
           </div>
@@ -429,7 +432,7 @@ body::before {
         <div style="font-size:16px;font-weight:900;color:var(--t2)">:</div>
         <div style="display:flex;flex-direction:column;align-items:center">
           <div style="font-size:7px;color:var(--t3);font-weight:700">SEC</div>
-          <div id="pickerSec" style="height:66px;overflow:hidden;position:relative;width:36px">
+          <div id="pickerSec" style="height:66px;overflow-y:scroll;-webkit-overflow-scrolling:touch;scrollbar-width:none;position:relative;width:36px">
             <div id="pickerSecList" style="display:flex;flex-direction:column;align-items:center"></div>
             <div style="pointer-events:none;position:absolute;top:22px;left:0;right:0;height:22px;border-top:1px solid var(--red);border-bottom:1px solid var(--red)"></div>
           </div>
@@ -458,7 +461,7 @@ body::before {
       <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
         <div style="display:flex;flex-direction:column;align-items:center">
           <div style="font-size:11px;color:var(--t3);font-weight:700;letter-spacing:.1em;margin-bottom:6px">MIN</div>
-          <div id="bigPickerMin" style="height:150px;overflow:hidden;position:relative;width:80px">
+          <div id="bigPickerMin" style="height:150px;overflow-y:scroll;-webkit-overflow-scrolling:touch;scrollbar-width:none;position:relative;width:80px">
             <div id="bigPickerMinList" style="display:flex;flex-direction:column;align-items:center"></div>
             <div style="pointer-events:none;position:absolute;top:60px;left:0;right:0;height:50px;border-top:2px solid var(--red);border-bottom:2px solid var(--red);background:rgba(200,16,46,.08)"></div>
             <div style="pointer-events:none;position:absolute;top:0;left:0;right:0;height:50px;background:linear-gradient(0deg,transparent,var(--bg2))"></div>
@@ -468,7 +471,7 @@ body::before {
         <div style="font-size:36px;font-weight:900;color:var(--t2);margin-top:20px">:</div>
         <div style="display:flex;flex-direction:column;align-items:center">
           <div style="font-size:11px;color:var(--t3);font-weight:700;letter-spacing:.1em;margin-bottom:6px">SEC</div>
-          <div id="bigPickerSec" style="height:150px;overflow:hidden;position:relative;width:80px">
+          <div id="bigPickerSec" style="height:150px;overflow-y:scroll;-webkit-overflow-scrolling:touch;scrollbar-width:none;position:relative;width:80px">
             <div id="bigPickerSecList" style="display:flex;flex-direction:column;align-items:center"></div>
             <div style="pointer-events:none;position:absolute;top:60px;left:0;right:0;height:50px;border-top:2px solid var(--red);border-bottom:2px solid var(--red);background:rgba(200,16,46,.08)"></div>
             <div style="pointer-events:none;position:absolute;top:0;left:0;right:0;height:50px;background:linear-gradient(0deg,transparent,var(--bg2))"></div>
