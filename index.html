@@ -252,7 +252,7 @@ body{
 .prog-fill{height:100%;background:var(--red);transition:width .4s}
 
 .ex-blk{background:var(--bg2);border-bottom:5px solid var(--bg)}
-.ex-hero{position:relative;height:180px;overflow:hidden;background:var(--bg3)}
+.ex-hero{position:relative;height:180px;overflow:hidden;background:linear-gradient(135deg,#1A0808 0%,#2A1010 50%,#1C1C1C 100%)}
 .ex-hero img{width:100%;height:100%;object-fit:cover;object-position:center 20%}
 .ex-hero-grad{position:absolute;inset:0;background:linear-gradient(to right,rgba(10,10,10,.97) 0%,rgba(10,10,10,.75) 45%,rgba(10,10,10,.1) 100%)}
 .ex-hero-info{position:absolute;inset:0;padding:14px 16px;display:flex;flex-direction:column;justify-content:flex-end;width:65%}
@@ -568,35 +568,7 @@ const REST_COMP={A:90,B:150,C:180,D:60};
 const REST_ISOL={A:60,B:75,C:90,D:45};
 const REST_HEAVY={A:120,B:180,C:240,D:90};
 
-const IMGS={
-  "Pendlay Row":"https://images.unsplash.com/photo-1598971639058-fab3c3109a13?w=700&q=80",
-  "Pull-Up Lesté":"https://images.unsplash.com/photo-1604480132736-44c188fe4d20?w=700&q=80",
-  "Meadows Row":"https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=700&q=80",
-  "Cable Fly":"https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=700&q=80",
-  "Face Pull câble":"https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=700&q=80",
-  "Cable Curl":"https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=700&q=80",
-  "Back Squat":"https://images.unsplash.com/photo-1567598508481-65985588e295?w=700&q=80",
-  "Bulgarian Split Squat":"https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=700&q=80",
-  "Leg Extension":"https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=700&q=80",
-  "Barbell Hip Thrust":"https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=700&q=80",
-  "Seated Calf Raise":"https://images.unsplash.com/photo-1518611012118-696072aa579a?w=700&q=80",
-  "Standing Calf Raise":"https://images.unsplash.com/photo-1536922246289-88c42f957773?w=700&q=80",
-  "Barbell OHP":"https://images.unsplash.com/photo-1534438097545-a2c22c57f2ad?w=700&q=80",
-  "Bench Press":"https://images.unsplash.com/photo-1532029837206-abbe2b7620e3?w=700&q=80",
-  "Arnold Press":"https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=700&q=80",
-  "Lateral Raise câble 1 bras":"https://images.unsplash.com/photo-1583454155184-870a1f63aebc?w=700&q=80",
-  "Dips Lestés":"https://images.unsplash.com/photo-1598971639058-fab3c3109a13?w=700&q=80",
-  "Overhead Triceps Rope":"https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=700&q=80",
-  "Deadlift Conventionnel":"https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=700&q=80",
-  "Nordic Leg Curl":"https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=700&q=80",
-  "Romanian Deadlift":"https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=700&q=80",
-  "Leg Curl couché":"https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=700&q=80",
-  "Ab Wheel Rollout":"https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=700&q=80",
-  "Farmer Walk":"https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=700&q=80",
-  "Incline Bench Press":"https://images.unsplash.com/photo-1532029837206-abbe2b7620e3?w=700&q=80",
-  "Rear Delt Fly câble":"https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=700&q=80",
-};
-const DIMG="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=700&q=80";
+// Images: SVG-based visuals used instead
 
 const PROG={
   startDate:"2026-08-09",
@@ -1045,6 +1017,58 @@ function startWo(){
   },1000);
 }
 
+
+// Exercise visual system — SVG silhouettes, no external images needed
+const EX_VISUALS = {
+  // [gradient_start, gradient_end, svg_icon, muscle_label]
+  "Pendlay Row":           ["#0D1B2A","#1A3A5A","ROW","Dos · Biceps"],
+  "Pull-Up Lesté":         ["#0A2A0A","#1A5A1A","PULL","Grand dorsal"],
+  "Meadows Row":           ["#0D1B2A","#1A3A5A","1ARM","Dos unilatéral"],
+  "Cable Fly":             ["#1A0A2A","#3A1A5A","FLY","Pectoraux"],
+  "Face Pull câble":       ["#1A1A0A","#3A3A1A","PULL","Épaules post."],
+  "Cable Curl":            ["#0A1A2A","#1A3A5A","CURL","Biceps"],
+  "Back Squat":            ["#2A0A0A","#5A1A1A","SQ","Quadriceps"],
+  "Bulgarian Split Squat": ["#2A0A0A","#5A1A1A","BSS","Quad · Fessier"],
+  "Leg Extension":         ["#2A0A0A","#5A1A1A","LEG","Quadriceps"],
+  "Barbell Hip Thrust":    ["#2A0A0A","#5A1A1A","THRUST","Fessiers"],
+  "Seated Calf Raise":     ["#2A0A0A","#5A1A1A","CALF","Soléaire"],
+  "Standing Calf Raise":   ["#2A0A0A","#5A1A1A","CALF","Gastrocnémien"],
+  "Barbell OHP":           ["#1A0A2A","#3A1A5A","OHP","Épaules · Triceps"],
+  "Bench Press":           ["#1A0A2A","#3A1A5A","BENCH","Pectoraux"],
+  "Arnold Press":          ["#1A0A2A","#3A1A5A","PRESS","Épaules 3D"],
+  "Lateral Raise câble 1 bras":["#1A0A2A","#3A1A5A","RAISE","Deltoïde médial"],
+  "Dips Lestés":           ["#1A0A2A","#3A1A5A","DIPS","Triceps · Pec bas"],
+  "Overhead Triceps Rope": ["#1A0A2A","#3A1A5A","TRI","Long chef triceps"],
+  "Deadlift Conventionnel":["#2A0A0A","#5A1A1A","DL","Chaîne post."],
+  "Nordic Leg Curl":       ["#2A0A0A","#5A1A1A","NLC","Ischio-jambiers"],
+  "Romanian Deadlift":     ["#2A0A0A","#5A1A1A","RDL","IJ · Fessiers"],
+  "Leg Curl couché":       ["#2A0A0A","#5A1A1A","CURL","Ischio-jambiers"],
+  "Ab Wheel Rollout":      ["#0A2A0A","#1A5A1A","ABS","Core anti-ext."],
+  "Farmer Walk":           ["#2A1A0A","#5A3A1A","WALK","Core · Prise"],
+  "Incline Bench Press":   ["#1A0A2A","#3A1A5A","INC","Pec sup · Épaule"],
+  "Rear Delt Fly câble":   ["#1A1A0A","#3A3A1A","RDF","Deltoïde post."],
+};
+
+function getExVisual(name){
+  const v = EX_VISUALS[name] || ["#1A1A1A","#2A2A2A","GYM","Exercice"];
+  return v;
+}
+
+function buildExHeroHTML(ex, wStr){
+  const [g1,g2,code,muscle] = getExVisual(ex.name);
+  return `<div class="ex-hero" style="background:linear-gradient(135deg,${g1} 0%,${g2} 100%)">
+    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:flex-end;padding-right:20px;opacity:.12">
+      <div style="font-size:88px;font-weight:900;color:#fff;letter-spacing:-.04em;line-height:1">${code}</div>
+    </div>
+    <div style="position:absolute;inset:0;padding:14px 16px;display:flex;flex-direction:column;justify-content:flex-end;width:70%">
+      <div style="font-size:10px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:6px">${muscle}</div>
+      <div class="ex-name">${ex.name}</div>
+      <div class="ex-sub">${ex.s} séries · ${ex.r} · <span style="color:var(--rs)">${wStr}</span></div>
+    </div>
+    ${ex.new?`<div class="ex-new-badge">★ NOUVEAU</div>`:''}
+  </div>`;
+}
+
 function renderWo(){
   const actId=activeDay();const day=dayObj(actId);const b=bloc();
   document.getElementById('woTitle').textContent=`J${actId} — ${day.name}`;
@@ -1058,7 +1082,6 @@ function renderWo(){
     const wUnit=isDB?'/m':'lb';
     const rInfo=getRestInfo(ex,b);
     const isBar=!ex.bw&&!ex.rpe;
-    const img=IMGS[ex.name]||DIMG;
     if(!S.sets[ex.name]){
       const pEx=prevSess?.exercises?.find(e=>e.name===ex.name);
       // Parse target reps: "6–8" → use middle value, "4–6" → use lower
@@ -1087,12 +1110,7 @@ function renderWo(){
     const doneC=sets.filter(s=>s.done).length;
 
     html+=`<div class="ex-blk">
-      <div class="ex-hero">
-        <img src="${img}" alt="${ex.name}" loading="lazy" onerror="this.style.opacity='.15'">
-        <div class="ex-hero-grad"></div>
-        <div class="ex-hero-info"><div class="ex-name">${ex.name}</div><div class="ex-sub">${ex.s} séries · ${ex.r} · <span style="color:var(--rs)">${wStr}</span></div></div>
-        ${ex.new?`<div class="ex-new-badge">★ NOUVEAU</div>`:''}
-      </div>
+      ${buildExHeroHTML(ex,wStr)}
       <div class="ex-acts">
         <div class="ex-act" onclick="openHist('${ex.name}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Historique</div>
         ${isBar?`<div class="ex-act" onclick="openPlate(document.querySelector('#sr-${ei}-0 .sinp')?.value||'${wNum}','${ex.name}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 5v14M18 5v14M4 9h4M16 9h4M4 15h4M16 15h4"/></svg>Plaques</div>`:''}
@@ -1226,7 +1244,9 @@ function openDaySh(id){
     <div style="padding:0 14px 9px;display:flex;gap:5px;flex-wrap:wrap"><span class="pill ${pillCls()}">${blocLbl()}</span></div>
     ${day.exercises.map(ex=>{const w=getW(ex,b);const img=IMGS[ex.name]||DIMG;const rInfo=getRestInfo(ex,b);return`<div style="padding:0 14px;margin-bottom:12px">
       <div style="display:flex;align-items:center;gap:11px">
-        <img src="${img}" style="width:60px;height:60px;object-fit:cover;border-radius:9px;flex-shrink:0;background:var(--bg3)" loading="lazy" onerror="this.style.opacity='.2'">
+        <div style="width:60px;height:60px;border-radius:9px;flex-shrink:0;background:linear-gradient(135deg,${getExVisual(ex.name)[0]},${getExVisual(ex.name)[1]});display:flex;align-items:center;justify-content:center">
+          <span style="font-size:13px;font-weight:900;color:rgba(255,255,255,.6);letter-spacing:-.02em">${getExVisual(ex.name)[2]}</span>
+        </div>
         <div style="flex:1">
           <div style="font-size:14px;font-weight:800">${ex.new?'★ ':''}${ex.name}</div>
           <div style="font-size:11px;color:var(--t2);margin-top:2px">${ex.s} × ${ex.r} · <span style="color:var(--rs);font-weight:700">${w}</span></div>
