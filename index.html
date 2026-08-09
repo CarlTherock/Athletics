@@ -65,16 +65,8 @@ body{
 }
 
 /* ─── SCREENS ─── */
-.scr{
-  position:absolute;top:0;left:0;right:0;
-  bottom:calc(var(--nav)+var(--safe));
-  overflow-y:scroll;
-  -webkit-overflow-scrolling:touch;
-  overscroll-behavior-y:contain;
-  touch-action:pan-y;
-  display:none;
-}
-.scr.on{display:block}
+
+
 
 /* ─── SPLASH ─── */
 #spl{
@@ -92,15 +84,7 @@ body{
 @keyframes sf{from{width:0}to{width:100%}}
 
 /* ─── BOTTOM NAV ─── */
-.bnav{
-  position:absolute;bottom:0;left:0;right:0;
-  height:calc(var(--nav)+var(--safe));
-  padding-bottom:var(--safe);
-  background:rgba(10,10,10,.96);
-  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-  border-top:1px solid var(--b);
-  display:flex;z-index:500;
-}
+
 .nb{
   flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:3px;border:none;background:none;cursor:pointer;
@@ -367,61 +351,40 @@ body{
 
 #spl{position:fixed;inset:0;z-index:9999;background:#0A0A0A;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;animation:splashGo 2.4s ease forwards}
 @keyframes splashGo{0%,65%{opacity:1;pointer-events:auto}90%,100%{opacity:0;pointer-events:none;visibility:hidden}}
-.screens{position:fixed;top:0;left:0;right:0;bottom:calc(54px + env(safe-area-inset-bottom,0px));overflow:hidden}
-.scr{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;display:none;padding-bottom:20px}
-.scr.on{display:block}
-.bnav{position:fixed;bottom:0;left:0;right:0;height:calc(54px + env(safe-area-inset-bottom,0px));padding-bottom:env(safe-area-inset-bottom,0px);background:rgba(10,10,10,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid #272727;display:flex;z-index:10}
+
+
+
+
 .sh-bg{position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.75);display:none;align-items:flex-end}
 .sh-bg.on{display:flex}
 .rest-ov{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.97);display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px}
 .rest-ov.on{display:flex}
 
 /* Layout — works in Safari web + PWA + Android */
-.screens{
-  position:fixed;top:0;left:0;right:0;
-  bottom:calc(54px + env(safe-area-inset-bottom,0px));
-  overflow:hidden;
-}
-.scr{
-  position:absolute;inset:0;
-  overflow-y:auto;
-  -webkit-overflow-scrolling:touch;
-  overscroll-behavior-y:contain;
-  display:none;
-  padding-bottom:20px;
-}
-.scr.on{display:block}
-.bnav{
-  position:fixed;bottom:0;left:0;right:0;
-  height:calc(54px + env(safe-area-inset-bottom,0px));
-  padding-bottom:env(safe-area-inset-bottom,0px);
-  background:rgba(10,10,10,.97);
-  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-  border-top:1px solid #272727;
-  display:flex;z-index:10;
-}
+
+
+
+
 
 /* ── FULL SCREEN LAYOUT (Safari + PWA + Android) ── */
 html,body{width:100%;height:100%;overflow:hidden}
 body{position:fixed;top:0;left:0;right:0;bottom:0}
-.screens{
-  position:fixed !important;
-  top:0 !important;
-  left:0 !important;
-  right:0 !important;
-  bottom:calc(54px + env(safe-area-inset-bottom,0px)) !important;
-  overflow:hidden !important;
-}
-.bnav{
-  position:fixed !important;
-  bottom:0 !important;
-  left:0 !important;
-  right:0 !important;
-  height:calc(54px + env(safe-area-inset-bottom,0px)) !important;
-  padding-bottom:env(safe-area-inset-bottom,0px) !important;
-}
+
+
 .rest-ov{position:fixed !important;inset:0 !important;z-index:1000 !important}
 .sh-bg{position:fixed !important;inset:0 !important}
+
+/* ── LAYOUT UNIQUE ── */
+html,body{width:100%;height:100%;overflow:hidden}
+body{position:fixed;top:0;left:0;right:0;bottom:0;overflow:hidden}
+.screens{position:fixed;top:0;left:0;right:0;bottom:calc(54px + env(safe-area-inset-bottom,0px));overflow:hidden}
+.scr{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;display:none;padding-bottom:20px}
+.scr.on{display:block}
+.bnav{position:fixed;bottom:0;left:0;right:0;height:calc(54px + env(safe-area-inset-bottom,0px));padding-bottom:env(safe-area-inset-bottom,0px);background:rgba(10,10,10,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid #272727;display:flex;z-index:10}
+.rest-ov{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.97);display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.rest-ov.on{display:flex}
+.sh-bg{position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.75);display:none;align-items:flex-end}
+.sh-bg.on{display:flex}
 </style>
 </head>
 <body>
@@ -629,6 +592,7 @@ body{position:fixed;top:0;left:0;right:0;bottom:0}
 
 
 <script>
+
 
 
 
@@ -851,7 +815,7 @@ function startRest(sec,type,next){
     const t=document.getElementById('restT');if(t)t.textContent=S.rRem;
     const arc=document.getElementById('restArc');
     if(arc)arc.style.strokeDashoffset=547*(1-S.rRem/S.rTotal);
-    if(S.rRem<=0){clearInterval(S.restInt);document.getElementById('restOv').classList.remove('on');}
+    if(S.rRem<=0){clearInterval(S.restInt);document.getElementById('restOv').classList.remove('on');playDone();}
   },1000);
 }
 function addRestTime(sec){
@@ -861,7 +825,6 @@ function addRestTime(sec){
   save();
 }
 function skipRest(){
-  playDone();
   playDone();if(S.restInt)clearInterval(S.restInt);document.getElementById('restOv').classList.remove('on');}
 
 // ════════════════════════════════════════════════════════════
@@ -1372,6 +1335,7 @@ save();
 renderToday();
 renderProg();
 setTimeout(()=>{const sp=document.getElementById('spl');if(sp){sp.classList.add('out');setTimeout(()=>sp.remove(),500);}},1600);
+
 
 
 
