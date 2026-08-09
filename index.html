@@ -1033,14 +1033,17 @@ function renderToday(){
     const sb=document.getElementById('startBtn');
     sb.textContent='Jour de repos 🚶';sb.onclick=null;sb.style.opacity='.5';
   } else {
-    tc.innerHTML=day.exercises.map((ex,i)=>{
+    tc.innerHTML=day.exercises.map((origEx,i)=>{
+      const replName=S.exReplacements&&S.exReplacements[actId+'::'+origEx.name];
+      const ex=replName?Object.assign({},origEx,{name:replName}):origEx;
+      const isReplaced=!!replName;
       const w=getW(ex,b);
       const img=getExerciseImage(ex.name);
-      return `<div class="dcard" data-name="${ex.name.replace(/"/g,'&quot;')}">
+      return `<div class="dcard" data-name="${origEx.name.replace(/"/g,'&quot;')}">
         <div class="dcard-h" onclick="if(!window.__dcardDragged__)openDaySh(${actId})">
           <div class="dnum-img"><img src="${img}" loading="lazy" onerror="this.style.display='none'"></div>
           <div class="dcard-info">
-            <div class="dcard-name">${ex.new?'★ ':''}${ex.name}</div>
+            <div class="dcard-name">${(ex.new||isReplaced)?'★ ':''}${ex.name}</div>
             <div class="dcard-sub">${ex.s} × ${ex.r} · <span style="color:var(--rs);font-weight:700">${w}</span></div>
           </div>
           <div class="dcard-grip"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="8" cy="6" r="1.8"/><circle cx="16" cy="6" r="1.8"/><circle cx="8" cy="12" r="1.8"/><circle cx="16" cy="12" r="1.8"/><circle cx="8" cy="18" r="1.8"/><circle cx="16" cy="18" r="1.8"/></svg></div>
@@ -1152,7 +1155,7 @@ function renderWo(){
   let html='';
 
   day.exercises.forEach((origEx,ei)=>{
-    var replName = S.exReplacements && S.exReplacements[activeDay()+'-'+ei];
+    var replName = S.exReplacements && S.exReplacements[actId+'::'+origEx.name];
     var ex = replName ? Object.assign({}, origEx, {name: replName}) : origEx;
     const wStr=getW(ex,b);const wNum=parseFloat(wStr)||0;
     const restInfo=getRestLabel(ex,b);
@@ -1184,7 +1187,7 @@ function renderWo(){
         <div class="ex-act" onclick="openHist('${ex.name}')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Historique
         </div>
-        <div class="ex-act" onclick="openExLibrary('${ex.name}',${ei})">
+        <div class="ex-act" onclick="openExLibrary(${actId},${ei})">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>Remplacer
         </div>
         ${isBar?`<div class="ex-act" onclick="openPlate('${sets[0].w||wNum}','${ex.name}')">
@@ -1310,17 +1313,20 @@ function openDaySh(id){
     <div style="padding:0 14px 9px;display:flex;gap:5px;flex-wrap:wrap">
       <span class="pill ${b==='A'?'pa':b==='B'?'pb':b==='C'?'pc':'pd2'}">${blocLbl()}</span>
     </div>
-    ${day.exercises.map(ex=>{const w=getW(ex,b);const img=getExerciseImage(ex.name);const rInfo=getRestLabel(ex,b);return `<div style="padding:0 14px;margin-bottom:12px">
+    ${day.exercises.map((origEx,exIdx)=>{const replName=S.exReplacements&&S.exReplacements[id+'::'+origEx.name];const ex=replName?Object.assign({},origEx,{name:replName}):origEx;const isReplaced=!!replName;const w=getW(ex,b);const img=getExerciseImage(ex.name);const rInfo=getRestLabel(ex,b);return `<div style="padding:0 14px;margin-bottom:12px">
       <div style="display:flex;align-items:center;gap:11px">
         <img src="${img}" style="width:60px;height:60px;object-fit:cover;border-radius:9px;flex-shrink:0;background:var(--bg3)" loading="lazy" onerror="this.style.opacity='.3'">
         <div style="flex:1">
-          <div style="font-size:14px;font-weight:800">${ex.new?'★ ':''}${ex.name}</div>
+          <div style="font-size:14px;font-weight:800">${(ex.new||isReplaced)?'★ ':''}${ex.name}</div>
           <div style="font-size:11px;color:var(--t2);margin-top:2px">${ex.s} × ${ex.r} · <span style="color:var(--rs);font-weight:700">${w}</span></div>
           <div style="font-size:10px;color:var(--t3);margin-top:2px">${rInfo.type} · ${rInfo.fmt}</div>
           <div style="font-size:10px;color:var(--t3);margin-top:3px;font-style:italic">${ex.note}</div>
         </div>
       </div>
-      ${!ex.bw&&!ex.rpe?`<button class="btn btn-ghost btn-sm" style="margin-top:8px;border-radius:20px;font-size:11px" onclick="openPlate('${parseFloat(w)||0}','${ex.name}')">🏋️ Voir les plaques</button>`:''}
+      <div style="display:flex;gap:7px;margin-top:8px;flex-wrap:wrap">
+        ${!ex.bw&&!ex.rpe?`<button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:11px" onclick="openPlate('${parseFloat(w)||0}','${ex.name}')">🏋️ Voir les plaques</button>`:''}
+        <button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:11px" onclick="openExLibrary(${id},${exIdx})">🔄 Remplacer</button>
+      </div>
       <div style="height:1px;background:var(--b);margin-top:11px"></div>
     </div>`;}).join('')}
     <div style="padding:0 12px 12px">
@@ -2285,6 +2291,7 @@ const EX_LIBRARY = {
 
 let exLibTargetName = null;
 let exLibTargetIdx = null;
+let exLibTargetDay = null;
 let exLibActiveTab = null;
 
 function svgForIcon(icon, color){
@@ -2352,9 +2359,13 @@ function renderExLibSearchResults(results){
   document.getElementById('exLibGrid').innerHTML = html;
 }
 
-function openExLibrary(exName, exIdx){
-  exLibTargetName = exName;
+function openExLibrary(dayId, exIdx){
+  var day = dayObj(dayId);
+  var origEx = day.exercises[exIdx];
+  exLibTargetDay = dayId;
   exLibTargetIdx = exIdx;
+  var repl = S.exReplacements && S.exReplacements[dayId+'::'+origEx.name];
+  exLibTargetName = repl || origEx.name;
   var muscles = Object.keys(EX_LIBRARY);
   exLibActiveTab = muscles[0];
   var searchEl = document.getElementById('exLibSearch');
@@ -2406,19 +2417,26 @@ function renderExLibGrid(muscle){
 }
 
 function selectReplacementExercise(newName){
-  var day = dayObj(activeDay());
+  var day = dayObj(exLibTargetDay);
   if(!day || exLibTargetIdx===null) return;
-  var oldName = day.exercises[exLibTargetIdx].name;
-  // Store an override map so the display name changes without mutating PROG
+  var origName = day.exercises[exLibTargetIdx].name;
   if(!S.exReplacements) S.exReplacements = {};
-  S.exReplacements[activeDay()+'-'+exLibTargetIdx] = newName;
-  // migrate any logged sets under the old name/index to the new name for this session
-  if(S.sets && S.sets[oldName]){
-    S.sets[newName] = S.sets[oldName];
-    if(oldName!==newName) delete S.sets[oldName];
+  var key = exLibTargetDay+'::'+origName;
+  var prevDisplay = S.exReplacements[key] || origName;
+  if(newName === origName){
+    delete S.exReplacements[key];
+  } else {
+    S.exReplacements[key] = newName;
+  }
+  // migrate any logged sets under the previous displayed name to the new name for this session
+  if(S.sets && S.sets[prevDisplay]){
+    S.sets[newName] = S.sets[prevDisplay];
+    if(prevDisplay!==newName) delete S.sets[prevDisplay];
   }
   save();
   document.getElementById('exLibSh').classList.remove('on');
+  renderToday();
+  if(document.getElementById('daySh').classList.contains('on')) openDaySh(exLibTargetDay);
   renderWo();
 }
 
