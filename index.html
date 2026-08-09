@@ -1252,71 +1252,114 @@ function go(name){
 
 // TODAY
 function renderToday(){
-  const b=bloc();const now=new Date();const wd=now.getDay();
-  if(!S.ovDay){const auto=WD2DAY[wd];if(auto!==null&&auto!==undefined)S.curDay=auto;}
-  const actId=activeDay();const day=dayObj(actId);
-  const isRest=WD2DAY[wd]===null&&!S.ovDay;
+  var b=bloc();
+  var now=new Date();
+  var wd=now.getDay();
+  if(!S.ovDay){var auto=WD2DAY[wd];if(auto!==null&&auto!==undefined)S.curDay=auto;}
+  var actId=activeDay();
+  var day=dayObj(actId);
+  var isRest=(WD2DAY[wd]===null&&!S.ovDay);
 
-  document.getElementById('todayLbl').textContent=now.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});
-  const bp=document.getElementById('todayBloc');bp.textContent=blocLbl();bp.className='pill '+pillCls();
-  document.getElementById('heroPhase').textContent=S.curWeek<=8?'PHASE 1 — FORCE & MASSE':'PHASE 2 — COUPE 300';
-  document.getElementById('heroDay').textContent=isRest?'Repos actif':`Jour ${actId} — ${day.name}`;
-  document.getElementById('heroSub').textContent=isRest?'LISS 35–45 min · Mobilité 15 min':day.sub;
-  // Calculate streak
-    const streak=calcStreak();
-  const streakBadge = streak>0 ? '<span class="pill" style="background:rgba(212,165,32,.12);color:var(--gold);border:1px solid rgba(212,165,32,.25)">\uD83D\uDD25 '+streak+' sem.</span>' : '';
-  const ovBadge = S.ovDay ? '<span class="pill pr">Journ\u00E9e modifi\u00E9e</span>' : '';
-  const restBadge = isRest ? '<span class="pill pb">REPOS + LISS</span>' : '';
-  document.getElementById('heroBadges').innerHTML = '<span class="pill '+pillCls()+'">'+blocLbl()+'</span>'
-    + '<span class="pill pg">Sem. '+S.curWeek+'/17</span>'
-    + streakBadge + ovBadge + restBadge;
+  // Topbar
+  var lbl=document.getElementById('todayLbl');
+  if(lbl)lbl.textContent=now.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});
+  var bp=document.getElementById('todayBloc');
+  if(bp){bp.textContent=blocLbl();bp.className='pill '+pillCls();}
+
+  // Hero
+  var hphase=document.getElementById('heroPhase');
+  if(hphase)hphase.textContent=S.curWeek<=8?'PHASE 1 — FORCE & MASSE':'PHASE 2 — COUPE 300';
+  var hday=document.getElementById('heroDay');
+  if(hday)hday.textContent=isRest?'Repos actif':'Jour '+actId+' — '+day.name;
+  var hsub=document.getElementById('heroSub');
+  if(hsub)hsub.textContent=isRest?'LISS 35–45 min · Mobilité 15 min':day.sub;
+
+  // Badges
+  var streak=0;try{streak=calcStreak();}catch(e){}
+  var badgeHTML='<span class="pill '+pillCls()+'">'+blocLbl()+'</span>';
+  badgeHTML+=' <span class="pill pg">Sem. '+S.curWeek+'/17</span>';
+  if(streak>0)badgeHTML+=' <span class="pill" style="background:rgba(212,165,32,.12);color:var(--gold);border:1px solid rgba(212,165,32,.25)">🔥 '+streak+' sem.</span>';
+  if(S.ovDay)badgeHTML+=' <span class="pill pr">Journée modifiée</span>';
+  if(isRest)badgeHTML+=' <span class="pill pb">REPOS + LISS</span>';
+  var hbadges=document.getElementById('heroBadges');
+  if(hbadges)hbadges.innerHTML=badgeHTML;
 
   // Week strip Sun→Sat
-  const sun=new Date(now);sun.setDate(now.getDate()-wd);
-  let strip='';
-  for(let i=0;i<7;i++){
-    const d2=new Date(sun);d2.setDate(sun.getDate()+i);
-    const dwd=d2.getDay();const dayId=WD2DAY[dwd];
-    const isSel=dwd===wd;const isDone=dayId&&S.sessions.some(s=>s.dayId===dayId&&s.date===d2.toLocaleDateString('fr-CA'));
-    strip+=`<div class="wchip ${isSel?'sel':''} ${isDone&&!isSel?'done':''} ${dayId===null?'rest-chip':''}" onclick="tapWd(${dwd})">
-      <div class="wchip-n">${DAY_FR[dwd]}</div>
-      <div class="wchip-d">${d2.getDate()}</div>
-      <div class="wchip-dot"></div>
-    </div>`;
+  var sun=new Date(now);sun.setDate(now.getDate()-wd);
+  var strip='';
+  for(var i=0;i<7;i++){
+    var d2=new Date(sun);d2.setDate(sun.getDate()+i);
+    var dwd=d2.getDay();
+    var dayId2=WD2DAY[dwd];
+    var isSel=(dwd===wd);
+    var isDone=!!(dayId2&&S.sessions.some(function(s){return s.dayId===dayId2&&s.date===d2.toLocaleDateString('fr-CA');}));
+    var isR=(dayId2===null);
+    var cls='wchip'+(isSel?' sel':'')+(isDone&&!isSel?' done':'')+(isR?' rest-chip':'');
+    strip+='<div class="'+cls+'" onclick="tapWd('+dwd+')">';
+    strip+='<div class="wchip-n">'+DAY_FR[dwd]+'</div>';
+    strip+='<div class="wchip-d">'+d2.getDate()+'</div>';
+    strip+='<div class="wchip-dot"></div></div>';
   }
-  document.getElementById('wstrip').innerHTML=strip;
+  var ws=document.getElementById('wstrip');if(ws)ws.innerHTML=strip;
 
-  // Cards
-  const tc=document.getElementById('todayCards');
-  if(isRest){
-    tc.innerHTML=`<div class="card" style="text-align:center;padding:18px 14px"><div style="font-size:28px;margin-bottom:8px">🚶</div><div style="font-size:15px;font-weight:800;margin-bottom:5px">Journée LISS</div><div style="font-size:12px;color:var(--t2)">Marche rapide ou vélo · 35–45 min · FC 60–65%</div><div style="font-size:11px;color:var(--t3);margin-top:5px">Mobilité 15 min — hanches et épaules</div></div>`;
-    const sb=document.getElementById('startBtn');sb.textContent='Jour de repos 🚶';sb.onclick=null;sb.style.opacity='.4';
-  } else {
-    tc.innerHTML=day.exercises.map((ex,i)=>{
-      const w=getW(ex,b);
-      return`<div class="dcard" onclick="openDaySh(${actId})">
-        <div class="dcard-h">
-          <div class="dnum"><div class="dnum-j">J${actId}</div><div class="dnum-n">${i+1}</div></div>
-          <div class="dcard-info"><div class="dcard-name">${ex.new?'★ ':''}${ex.name}</div><div class="dcard-sub">${ex.s} × ${ex.r} · <span style="color:var(--rs);font-weight:700">${w}</span></div></div>
-          ${ex.new?'<span class="pill pg" style="font-size:9px;padding:2px 7px">★</span>':''}
-        </div>
-      </div>`;
-    }).join('');
-    const sb=document.getElementById('startBtn');sb.textContent='▶ Commencer l\'entraînement';sb.onclick=startWo;sb.style.opacity='1';
+  // Today cards
+  var tc=document.getElementById('todayCards');
+  if(tc){
+    if(isRest){
+      tc.innerHTML='<div class="card" style="text-align:center;padding:18px 14px">'
+        +'<div style="font-size:28px;margin-bottom:8px">🚶</div>'
+        +'<div style="font-size:15px;font-weight:800;margin-bottom:5px">Journée LISS</div>'
+        +'<div style="font-size:12px;color:var(--t2)">Marche rapide ou vélo · 35–45 min · FC 60–65%</div>'
+        +'<div style="font-size:11px;color:var(--t3);margin-top:5px">Mobilité 15 min — hanches et épaules</div>'
+        +'</div>';
+      var sb=document.getElementById('startBtn');
+      if(sb){sb.textContent='Jour de repos 🚶';sb.onclick=null;sb.style.opacity='0.4';}
+    } else {
+      var cards='';
+      for(var ei=0;ei<day.exercises.length;ei++){
+        var ex=day.exercises[ei];
+        var w=getW(ex,b);
+        cards+='<div class="dcard" onclick="openDaySh('+actId+')">';
+        cards+='<div class="dcard-h">';
+        cards+='<div class="dnum"><div class="dnum-j">J'+actId+'</div><div class="dnum-n">'+(ei+1)+'</div></div>';
+        cards+='<div class="dcard-info">';
+        cards+='<div class="dcard-name">'+(ex.new?'★ ':'')+ex.name+'</div>';
+        cards+='<div class="dcard-sub">'+ex.s+' × '+ex.r+' · <span style="color:var(--rs);font-weight:700">'+w+'</span></div>';
+        cards+='</div>';
+        if(ex.new)cards+='<span class="pill pg" style="font-size:9px;padding:2px 7px">★</span>';
+        cards+='</div></div>';
+      }
+      tc.innerHTML=cards;
+      var sb=document.getElementById('startBtn');
+      if(sb){sb.textContent='▶ Commencer l'entraînement';sb.onclick=startWo;sb.style.opacity='1';}
+    }
   }
 
   // Workout banner
-  const banner=document.getElementById('woBanner');
-  if(S.woStart){banner.classList.add('on');}else{banner.classList.remove('on');}
+  var banner=document.getElementById('woBanner');
+  if(banner)banner.classList[S.woStart?'add':'remove']('on');
 
   // Week list
-  const tc2={pull:'#3B82F6',legs:'#C8102E',push:'#8B5CF6',full:'#F97316'};
-  document.getElementById('weekList').innerHTML=
-    `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 13px;background:var(--bg3)"><div style="font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--rs)">SEMAINE ${S.curWeek}/17</div><span class="pill ${pillCls()}">${blocLbl()}</span></div>`+
-    PROG.days.map(d=>{const done=S.sessions.some(s=>s.dayId===d.id&&s.date===tod());return`<div style="display:flex;align-items:center;gap:9px;padding:10px 13px;border-top:1px solid var(--b)"><div style="width:6px;height:6px;border-radius:50%;background:${tc2[d.type]};flex-shrink:0"></div><div style="font-size:10px;color:var(--t3);font-weight:700;width:16px">J${d.id}</div><div style="flex:1;font-size:12px;font-weight:700">${d.name}</div>${done?'<div style="font-size:10px;color:var(--green);font-weight:700">✓</div>':'<div style="font-size:10px;color:var(--t4)">—</div>'}</div>`;}).join('');
+  var wl=document.getElementById('weekList');
+  if(wl){
+    var typeC={pull:'#3B82F6',legs:'#C8102E',push:'#8B5CF6',full:'#F97316'};
+    var wlHTML='<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 13px;background:var(--bg3)">';
+    wlHTML+='<div style="font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--rs)">SEMAINE '+S.curWeek+'/17</div>';
+    wlHTML+='<span class="pill '+pillCls()+'">'+blocLbl()+'</span></div>';
+    for(var di=0;di<PROG.days.length;di++){
+      var pd=PROG.days[di];
+      var done=S.sessions.some(function(s){return s.dayId===pd.id&&s.date===tod();});
+      wlHTML+='<div style="display:flex;align-items:center;gap:9px;padding:10px 13px;border-top:1px solid var(--b)">';
+      wlHTML+='<div style="width:6px;height:6px;border-radius:50%;background:'+(typeC[pd.type]||'#333')+';flex-shrink:0"></div>';
+      wlHTML+='<div style="font-size:10px;color:var(--t3);font-weight:700;width:16px">J'+pd.id+'</div>';
+      wlHTML+='<div style="flex:1;font-size:12px;font-weight:700">'+pd.name+'</div>';
+      wlHTML+=done?'<div style="font-size:10px;color:var(--green);font-weight:700">✓</div>':'<div style="font-size:10px;color:var(--t4)">—</div>';
+      wlHTML+='</div>';
+    }
+    wl.innerHTML=wlHTML;
+  }
 }
 
-// Tap on week chip — if training day, show its sheet; if rest, show rest info
 function tapWd(wd){
   S.ovDay=null;
   const dayId=WD2DAY[wd];
