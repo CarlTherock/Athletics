@@ -696,6 +696,7 @@ body::before {
 
 
 
+
 // ════════════════════════════════════════════════════════════
 // PROGRAMME DATA
 // SEMAINE : Dim=J1, Lun=J2, Mar=J3, Mer=J4, Jeu=J5, Ven=REPOS, Sam=REPOS
@@ -902,14 +903,14 @@ function openPlate(wStr,exName){
 // ════════════════════════════════════════════════════════════
 function startRest(sec,type,next){
   S.rRem=sec;S.rTotal=sec;
-  document.getElementById('restT').textContent=sec;
+  document.getElementById('restT').textContent=fmt(sec);
   document.getElementById('restTypeLbl').textContent=type;
   document.getElementById('restNext').textContent=next||'Prochaine série';
   document.getElementById('restOv').classList.add('on');
   if(S.restInt)clearInterval(S.restInt);
   S.restInt=setInterval(()=>{
     S.rRem--;
-    const t=document.getElementById('restT');if(t)t.textContent=S.rRem;
+    const t=document.getElementById('restT');if(t)t.textContent=fmt(S.rRem);
     const arc=document.getElementById('restArc');
     if(arc)arc.style.strokeDashoffset=547*(1-S.rRem/S.rTotal);
     if(S.rRem<=0){clearInterval(S.restInt);document.getElementById('restOv').classList.remove('on');playDone();}
@@ -1362,7 +1363,7 @@ function addRestTime(sec){
   if(!S.restEndTs && S.rRem<=0) return;
   S.rRem = Math.max(0, S.rRem + sec);
   S.rTotal = Math.max(5, S.rTotal + sec);
-  const t=document.getElementById('restT');if(t)t.textContent=S.rRem;
+  const t=document.getElementById('restT');if(t)t.textContent=fmt(S.rRem);
   const arc=document.getElementById('restArc');
   if(arc)arc.style.strokeDashoffset = 547*(1-S.rRem/S.rTotal);
   save();
@@ -1429,7 +1430,7 @@ function confirmRestEdit(e){
   document.getElementById('restEditWrap').style.display='none';
   document.getElementById('restNext').style.opacity='1';
   document.getElementById('restBtnsWrap').style.opacity='1';
-  const t=document.getElementById('restT');if(t)t.textContent=sec;
+  const t=document.getElementById('restT');if(t)t.textContent=fmt(sec);
   const arc=document.getElementById('restArc');if(arc)arc.style.strokeDashoffset=0;
 }
 
@@ -1581,6 +1582,7 @@ save();
 renderToday();
 renderProg();
 setTimeout(()=>{const sp=document.getElementById('spl');if(sp){sp.classList.add('out');setTimeout(()=>sp.remove(),500);}},1600);
+
 
 
 
