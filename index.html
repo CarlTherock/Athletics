@@ -114,6 +114,7 @@ body{
 .sp-bar{width:90px;height:2px;background:var(--b2);border-radius:1px;overflow:hidden;margin-top:18px}
 .sp-fill{height:100%;background:var(--red);animation:sf 1.5s ease forwards}
 @keyframes sf{from{width:0}to{width:100%}}
+@keyframes splashOut{from{opacity:1;pointer-events:auto}to{opacity:0;pointer-events:none;visibility:hidden}}
 
 /* ── REST OVERLAY ── */
 .rest-ov{
@@ -366,65 +367,14 @@ body{
 <div class="frame">
 
 <!-- SPLASH -->
-<div id="spl">
-  <div class="sp-brand">CTR Athletics</div>
-  <div class="sp-n" style="font-size:72px;letter-spacing:-.03em">CTR</div>
-  <div class="sp-sub" id="splSub">Athletics</div>
-  <div class="sp-bar"><div class="sp-fill"></div></div>
-</div>
-
-<!-- ONBOARDING (shown once on first launch) -->
-<div id="onboarding" style="display:none;position:absolute;inset:0;z-index:9998;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch">
-  <div style="max-width:360px;margin:0 auto;padding:40px 24px 40px">
-    <!-- Logo -->
-    <div style="text-align:center;margin-bottom:32px">
-      <div style="font-size:13px;font-weight:800;letter-spacing:.3em;color:var(--accentSoft);text-transform:uppercase;margin-bottom:6px">CTR Athletics</div>
-      <div style="font-size:56px;font-weight:900;color:var(--text,#fff);line-height:1;letter-spacing:-.03em">CTR</div>
-      <div style="font-size:14px;color:var(--t3);margin-top:4px">Plateforme de coaching sportif</div>
-    </div>
-
-    <!-- Form -->
-    <div style="display:flex;flex-direction:column;gap:16px">
-      <div>
-        <div class="inp-lbl">Prénom</div>
-        <input class="inp" type="text" id="ob-name" placeholder="Carl" autocomplete="given-name" style="font-size:16px">
-      </div>
-      <div>
-        <div class="inp-lbl">Courriel</div>
-        <input class="inp" type="email" id="ob-email" placeholder="carl@email.com" autocomplete="email" style="font-size:16px">
-      </div>
-
-      <!-- Color picker -->
-      <div>
-        <div class="inp-lbl">Couleur de l'interface</div>
-        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:4px">
-          <div onclick="selectColor('#C8102E',this)" class="color-opt sel" style="background:#C8102E" title="Rouge CTR"></div>
-          <div onclick="selectColor('#2563EB',this)" class="color-opt" style="background:#2563EB" title="Bleu"></div>
-          <div onclick="selectColor('#16A34A',this)" class="color-opt" style="background:#16A34A" title="Vert"></div>
-          <div onclick="selectColor('#7C3AED',this)" class="color-opt" style="background:#7C3AED" title="Violet"></div>
-          <div onclick="selectColor('#D97706',this)" class="color-opt" style="background:#D97706" title="Orange"></div>
-          <div onclick="selectColor('#0891B2',this)" class="color-opt" style="background:#0891B2" title="Cyan"></div>
-          <div onclick="selectColor('#DB2777',this)" class="color-opt" style="background:#DB2777" title="Rose"></div>
-          <div onclick="selectColor('#B45309',this)" class="color-opt" style="background:#B45309" title="Brun"></div>
-          <div onclick="selectColor('#374151',this)" class="color-opt" style="background:#374151" title="Ardoise"></div>
-          <div onclick="selectColor('#1A1A1A',this)" class="color-opt" style="background:linear-gradient(135deg,#333,#111);border:2px solid #555" title="Noir"></div>
-        </div>
-        <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
-          <div style="font-size:11px;color:var(--t3)">Personnalisée :</div>
-          <input type="color" id="ob-custom-color" value="#C8102E"
-            oninput="selectColor(this.value,null)"
-            style="width:36px;height:30px;border-radius:8px;border:1.5px solid var(--b);background:none;cursor:pointer;padding:2px">
-        </div>
-      </div>
-
-      <button onclick="finishOnboarding()" class="btn btn-red btn-lg" id="ob-submit" style="margin-top:8px;border-radius:var(--r)">
-        Commencer →
-      </button>
-      <div style="font-size:10px;color:var(--t3);text-align:center;line-height:1.6">
-        Tes données restent sur ton appareil. Aucun compte requis.<br>Le courriel servira pour les futures fonctionnalités de coaching.
-      </div>
-    </div>
+<div id="spl" style="position:absolute;inset:0;z-index:9999;background:#0A0A0A;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;animation:splashOut 0.5s ease 1.6s forwards">
+  <div style="font-size:10px;font-weight:800;letter-spacing:.3em;color:#FF4D6D;text-transform:uppercase">CTR Athletics</div>
+  <div style="font-size:72px;font-weight:900;color:#fff;line-height:1;letter-spacing:-.03em">CTR</div>
+  <div style="font-size:12px;color:#555;font-weight:600;letter-spacing:.15em;text-transform:uppercase">Athletics</div>
+  <div style="width:90px;height:2px;background:#2A2A2A;border-radius:1px;overflow:hidden;margin-top:18px">
+    <div style="height:100%;background:#C8102E;animation:sf 1.5s ease forwards"></div>
   </div>
+</div>
 </div>
 
 <!-- REST OVERLAY -->
@@ -2939,21 +2889,7 @@ function processImportedRows(rows){
 
 // ════════════════════════════════════════════════════════
 // INIT
-// Dismiss splash IMMEDIATELY as first priority
-(function(){
-  // Dismiss splash as soon as DOM is ready - no waiting
-  function dismissSplash(){
-    var sp=document.getElementById('spl');
-    if(sp){
-      sp.style.transition='opacity 0.6s';
-      sp.style.opacity='0';
-      setTimeout(function(){if(sp&&sp.parentNode)sp.parentNode.removeChild(sp);},650);
-    }
-  }
-  // Try after 1.4s, and again at 3s as backup
-  setTimeout(dismissSplash, 1400);
-  setTimeout(dismissSplash, 3000);
-})();
+// Splash handled by CSS animation (no JS needed)
 
 // Init app state
 try{ load(); }catch(e){}
