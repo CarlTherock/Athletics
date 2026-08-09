@@ -371,7 +371,7 @@ body{
 <div class="frame">
 
 <!-- SPLASH -->
-<div id="spl" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;background:#0A0A0A;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;animation:splashHide 0.5s ease 1.6s forwards">
+<div id="spl" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;background:#0A0A0A;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;animation:splashHide 2.2s ease forwards">
   <div style="font-size:10px;font-weight:800;letter-spacing:.3em;color:#FF4D6D;text-transform:uppercase">CTR Athletics</div>
   <div style="font-size:72px;font-weight:900;color:#fff;line-height:1;letter-spacing:-.03em">CTR</div>
   <div style="font-size:12px;color:#555;font-weight:600;letter-spacing:.15em;text-transform:uppercase">Athletics</div>
@@ -2934,26 +2934,29 @@ function processImportedRows(rows){
 
 // ════════════════════════════════════════════════════════
 // INIT
-// Splash handled by CSS animation + JS cleanup
+// Splash: render app first, THEN hide splash
+// Step 1: render everything while splash is still showing
+try{ renderToday(); }catch(e){ console.error(e); }
+try{ renderProg(); }catch(e){}
+
+// Step 2: hide splash after animation completes (2.2s)
 setTimeout(function(){
-  var sp=document.getElementById('spl');
+  var sp = document.getElementById('spl');
   if(sp){
-    sp.style.opacity='0';
-    sp.style.pointerEvents='none';
+    sp.style.transition = 'opacity 0.4s ease';
+    sp.style.opacity = '0';
+    sp.style.pointerEvents = 'none';
     setTimeout(function(){
-      if(sp && sp.parentNode){
-        sp.style.display='none'; // fully remove from rendering
-      }
-    }, 600);
+      if(sp) sp.style.display = 'none';
+    }, 450);
   }
-}, 1600);
+}, 2000);
 
 // Init app state
 try{ load(); }catch(e){}
 try{ S.curWeek=calcWeek(); }catch(e){}
 try{ save(); }catch(e){}
-try{ renderToday(); }catch(e){ console.error('renderToday failed:',e); }
-try{ renderProg(); }catch(e){ console.error('renderProg failed:',e); }
+// renderToday and renderProg called in splash timeout below
 // Resync rest timer if it was running before page reload
 if(S.restEndTs && S.restEndTs > Date.now()){
   document.getElementById('restTypeLbl').textContent = S.restType||'REPOS';
