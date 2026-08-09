@@ -405,20 +405,48 @@ body::before {
 <!-- REST OVERLAY -->
 <div class="rest-ov" id="restOv">
   <div class="rest-type-lbl" id="restTypeLbl">REPOS COMPOSÉ</div>
-  <div class="rest-ring">
+  <div class="rest-ring" onclick="openRestEdit(event)">
     <svg viewBox="0 0 190 190" fill="none">
       <circle cx="95" cy="95" r="87" stroke="#1C1C1C" stroke-width="8"/>
       <circle id="restArc" cx="95" cy="95" r="87" stroke="#C8102E" stroke-width="8"
         stroke-linecap="round" stroke-dasharray="547" stroke-dashoffset="0"
         transform="rotate(-90 95 95)" style="transition:stroke-dashoffset 1s linear"/>
     </svg>
-    <div class="rest-inner">
+    <div class="rest-inner" id="restDisplayWrap">
       <div class="rest-t" id="restT">120</div>
-      <div class="rest-lbl">repos</div>
+      <div class="rest-lbl">repos · ✏️</div>
+    </div>
+    <div class="rest-inner" id="restEditWrap" style="display:none;flex-direction:column;align-items:center;gap:6px">
+      <div style="font-size:9px;font-weight:800;letter-spacing:.12em;color:var(--rs);text-transform:uppercase">DURÉE</div>
+      <div style="display:flex;align-items:center;gap:3px">
+        <div style="display:flex;flex-direction:column;align-items:center">
+          <div style="font-size:7px;color:var(--t3);font-weight:700">MIN</div>
+          <div id="pickerMin" style="height:66px;overflow:hidden;position:relative;width:36px">
+            <div id="pickerMinList" style="display:flex;flex-direction:column;align-items:center"></div>
+            <div style="pointer-events:none;position:absolute;top:22px;left:0;right:0;height:22px;border-top:1px solid var(--red);border-bottom:1px solid var(--red)"></div>
+          </div>
+        </div>
+        <div style="font-size:16px;font-weight:900;color:var(--t2)">:</div>
+        <div style="display:flex;flex-direction:column;align-items:center">
+          <div style="font-size:7px;color:var(--t3);font-weight:700">SEC</div>
+          <div id="pickerSec" style="height:66px;overflow:hidden;position:relative;width:36px">
+            <div id="pickerSecList" style="display:flex;flex-direction:column;align-items:center"></div>
+            <div style="pointer-events:none;position:absolute;top:22px;left:0;right:0;height:22px;border-top:1px solid var(--red);border-bottom:1px solid var(--red)"></div>
+          </div>
+        </div>
+      </div>
+      <button onclick="confirmRestEdit(event)" style="padding:4px 14px;border-radius:20px;border:none;background:var(--red);color:#fff;font-size:10px;font-weight:800;cursor:pointer;margin-top:2px">✓ OK</button>
     </div>
   </div>
-  <div class="rest-next" id="restNext">Prochaine série</div>
-  <button class="btn btn-ol btn-md" onclick="skipRest()">Passer →</button>
+  <div class="rest-next" id="restNext" style="transition:opacity .2s">Prochaine série</div>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:4px" id="restBtnsWrap">
+    <div style="display:flex;align-items:center;gap:10px">
+      <button onclick="addRestTime(-15)" style="width:40px;height:40px;border-radius:50%;border:1.5px solid var(--b2);background:var(--bg3);color:var(--t2);font-size:16px;font-weight:800;cursor:pointer">−</button>
+      <div style="font-size:9px;color:var(--t3);font-weight:700">15 SEC</div>
+      <button onclick="addRestTime(15)" style="width:40px;height:40px;border-radius:50%;border:1.5px solid var(--b2);background:var(--bg3);color:var(--t2);font-size:16px;font-weight:800;cursor:pointer">+</button>
+    </div>
+    <button class="btn btn-ol btn-md" onclick="skipRest()" style="width:160px">Passer →</button>
+  </div>
 </div>
 
 <!-- PLATE SHEET -->
@@ -596,6 +624,8 @@ body::before {
 
 
 <script>
+
+
 
 
 
@@ -824,12 +854,7 @@ function startRest(sec,type,next){
     if(S.rRem<=0){clearInterval(S.restInt);document.getElementById('restOv').classList.remove('on');playDone();}
   },1000);
 }
-function addRestTime(sec){
-  if(!S.restEndTs) return;
-  S.restEndTs += sec*1000;
-  S.rTotal = Math.max(5, S.rTotal + sec);
-  save();
-}
+
 function skipRest(){
   playDone();if(S.restInt)clearInterval(S.restInt);document.getElementById('restOv').classList.remove('on');}
 
@@ -1270,6 +1295,78 @@ function toggleWeekSummary(){
   if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
 }
 
+
+// ── ±15s buttons ──
+function addRestTime(sec){
+  if(!S.restEndTs && S.rRem<=0) return;
+  S.rRem = Math.max(0, S.rRem + sec);
+  S.rTotal = Math.max(5, S.rTotal + sec);
+  const t=document.getElementById('restT');if(t)t.textContent=S.rRem;
+  const arc=document.getElementById('restArc');
+  if(arc)arc.style.strokeDashoffset = 547*(1-S.rRem/S.rTotal);
+  save();
+}
+
+// ── DRUM-ROLL PICKER ──
+const ITEM_H = 22;
+let pickerMinVal = 1;
+let pickerSecVal = 30;
+
+function buildPickerCol(elId, values, selected){
+  const list = document.getElementById(elId);
+  if(!list) return;
+  list.innerHTML = values.map(v=>'<div style="height:'+ITEM_H+'px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;flex-shrink:0;width:36px">'+String(v).padStart(2,'0')+'</div>').join('');
+  const idx = values.indexOf(selected);
+  const wrapper = list.parentElement;
+  wrapper.scrollTop = idx * ITEM_H;
+  attachPickerScroll(wrapper, values, elId==='pickerMinList'?'min':'sec');
+}
+
+function attachPickerScroll(wrapper, values, type){
+  let scrollTimer;
+  wrapper.onscroll = function(){
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(function(){
+      const idx = Math.round(wrapper.scrollTop / ITEM_H);
+      const clamped = Math.max(0, Math.min(values.length-1, idx));
+      wrapper.scrollTo({top: clamped*ITEM_H, behavior:'smooth'});
+      if(type==='min') pickerMinVal = values[clamped];
+      else pickerSecVal = values[clamped];
+    }, 80);
+  };
+}
+
+function openRestEdit(e){
+  e.stopPropagation();
+  pickerMinVal = Math.floor(S.rRem/60);
+  pickerSecVal = S.rRem % 60;
+  const mins = [];for(let i=0;i<10;i++)mins.push(i);
+  const secs = [];for(let i=0;i<60;i+=5)secs.push(i);
+  if(secs.indexOf(pickerSecVal)===-1) pickerSecVal = Math.round(pickerSecVal/5)*5;
+
+  buildPickerCol('pickerMinList', mins, pickerMinVal);
+  buildPickerCol('pickerSecList', secs, pickerSecVal);
+
+  document.getElementById('restDisplayWrap').style.display='none';
+  document.getElementById('restEditWrap').style.display='flex';
+  document.getElementById('restNext').style.opacity='0';
+  document.getElementById('restBtnsWrap').style.opacity='0';
+}
+
+function confirmRestEdit(e){
+  if(e) e.stopPropagation();
+  const sec = Math.max(5, pickerMinVal*60 + pickerSecVal);
+  S.rRem = sec;
+  S.rTotal = sec;
+  save();
+  document.getElementById('restDisplayWrap').style.display='flex';
+  document.getElementById('restEditWrap').style.display='none';
+  document.getElementById('restNext').style.opacity='1';
+  document.getElementById('restBtnsWrap').style.opacity='1';
+  const t=document.getElementById('restT');if(t)t.textContent=sec;
+  const arc=document.getElementById('restArc');if(arc)arc.style.strokeDashoffset=0;
+}
+
 // INIT
 // ════════════════════════════════════════════════════════════
 // ── WAKE LOCK ──
@@ -1334,6 +1431,8 @@ save();
 renderToday();
 renderProg();
 setTimeout(()=>{const sp=document.getElementById('spl');if(sp){sp.classList.add('out');setTimeout(()=>sp.remove(),500);}},1600);
+
+
 
 
 
