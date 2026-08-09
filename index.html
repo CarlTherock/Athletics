@@ -297,12 +297,12 @@ body{
 .pl-for{font-size:14px;color:var(--t2);text-align:center;padding:0 18px 14px}
 .pl-for strong{color:#fff;font-weight:800}
 /* Barbell : LEFT=[plates_heavy→light][bar_end][collar][mid_bar]   RIGHT=[mid_bar][collar][bar_end][plates_light→heavy] */
-.bb-wrap{display:flex;align-items:center;justify-content:center;margin:0 18px 12px;gap:0;overflow:hidden;position:relative}
-.bb-end{height:9px;width:22px;background:linear-gradient(180deg,#3a3a3a,#0a0a0a);border-radius:2px}
-.bb-mid{flex:1;min-width:44px;max-width:120px;height:7px;background:linear-gradient(180deg,#2c2c2c,#050505);border-radius:1px;position:relative;display:flex;align-items:center;justify-content:center}
-.bb-mid::after{content:'CTR';position:absolute;top:-9px;left:50%;transform:translateX(-50%);font-size:8px;font-weight:900;letter-spacing:.12em;color:var(--gold)}
-.bb-col{width:8px;height:46px;background:linear-gradient(180deg,#333,#0a0a0a);border-radius:3px;flex-shrink:0}
-.bb-pl{display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:4px;flex-shrink:0;font-size:8px;font-weight:900;color:rgba(255,255,255,.95);border:2px solid rgba(255,255,255,.15)}
+.bb-wrap{display:flex;align-items:center;justify-content:center;margin:6px 18px 18px;gap:0;overflow:hidden;position:relative}
+.bb-end{height:18px;width:44px;background:linear-gradient(180deg,#3a3a3a,#0a0a0a);border-radius:3px}
+.bb-mid{flex:1;min-width:88px;max-width:240px;height:14px;background:linear-gradient(180deg,#2c2c2c,#050505);border-radius:2px;position:relative;display:flex;align-items:center;justify-content:center}
+.bb-mid::after{content:'CTR';position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:13px;font-weight:900;letter-spacing:.14em;color:var(--gold)}
+.bb-col{background:linear-gradient(180deg,#333,#0a0a0a);border-radius:3px;flex-shrink:0}
+.bb-pl{display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:5px;flex-shrink:0;font-size:13px;font-weight:900;color:rgba(255,255,255,.95);border:3px solid rgba(255,255,255,.15)}
 /* Vertical bars chart */
 .pl-bars{display:flex;align-items:flex-end;gap:7px;height:120px;padding:0 18px;border-bottom:2px solid var(--b2);margin-bottom:10px}
 .pl-bar-col{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1}
@@ -920,13 +920,12 @@ function openPlate(wStr,exName){
   } else {
     h+=`<div class="pl-for">Pour <strong>${n} lb</strong>, chaque côté :</div>`;
     // BARBELL: plates on OUTSIDE — structure: [plates reversed=heavy first][bar_end][collar][mid][collar][bar_end][plates light→heavy]
-    const mkPl=(p,side)=>{const pw=p.w>=45?18:p.w>=25?14:p.w>=10?11:8;const ph=Math.min(42,Math.max(12,p.h*.48));const lbl=pw>=11?p.w:'';return `<div class="bb-pl" style="width:${pw}px;height:${ph}px;background:${p.c}">${lbl}</div>`;};
-    // Left side = heaviest plate against collar, lightest outermost
-    // So we render plates in normal order left-to-right on left side (heavy=closest to collar=right of left group)
-    // Structure: [plate_light...plate_heavy] [collar] [bar]
-    const leftPl=[...plates].reverse().map(p=>mkPl(p,'L')).join(''); // reversed so heavy is rightmost (near collar)
-    const rightPl=plates.map(p=>mkPl(p,'R')).join('');               // normal order: heavy first from collar
-    h+=`<div class="bb-wrap">${leftPl}<div class="bb-end"></div><div class="bb-col"></div><div class="bb-mid"></div><div class="bb-col"></div><div class="bb-end"></div>${rightPl}</div>`;
+    const mkPl=(p,side)=>{const pw=p.w>=45?36:p.w>=25?28:p.w>=10?22:16;const ph=Math.min(84,Math.max(24,p.h*.96));const lbl=pw>=22?p.w:'';return `<div class="bb-pl" style="width:${pw}px;height:${ph}px;background:${p.c}">${lbl}</div>`;};
+    const collarPw=16,collarPh=Math.min(84,Math.max(24,40*.96)); // sized to match the 5lb plate exactly
+    const colHtml=`<div class="bb-col" style="width:${collarPw}px;height:${collarPh}px"></div>`;
+    const leftPl=[...plates].reverse().map(p=>mkPl(p,'L')).join(''); // light→heavy, heaviest ends up against the collar
+    const rightPl=plates.map(p=>mkPl(p,'R')).join('');               // heavy→light, heaviest starts against the collar
+    h+=`<div class="bb-wrap"><div class="bb-end"></div>${leftPl}${colHtml}<div class="bb-mid"></div>${colHtml}${rightPl}<div class="bb-end"></div></div>`;
     // Bars chart
     const cnt={};for(const p of plates)cnt[p.w]=(cnt[p.w]||0)+1;
     const used=PL.filter(p=>cnt[p.w]);const maxC=Math.max(1,...Object.values(cnt));
