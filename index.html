@@ -929,12 +929,33 @@ function renderWo(){
 
   day.exercises.forEach((ex,ei)=>{
     const wStr=getW(ex,b);const wNum=parseFloat(wStr)||0;
+    const isDB=['Arnold Press','Lateral Raise câble 1 bras','Farmer Walk','Bulgarian Split Squat'].includes(ex.name);
+    const wUnit=isDB?'/m':'lb';
     const rInfo=getRestInfo(ex,b);
     const isBar=!ex.bw&&!ex.rpe;
     const img=IMGS[ex.name]||DIMG;
     if(!S.sets[ex.name]){
       const pEx=prevSess?.exercises?.find(e=>e.name===ex.name);
-      S.sets[ex.name]=Array.from({length:ex.s},(_,si)=>{const prev=pEx?.sets?.[si];return{w:prev?.w||wNum||0,r:prev?.r||0,done:false,type:'working'};});
+      // Parse target reps: "6–8" → use middle value, "4–6" → use lower
+      const parseTargetReps=(str)=>{
+        if(!str)return 0;
+        const m=str.match(/(\d+)/g);
+        if(!m)return 0;
+        if(m.length===1)return parseInt(m[0]);
+        // Use lower bound of range as starting point
+        return parseInt(m[0]);
+      };
+      const targetReps=parseTargetReps(ex.r);
+      S.sets[ex.name]=Array.from({length:ex.s},(_,si)=>{
+        const prev=pEx?.sets?.[si];
+        return{
+          w:prev?.w||wNum||0,
+          // Pre-fill reps from program target; override with previous session if exists
+          r:prev?.r||targetReps||0,
+          done:false,
+          type:si===0&&!pEx?'warmup':'working'
+        };
+      });
     }
     const sets=S.sets[ex.name];
     const prevLast=S.hist[ex.name]?.slice(-1)[0];
@@ -970,9 +991,15 @@ function renderWo(){
           return`<div class="set-row${set.done?' dr':''}" id="sr-${ei}-${si}">
             <div class="hex ${hx}" onclick="cycleT('${ex.name}',${si})">${set.type==='warmup'?'W':set.type==='drop'?'D':si+1}</div>
             <div class="set-prev">${pSet?pSet.w+'lb':wStr}</div>
-            <input class="sinp${set.done?' sd':''}" type="number" inputmode="decimal" value="${set.w||''}" placeholder="${wNum||''}" oninput="updS('${ex.name}',${si},'w',this.value)">
-            <div class="set-unit">lb</div>
-            <input class="sinp${set.done?' sd':''}" type="number" inputmode="numeric" value="${set.r||''}" placeholder="0" oninput="updS('${ex.name}',${si},'r',this.value)">
+            <input class="sinp${set.done?' sd':''}" type="number" inputmode="decimal"
+              value="${set.w||''}" placeholder="${wNum||0}"
+              oninput="updS('${ex.name}',${si},'w',this.value)"
+              style="color:${set.w?'#fff':'var(--t3)'}">
+            <div class="set-unit" style="font-size:8px">${wUnit}</div>
+            <input class="sinp${set.done?' sd':''}" type="number" inputmode="numeric"
+              value="${set.r||''}" placeholder="${parseTargetRepsInline(ex.r)}"
+              oninput="updS('${ex.name}',${si},'r',this.value)"
+              style="color:${set.r?'#fff':'var(--t3)'}">
             <button class="chk${set.done?' on':''}" onclick="chkSet('${ex.name}',${ei},${si})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></button>
           </div>`;
         }).join('')}
@@ -989,7 +1016,34 @@ function renderWo(){
 }
 
 function cycleT(n,si){const s=S.sets[n]?.[si];if(!s)return;s.type={working:'warmup',warmup:'drop',drop:'working'}[s.type];save();renderWo();}
-function updS(n,si,f,v){const s=S.sets[n]?.[si];if(!s)return;s[f]=f==='w'?parseFloat(v)||0:parseInt(v)||0;save();}
+function updS(n,si,f,v){
+  const sets=S.sets[n];if(!sets||!sets[si])return;
+  const val=f==='w'?parseFloat(v)||0:parseInt(v)||0;
+  sets[si][f]=val;
+  // Propagate weight to all subsequent UNDONE sets
+  if(f==='w'){
+    for(let i=si+1;i<sets.length;i++){
+      if(!sets[i].done){
+        sets[i].w=val;
+        // Update DOM input directly without full re-render
+        const row=document.getElementById('sr-'+getExIdx(n)+'-'+i);
+        if(row){const inp=row.querySelectorAll('.sinp')[0];if(inp&&document.activeElement!==inp)inp.value=val||'';}
+      }
+    }
+  }
+  save();
+}
+function parseTargetRepsInline(str){
+  if(!str)return'0';
+  const m=str.match(/(\d+)/g);
+  if(!m)return'0';
+  if(m.length===1)return m[0];
+  return m[0]; // show lower bound of range
+}
+function getExIdx(exName){
+  const actId=activeDay();const day=dayObj(actId);
+  return day.exercises.findIndex(ex=>ex.name===exName);
+}
 function addSet(n){if(!S.sets[n])return;const l=S.sets[n].slice(-1)[0];S.sets[n].push({w:l?.w||0,r:l?.r||0,done:false,type:'working'});save();renderWo();}
 
 function chkSet(exName,ei,si){
