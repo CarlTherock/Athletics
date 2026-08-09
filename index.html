@@ -395,6 +395,28 @@ body{
   </div>
 </div>
 
+<!-- EXERCISE LIBRARY SHEET -->
+<div class="sh-bg" id="libSh" onclick="if(event.target===this)this.classList.remove('on')">
+  <div class="sh" style="max-height:95%">
+    <div class="sh-handle"></div>
+    <div style="padding:0 14px 10px;display:flex;align-items:center;justify-content:space-between">
+      <div class="sh-title" style="padding:0">Remplacer l'exercice</div>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('libSh').classList.remove('on')" style="border-radius:20px">✕</button>
+    </div>
+    <!-- Search -->
+    <div style="padding:0 14px 10px">
+      <input class="inp" type="text" placeholder="🔍  Rechercher un exercice…" inputmode="search"
+        oninput="renderLibrary('all',this.value)"
+        style="font-size:14px;font-weight:600;border-radius:50px;padding:10px 16px">
+    </div>
+    <!-- Muscle tabs -->
+    <div id="libTabs" style="display:flex;gap:6px;overflow-x:auto;padding:0 14px 10px;scrollbar-width:none"></div>
+    <input type="hidden" id="libActiveMuscle" value="all">
+    <!-- Grid -->
+    <div id="libGrid" style="overflow-y:auto;max-height:60vh"></div>
+  </div>
+</div>
+
 <!-- FLOATING REST BUBBLE — keeps screen active, shows when rest overlay is closed -->
 <div id="restBubble" style="
   display:none;position:absolute;bottom:calc(var(--nav) + var(--safe-b) + 12px);
@@ -641,7 +663,7 @@ const MUSCLES=[
 ];
 
 // STATE
-let S={curDay:1,curWeek:1,ovDay:null,woStart:null,woInt:null,restInt:null,rRem:0,rTotal:0,restEndTs:null,restType:'',restNext:'',sets:{},sessions:[],photos:[],hist:{}};
+let S={curDay:1,curWeek:1,ovDay:null,woStart:null,woInt:null,restInt:null,rRem:0,rTotal:0,restEndTs:null,restType:'',restNext:'',sets:{},sessions:[],photos:[],hist:{},exOverrides:{}};
 const KEY="ctr300v6";
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function load(){try{const d=localStorage.getItem(KEY);if(d)Object.assign(S,JSON.parse(d))}catch(e){}}
@@ -1108,6 +1130,225 @@ function buildExHeroHTML(ex, wStr){
   </div>`;
 }
 
+
+// ════════════════════════════════════════════════════════════
+// EXERCISE LIBRARY — Bibliothèque complète par groupe musculaire
+// ════════════════════════════════════════════════════════════
+const EX_LIBRARY = [
+  // ── PECTORAUX ──
+  {name:"Bench Press",           muscle:"Pectoraux",   code:"BENCH", g1:"#1A0A2A",g2:"#3A1A5A", eq:"Barre",    diff:3, desc:"Composé · Pectoraux moyens"},
+  {name:"Incline Bench Press",   muscle:"Pectoraux",   code:"INC",   g1:"#1A0A2A",g2:"#3A1A5A", eq:"Barre",    diff:3, desc:"Composé · Pectoraux hauts"},
+  {name:"Decline Bench Press",   muscle:"Pectoraux",   code:"DEC",   g1:"#1A0A2A",g2:"#3A1A5A", eq:"Barre",    diff:3, desc:"Composé · Pectoraux bas"},
+  {name:"Dumbbell Bench Press",  muscle:"Pectoraux",   code:"DBP",   g1:"#1A0A2A",g2:"#3A1A5A", eq:"Haltères", diff:2, desc:"Composé · Amplitude supérieure"},
+  {name:"Cable Fly",             muscle:"Pectoraux",   code:"FLY",   g1:"#1A0A2A",g2:"#3A1A5A", eq:"Câble",    diff:1, desc:"Isolation · Tension constante"},
+  {name:"Dips Lestés",           muscle:"Pectoraux",   code:"DIPS",  g1:"#1A0A2A",g2:"#3A1A5A", eq:"Barre",    diff:2, desc:"Composé · Pec bas · Triceps"},
+  {name:"Pec Deck",              muscle:"Pectoraux",   code:"DEC",   g1:"#1A0A2A",g2:"#3A1A5A", eq:"Machine",  diff:1, desc:"Isolation · Machine"},
+  {name:"Push-Up Lesté",         muscle:"Pectoraux",   code:"PU",    g1:"#1A0A2A",g2:"#3A1A5A", eq:"Poids corps",diff:1,desc:"Composé · Poids corps"},
+
+  // ── DOS ──
+  {name:"Pendlay Row",           muscle:"Dos",         code:"ROW",   g1:"#0D1B2A",g2:"#1A3A5A", eq:"Barre",    diff:3, desc:"Composé · Explosif · Dos épais"},
+  {name:"Barbell Row",           muscle:"Dos",         code:"BRow",  g1:"#0D1B2A",g2:"#1A3A5A", eq:"Barre",    diff:2, desc:"Composé · Dos épais"},
+  {name:"Pull-Up Lesté",         muscle:"Dos",         code:"PUP",   g1:"#0D1B2A",g2:"#1A3A5A", eq:"Barre",    diff:3, desc:"Composé · Grand dorsal"},
+  {name:"Lat Pulldown",          muscle:"Dos",         code:"LAT",   g1:"#0D1B2A",g2:"#1A3A5A", eq:"Câble",    diff:1, desc:"Composé · Grand dorsal machine"},
+  {name:"Seated Cable Row",      muscle:"Dos",         code:"SCR",   g1:"#0D1B2A",g2:"#1A3A5A", eq:"Câble",    diff:1, desc:"Composé · Dos épais câble"},
+  {name:"Meadows Row",           muscle:"Dos",         code:"MR",    g1:"#0D1B2A",g2:"#1A3A5A", eq:"Barre",    diff:2, desc:"Unilatéral · Dos épais"},
+  {name:"T-Bar Row",             muscle:"Dos",         code:"TBR",   g1:"#0D1B2A",g2:"#1A3A5A", eq:"Barre",    diff:2, desc:"Composé · Dos épais"},
+  {name:"Single Arm DB Row",     muscle:"Dos",         code:"1AR",   g1:"#0D1B2A",g2:"#1A3A5A", eq:"Haltère",  diff:1, desc:"Unilatéral · Haltère"},
+  {name:"Chest-Supported Row",   muscle:"Dos",         code:"CSR",   g1:"#0D1B2A",g2:"#1A3A5A", eq:"Haltères", diff:1, desc:"Composé · Isolé du bas du dos"},
+  {name:"Face Pull câble",       muscle:"Dos",         code:"FP",    g1:"#0D1B2A",g2:"#1A3A5A", eq:"Câble",    diff:1, desc:"Isolation · Deltoïde post · Coiffe"},
+
+  // ── ÉPAULES ──
+  {name:"Barbell OHP",           muscle:"Épaules",     code:"OHP",   g1:"#2A0A1A",g2:"#5A1A3A", eq:"Barre",    diff:3, desc:"Composé · Épaules 3D"},
+  {name:"Arnold Press",          muscle:"Épaules",     code:"ARN",   g1:"#2A0A1A",g2:"#5A1A3A", eq:"Haltères", diff:2, desc:"Composé · Épaules 3D rotation"},
+  {name:"Dumbbell OHP",          muscle:"Épaules",     code:"DOHP",  g1:"#2A0A1A",g2:"#5A1A3A", eq:"Haltères", diff:2, desc:"Composé · Stabilisateurs"},
+  {name:"Lateral Raise câble 1 bras",muscle:"Épaules", code:"LAT",   g1:"#2A0A1A",g2:"#5A1A3A", eq:"Câble",    diff:1, desc:"Isolation · Deltoïde médial"},
+  {name:"Lateral Raise DB",      muscle:"Épaules",     code:"LRD",   g1:"#2A0A1A",g2:"#5A1A3A", eq:"Haltères", diff:1, desc:"Isolation · Deltoïde médial"},
+  {name:"Rear Delt Fly câble",   muscle:"Épaules",     code:"RDF",   g1:"#2A0A1A",g2:"#5A1A3A", eq:"Câble",    diff:1, desc:"Isolation · Deltoïde postérieur"},
+  {name:"Upright Row",           muscle:"Épaules",     code:"UR",    g1:"#2A0A1A",g2:"#5A1A3A", eq:"Barre",    diff:2, desc:"Composé · Épaules · Trapèzes"},
+  {name:"Machine Shoulder Press",muscle:"Épaules",     code:"MSP",   g1:"#2A0A1A",g2:"#5A1A3A", eq:"Machine",  diff:1, desc:"Composé · Machine"},
+
+  // ── BICEPS ──
+  {name:"Cable Curl",            muscle:"Biceps",      code:"CC",    g1:"#0A1A2A",g2:"#1A3A4A", eq:"Câble",    diff:1, desc:"Isolation · Tension constante"},
+  {name:"Barbell Curl",          muscle:"Biceps",      code:"BC",    g1:"#0A1A2A",g2:"#1A3A4A", eq:"Barre",    diff:1, desc:"Isolation · Surcharge maximale"},
+  {name:"Dumbbell Curl",         muscle:"Biceps",      code:"DC",    g1:"#0A1A2A",g2:"#1A3A4A", eq:"Haltères", diff:1, desc:"Isolation · Supination"},
+  {name:"Hammer Curl",           muscle:"Biceps",      code:"HC",    g1:"#0A1A2A",g2:"#1A3A4A", eq:"Haltères", diff:1, desc:"Isolation · Brachial · Long chef"},
+  {name:"Incline DB Curl",       muscle:"Biceps",      code:"IDC",   g1:"#0A1A2A",g2:"#1A3A4A", eq:"Haltères", diff:1, desc:"Isolation · Étirement maximum"},
+  {name:"Concentration Curl",    muscle:"Biceps",      code:"CON",   g1:"#0A1A2A",g2:"#1A3A4A", eq:"Haltère",  diff:1, desc:"Isolation · Peak contraction"},
+  {name:"EZ Bar Curl",           muscle:"Biceps",      code:"EZ",    g1:"#0A1A2A",g2:"#1A3A4A", eq:"Barre EZ", diff:1, desc:"Isolation · Confort poignets"},
+
+  // ── TRICEPS ──
+  {name:"Overhead Triceps Rope", muscle:"Triceps",     code:"OTR",   g1:"#1A1A0A",g2:"#3A3A1A", eq:"Câble",    diff:1, desc:"Isolation · Long chef étirement"},
+  {name:"Tricep Pushdown",       muscle:"Triceps",     code:"PD",    g1:"#1A1A0A",g2:"#3A3A1A", eq:"Câble",    diff:1, desc:"Isolation · Chef latéral"},
+  {name:"Close Grip Bench",      muscle:"Triceps",     code:"CGB",   g1:"#1A1A0A",g2:"#3A3A1A", eq:"Barre",    diff:2, desc:"Composé · Triceps · Pectoraux"},
+  {name:"Skull Crusher",         muscle:"Triceps",     code:"SK",    g1:"#1A1A0A",g2:"#3A3A1A", eq:"Barre EZ", diff:2, desc:"Isolation · Long chef"},
+  {name:"Diamond Push-Up",       muscle:"Triceps",     code:"DPU",   g1:"#1A1A0A",g2:"#3A3A1A", eq:"Poids corps",diff:1,desc:"Isolation · Poids corps"},
+  {name:"Dips étroits",          muscle:"Triceps",     code:"DIPs",  g1:"#1A1A0A",g2:"#3A3A1A", eq:"Poids corps",diff:2,desc:"Composé · Triceps emphasis"},
+
+  // ── QUADRICEPS ──
+  {name:"Back Squat",            muscle:"Quadriceps",  code:"SQ",    g1:"#2A0A0A",g2:"#5A1A1A", eq:"Barre",    diff:3, desc:"Composé · Roi des jambes"},
+  {name:"Front Squat",           muscle:"Quadriceps",  code:"FSQ",   g1:"#2A0A0A",g2:"#5A1A1A", eq:"Barre",    diff:3, desc:"Composé · Quad dominant"},
+  {name:"Leg Press",             muscle:"Quadriceps",  code:"LP",    g1:"#2A0A0A",g2:"#5A1A1A", eq:"Machine",  diff:1, desc:"Composé · Machine"},
+  {name:"Bulgarian Split Squat", muscle:"Quadriceps",  code:"BSS",   g1:"#2A0A0A",g2:"#5A1A1A", eq:"Haltères", diff:2, desc:"Unilatéral · Quad · Fessier"},
+  {name:"Leg Extension",         muscle:"Quadriceps",  code:"LE",    g1:"#2A0A0A",g2:"#5A1A1A", eq:"Machine",  diff:1, desc:"Isolation · Quadriceps"},
+  {name:"Hack Squat",            muscle:"Quadriceps",  code:"HS",    g1:"#2A0A0A",g2:"#5A1A1A", eq:"Machine",  diff:2, desc:"Composé · Quad dominant"},
+  {name:"Walking Lunge",         muscle:"Quadriceps",  code:"LUN",   g1:"#2A0A0A",g2:"#5A1A1A", eq:"Haltères", diff:2, desc:"Unilatéral · Fonctionnel"},
+
+  // ── ISCHIO-JAMBIERS ──
+  {name:"Romanian Deadlift",     muscle:"Ischio",      code:"RDL",   g1:"#1A0A0A",g2:"#4A1A1A", eq:"Barre",    diff:2, desc:"Composé · IJ · Fessiers"},
+  {name:"Nordic Leg Curl",       muscle:"Ischio",      code:"NLC",   g1:"#1A0A0A",g2:"#4A1A1A", eq:"Poids corps",diff:3,desc:"Excentrique · IJ priorité"},
+  {name:"Leg Curl couché",       muscle:"Ischio",      code:"LC",    g1:"#1A0A0A",g2:"#4A1A1A", eq:"Machine",  diff:1, desc:"Isolation · Machine"},
+  {name:"Seated Leg Curl",       muscle:"Ischio",      code:"SLC",   g1:"#1A0A0A",g2:"#4A1A1A", eq:"Machine",  diff:1, desc:"Isolation · Angle différent"},
+  {name:"Stiff Leg Deadlift",    muscle:"Ischio",      code:"SLD",   g1:"#1A0A0A",g2:"#4A1A1A", eq:"Barre",    diff:2, desc:"Composé · IJ emphasis"},
+  {name:"Good Morning",          muscle:"Ischio",      code:"GM",    g1:"#1A0A0A",g2:"#4A1A1A", eq:"Barre",    diff:2, desc:"Composé · IJ · Bas du dos"},
+
+  // ── FESSIERS ──
+  {name:"Barbell Hip Thrust",    muscle:"Fessiers",    code:"HT",    g1:"#2A0A0A",g2:"#5A1A0A", eq:"Barre",    diff:2, desc:"Isolation · Fessiers priorité"},
+  {name:"Hip Thrust Unilatéral", muscle:"Fessiers",    code:"1HT",   g1:"#2A0A0A",g2:"#5A1A0A", eq:"Poids corps",diff:2,desc:"Unilatéral · Correction asymétrie"},
+  {name:"Glute Bridge",          muscle:"Fessiers",    code:"GB",    g1:"#2A0A0A",g2:"#5A1A0A", eq:"Barre",    diff:1, desc:"Isolation · Débutant convivial"},
+  {name:"Cable Kickback",        muscle:"Fessiers",    code:"CK",    g1:"#2A0A0A",g2:"#5A1A0A", eq:"Câble",    diff:1, desc:"Isolation · Fessier câble"},
+  {name:"Sumo Deadlift",         muscle:"Fessiers",    code:"SD",    g1:"#2A0A0A",g2:"#5A1A0A", eq:"Barre",    diff:3, desc:"Composé · Fessiers · Adducteurs"},
+  {name:"Step-Up Lesté",         muscle:"Fessiers",    code:"SU",    g1:"#2A0A0A",g2:"#5A1A0A", eq:"Haltères", diff:2, desc:"Unilatéral · Fonctionnel"},
+
+  // ── MOLLETS ──
+  {name:"Standing Calf Raise",   muscle:"Mollets",     code:"SCR",   g1:"#0A2A1A",g2:"#1A5A3A", eq:"Machine",  diff:1, desc:"Gastrocnémien · Debout"},
+  {name:"Seated Calf Raise",     muscle:"Mollets",     code:"SeCR",  g1:"#0A2A1A",g2:"#1A5A3A", eq:"Machine",  diff:1, desc:"Soléaire · Assis"},
+  {name:"Donkey Calf Raise",     muscle:"Mollets",     code:"DCR",   g1:"#0A2A1A",g2:"#1A5A3A", eq:"Machine",  diff:1, desc:"Gastrocnémien · Amplitude max"},
+  {name:"Single Leg Calf Raise", muscle:"Mollets",     code:"1CR",   g1:"#0A2A1A",g2:"#1A5A3A", eq:"Poids corps",diff:1,desc:"Unilatéral · Progression naturelle"},
+
+  // ── CORE ──
+  {name:"Ab Wheel Rollout",      muscle:"Core",        code:"ABW",   g1:"#0A2A0A",g2:"#1A5A1A", eq:"Roue",     diff:3, desc:"Anti-extension · Core profond"},
+  {name:"Plank",                 muscle:"Core",        code:"PLK",   g1:"#0A2A0A",g2:"#1A5A1A", eq:"Poids corps",diff:1,desc:"Isométrique · Gainage"},
+  {name:"Hanging Leg Raise",     muscle:"Core",        code:"HLR",   g1:"#0A2A0A",g2:"#1A5A1A", eq:"Barre",    diff:2, desc:"Abdominaux inférieurs"},
+  {name:"Cable Crunch",          muscle:"Core",        code:"CC",    g1:"#0A2A0A",g2:"#1A5A1A", eq:"Câble",    diff:1, desc:"Isolation · Flexion rachis"},
+  {name:"Russian Twist",         muscle:"Core",        code:"RT",    g1:"#0A2A0A",g2:"#1A5A1A", eq:"Disque",   diff:1, desc:"Rotation · Obliques"},
+  {name:"Pallof Press",          muscle:"Core",        code:"PP",    g1:"#0A2A0A",g2:"#1A5A1A", eq:"Câble",    diff:1, desc:"Anti-rotation · Core fonctionnel"},
+
+  // ── CHAÎNE POSTÉRIEURE / FULL BODY ──
+  {name:"Deadlift Conventionnel",muscle:"Full Body",   code:"DL",    g1:"#1A1A0A",g2:"#3A3A1A", eq:"Barre",    diff:3, desc:"Composé · Roi des exercices"},
+  {name:"Trap Bar Deadlift",     muscle:"Full Body",   code:"TBD",   g1:"#1A1A0A",g2:"#3A3A1A", eq:"Trap Bar", diff:2, desc:"Composé · Genoux · Dos"},
+  {name:"Farmer Walk",           muscle:"Full Body",   code:"FW",    g1:"#1A1A0A",g2:"#3A3A1A", eq:"Haltères", diff:1, desc:"Fonctionnel · Prise · Core"},
+  {name:"Rack Pull",             muscle:"Full Body",   code:"RP",    g1:"#1A1A0A",g2:"#3A3A1A", eq:"Barre",    diff:2, desc:"Composé · Dos épais · DL partiel"},
+  {name:"Power Clean",           muscle:"Full Body",   code:"PC",    g1:"#1A1A0A",g2:"#3A3A1A", eq:"Barre",    diff:3, desc:"Olympique · Explosivité"},
+  {name:"Kettlebell Swing",      muscle:"Full Body",   code:"KB",    g1:"#1A1A0A",g2:"#3A3A1A", eq:"Kettlebell",diff:2,desc:"Balistique · Chaîne post."},
+];
+
+// Group by muscle
+const MUSCLES_ORDER=["Pectoraux","Dos","Épaules","Biceps","Triceps","Quadriceps","Ischio","Fessiers","Mollets","Core","Full Body"];
+const EX_BY_MUSCLE={};
+MUSCLES_ORDER.forEach(m=>EX_BY_MUSCLE[m]=[]);
+EX_LIBRARY.forEach(ex=>{if(EX_BY_MUSCLE[ex.muscle])EX_BY_MUSCLE[ex.muscle].push(ex);});
+
+let replaceTarget={exName:null,ei:null}; // which exercise to replace
+
+function openExLibrary(exName, ei){
+  replaceTarget={exName,ei};
+  renderLibrary('all','');
+  document.getElementById('libSh').classList.add('on');
+}
+
+function renderLibrary(muscle, search){
+  const q=(search||'').toLowerCase().trim();
+  const activeTab=document.getElementById('libActiveMuscle');
+  if(activeTab) activeTab.value=muscle;
+  
+  let exercises = q 
+    ? EX_LIBRARY.filter(ex=>ex.name.toLowerCase().includes(q)||ex.muscle.toLowerCase().includes(q)||ex.desc.toLowerCase().includes(q))
+    : muscle==='all' ? EX_LIBRARY : (EX_BY_MUSCLE[muscle]||[]);
+  
+  // Muscle tab pills
+  const tabs=['all',...MUSCLES_ORDER];
+  const tabsHtml=tabs.map(m=>`
+    <div onclick="renderLibrary('${m}','')" style="flex-shrink:0;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .15s;
+      background:${(muscle===m&&!q)?'var(--red)':'var(--bg3)'};
+      color:${(muscle===m&&!q)?'#fff':'var(--t2)'};
+      border:1px solid ${(muscle===m&&!q)?'var(--red)':'var(--b)'}">
+      ${m==='all'?'Tous':m}
+    </div>`).join('');
+  
+  // Exercise grid — 2 columns
+  const gridHtml = exercises.length===0 
+    ? `<div style="text-align:center;padding:32px 0;color:var(--t3);font-size:13px">Aucun exercice trouvé</div>`
+    : `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 14px 14px">
+        ${exercises.map(ex=>`
+          <div onclick="selectReplacement('${ex.name}')" style="
+            background:linear-gradient(135deg,${ex.g1},${ex.g2});
+            border-radius:var(--r);padding:12px;cursor:pointer;
+            border:1px solid rgba(255,255,255,.06);
+            position:relative;overflow:hidden;
+            transition:transform .15s;
+            min-height:90px;display:flex;flex-direction:column;justify-content:flex-end;
+          " ontouchstart="this.style.transform='scale(.96)'" ontouchend="this.style.transform='scale(1)'">
+            <!-- Background code -->
+            <div style="position:absolute;top:4px;right:8px;font-size:28px;font-weight:900;color:rgba(255,255,255,.1);letter-spacing:-.02em;line-height:1">${ex.code}</div>
+            <!-- Difficulty dots -->
+            <div style="position:absolute;top:8px;left:8px;display:flex;gap:3px">
+              ${[1,2,3].map(d=>`<div style="width:5px;height:5px;border-radius:50%;background:${d<=ex.diff?'rgba(255,255,255,.7)':'rgba(255,255,255,.15)'}"></div>`).join('')}
+            </div>
+            <!-- Equipment badge -->
+            <div style="position:absolute;top:8px;right:8px;font-size:8px;font-weight:800;color:rgba(255,255,255,.5);letter-spacing:.06em;text-transform:uppercase">${ex.eq}</div>
+            <!-- Name + desc -->
+            <div style="font-size:12px;font-weight:800;color:#fff;line-height:1.2;margin-bottom:3px">${ex.name}</div>
+            <div style="font-size:9px;color:rgba(255,255,255,.55);line-height:1.3">${ex.desc}</div>
+          </div>
+        `).join('')}
+      </div>`;
+  
+  document.getElementById('libTabs').innerHTML=tabsHtml;
+  document.getElementById('libGrid').innerHTML=gridHtml;
+}
+
+function selectReplacement(newExName){
+  const {exName,ei} = replaceTarget;
+  if(!exName||ei===null) return;
+  
+  const actId=activeDay();
+  const day=dayObj(actId);
+  const b=bloc();
+  
+  // Find existing exercise data
+  const newLibEx = EX_LIBRARY.find(e=>e.name===newExName);
+  if(!newLibEx) return;
+  
+  // Replace in day program (in-session only — doesn't modify PROG permanently)
+  const progEx = day.exercises[ei];
+  
+  // Transfer sets with same structure
+  const oldSets = S.sets[exName] || [];
+  S.sets[newExName] = oldSets.map(s=>({...s}));
+  delete S.sets[exName];
+  
+  // Store session override for this exercise
+  if(!S.exOverrides) S.exOverrides={};
+  S.exOverrides[`${actId}-${ei}`] = newExName;
+  
+  save();
+  document.getElementById('libSh').classList.add('on') && document.getElementById('libSh').classList.remove('on');
+  document.getElementById('libSh').classList.remove('on');
+  renderWo();
+}
+
+function getExForSlot(day, ei){
+  const key=`${activeDay()}-${ei}`;
+  const override = S.exOverrides && S.exOverrides[key];
+  if(override){
+    // Build synthetic ex object from library
+    const libEx = EX_LIBRARY.find(e=>e.name===override);
+    if(libEx){
+      const progEx = day.exercises[ei];
+      return {
+        ...progEx,
+        name: libEx.name,
+        rt: progEx.rt || 'comp',
+        new: false,
+        bw: false,
+        rpe: false,
+        w: progEx.w,
+      };
+    }
+  }
+  return day.exercises[ei];
+}
+
 function renderWo(){
   const actId=activeDay();const day=dayObj(actId);const b=bloc();
   document.getElementById('woTitle').textContent=`J${actId} — ${day.name}`;
@@ -1115,7 +1356,8 @@ function renderWo(){
   const prevSess=S.sessions.filter(s=>s.dayId===actId).slice(-1)[0];
   let html='';
 
-  day.exercises.forEach((ex,ei)=>{
+  day.exercises.forEach((origEx,ei)=>{
+    const ex=getExForSlot(day,ei);
     const wStr=getW(ex,b);const wNum=parseFloat(wStr)||0;
     const isDB=['Arnold Press','Lateral Raise câble 1 bras','Farmer Walk','Bulgarian Split Squat'].includes(ex.name);
     const wUnit=isDB?'/m':'lb';
@@ -1155,6 +1397,7 @@ function renderWo(){
         ${isBar?`<div class="ex-act" onclick="openPlate(document.querySelector('#sr-${ei}-0 .sinp')?.value||'${wNum}','${ex.name}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 5v14M18 5v14M4 9h4M16 9h4M4 15h4M16 15h4"/></svg>Plaques</div>`:''}
         <div class="ex-act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${rInfo.type} · ${rInfo.fmt}</div>
         <div class="ex-act ${doneC===ex.s?'on':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>${doneC}/${ex.s} série${ex.s>1?'s':''}</div>
+        <div class="ex-act" onclick="openExLibrary('${ex.name}',${ei})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Remplacer</div>
       </div>
       <div class="ex-note">${ex.note}</div>
       ${prevLast?`<div class="prev-ban"><div><div class="prev-ban-l">Dernière fois</div><div class="prev-ban-v">${prevLast.w} lb × ${prevLast.r} reps</div></div>${prevLast.isPR?'<span class="pr-badge">🏆 PR</span>':''}</div>`:''}
