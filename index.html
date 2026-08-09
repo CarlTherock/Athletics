@@ -297,11 +297,12 @@ body{
 .pl-for{font-size:14px;color:var(--t2);text-align:center;padding:0 18px 14px}
 .pl-for strong{color:#fff;font-weight:800}
 /* Barbell : LEFT=[plates_heavy→light][bar_end][collar][mid_bar]   RIGHT=[mid_bar][collar][bar_end][plates_light→heavy] */
-.bb-wrap{display:flex;align-items:center;justify-content:center;margin:0 18px 12px;gap:0;overflow:hidden}
-.bb-end{height:8px;width:20px;background:linear-gradient(180deg,#D0D0D0,#888);border-radius:2px}
-.bb-mid{flex:1;min-width:36px;max-width:80px;height:6px;background:linear-gradient(180deg,#CCC,#888);border-radius:1px}
-.bb-col{width:8px;height:44px;background:linear-gradient(180deg,#C8C8C8,#777);border-radius:3px;flex-shrink:0}
-.bb-pl{display:flex;align-items:center;justify-content:center;border-radius:4px;flex-shrink:0;font-size:7px;font-weight:900;color:rgba(255,255,255,.9);border:2px solid rgba(255,255,255,.15)}
+.bb-wrap{display:flex;align-items:center;justify-content:center;margin:0 18px 12px;gap:0;overflow:hidden;position:relative}
+.bb-end{height:9px;width:22px;background:linear-gradient(180deg,#3a3a3a,#0a0a0a);border-radius:2px}
+.bb-mid{flex:1;min-width:44px;max-width:120px;height:7px;background:linear-gradient(180deg,#2c2c2c,#050505);border-radius:1px;position:relative;display:flex;align-items:center;justify-content:center}
+.bb-mid::after{content:'CTR';position:absolute;top:-9px;left:50%;transform:translateX(-50%);font-size:8px;font-weight:900;letter-spacing:.12em;color:var(--gold)}
+.bb-col{width:8px;height:46px;background:linear-gradient(180deg,#333,#0a0a0a);border-radius:3px;flex-shrink:0}
+.bb-pl{display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:4px;flex-shrink:0;font-size:8px;font-weight:900;color:rgba(255,255,255,.95);border:2px solid rgba(255,255,255,.15)}
 /* Vertical bars chart */
 .pl-bars{display:flex;align-items:flex-end;gap:7px;height:120px;padding:0 18px;border-bottom:2px solid var(--b2);margin-bottom:10px}
 .pl-bar-col{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1}
@@ -884,7 +885,7 @@ function dayObj(id){return PROG.days[(id||activeDay())-1]}
 // ════════════════════════════════════════════════════════════
 // PLATES — plaques vers l'EXTÉRIEUR
 // ════════════════════════════════════════════════════════════
-const BAR=45;
+let BAR=45;
 const PL=[
   {w:45,c:'#C8102E',h:115},{w:35,c:'#2563EB',h:96},
   {w:25,c:'#CA8A04',h:78},{w:10,c:'#16A34A',h:55},
@@ -897,7 +898,19 @@ function calcPlates(tot){
   return out;
 }
 
+let __lastPlateArgs = null;
+const BAR_PRESETS = [45,35,25,15];
+function setBarWeight(val){
+  const n = val==='custom' ? parseFloat(prompt('Poids personnalisé de la barre (lb) :', BAR)) : parseFloat(val);
+  if(isNaN(n) || n<=0) return;
+  BAR = n;
+  S.barWeight = n;
+  save();
+  if(__lastPlateArgs) openPlate(__lastPlateArgs.wStr, __lastPlateArgs.exName);
+}
+
 function openPlate(wStr,exName){
+  __lastPlateArgs = {wStr,exName};
   const n=parseFloat(wStr);
   document.getElementById('plTitle').textContent='🏋️ '+exName;
   const plates=isNaN(n)?[]:calcPlates(n);
@@ -907,7 +920,7 @@ function openPlate(wStr,exName){
   } else {
     h+=`<div class="pl-for">Pour <strong>${n} lb</strong>, chaque côté :</div>`;
     // BARBELL: plates on OUTSIDE — structure: [plates reversed=heavy first][bar_end][collar][mid][collar][bar_end][plates light→heavy]
-    const mkPl=(p,side)=>{const pw=p.w>=45?18:p.w>=25?14:p.w>=10?11:8;const ph=Math.min(42,Math.max(12,p.h*.48));return `<div class="bb-pl" style="width:${pw}px;height:${ph}px;background:${p.c}"></div>`;};
+    const mkPl=(p,side)=>{const pw=p.w>=45?18:p.w>=25?14:p.w>=10?11:8;const ph=Math.min(42,Math.max(12,p.h*.48));const lbl=pw>=11?p.w:'';return `<div class="bb-pl" style="width:${pw}px;height:${ph}px;background:${p.c}">${lbl}</div>`;};
     // Left side = heaviest plate against collar, lightest outermost
     // So we render plates in normal order left-to-right on left side (heavy=closest to collar=right of left group)
     // Structure: [plate_light...plate_heavy] [collar] [bar]
@@ -923,7 +936,13 @@ function openPlate(wStr,exName){
       h+=`</div>`;
     }
     for(const p of used){const c=cnt[p.w];h+=`<div class="pl-row"><div class="pl-dot" style="background:${p.c}"></div><div class="pl-name">${p.w} lb × ${c} de chaque côté</div><div class="pl-cnt">${c*2} total</div></div>`;}
-    h+=`<div class="pl-row" style="border-top:2px solid var(--b2)"><div class="pl-name" style="font-weight:800">+ Barre (${BAR} lb)</div></div>`;
+    h+=`<div class="pl-row" style="border-top:2px solid var(--b2)">
+      <div class="pl-name" style="font-weight:800">Ma barre</div>
+      <select onchange="setBarWeight(this.value)" style="background:var(--bg3);color:#fff;border:1px solid var(--b);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;outline:none">
+        ${BAR_PRESETS.map(w=>`<option value="${w}" ${BAR===w?'selected':''}>${w} lb</option>`).join('')}
+        <option value="custom" ${!BAR_PRESETS.includes(BAR)?'selected':''}>${!BAR_PRESETS.includes(BAR)?'Personnalisé — '+BAR+' lb':'Personnalisé…'}</option>
+      </select>
+    </div>`;
   }
   document.getElementById('plBody').innerHTML=h;
   raiseSheet('plSh');
@@ -1325,7 +1344,7 @@ function openDaySh(id){
         </div>
       </div>
       <div style="display:flex;gap:7px;margin-top:8px;flex-wrap:wrap">
-        ${!ex.bw&&!ex.rpe?`<button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:11px" onclick="openPlate('${parseFloat(w)||0}','${ex.name}')">🏋️ Voir les plaques</button>`:''}
+        ${!ex.bw&&!ex.rpe?`<button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:11px" onclick="openPlate('${parseFloat(w)||0}','${ex.name}')">🏋️ Plaques</button>`:''}
         <button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:11px;display:inline-flex;align-items:center;gap:5px" onclick="openExLibrary(${id},${exIdx})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>Remplacer</button>
       </div>
       <div style="height:1px;background:var(--b);margin-top:11px"></div>
@@ -2635,6 +2654,7 @@ function playDone(){
 
 
 load();
+if(S.barWeight) BAR=S.barWeight;
 S.curWeek=calcWeek();
 save();
 renderToday();
