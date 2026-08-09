@@ -1313,8 +1313,13 @@ function renderToday(){
   document.getElementById('heroDay').textContent=isRest?'Repos actif':`Jour ${actId} — ${day.name}`;
   document.getElementById('heroSub').textContent=isRest?'LISS 35–45 min · Mobilité 15 min':day.sub;
   // Calculate streak
-  const streak=calcStreak();
-  document.getElementById('heroBadges').innerHTML=`<span class="pill ${pillCls()}">${blocLbl()}</span><span class="pill pg">Sem. ${S.curWeek}/17</span>${streak>0?`<span class="pill" style="background:rgba(212,165,32,.12);color:var(--gold);border:1px solid rgba(212,165,32,.25)">🔥 ${streak} sem.</span>`:''} ${S.ovDay?'<span class="pill pr">Journée modifiée</span>':''}${isRest?'<span class="pill pb">REPOS + LISS</span>':''}`;
+    const streak=calcStreak();
+  const streakBadge = streak>0 ? '<span class="pill" style="background:rgba(212,165,32,.12);color:var(--gold);border:1px solid rgba(212,165,32,.25)">\uD83D\uDD25 '+streak+' sem.</span>' : '';
+  const ovBadge = S.ovDay ? '<span class="pill pr">Journ\u00E9e modifi\u00E9e</span>' : '';
+  const restBadge = isRest ? '<span class="pill pb">REPOS + LISS</span>' : '';
+  document.getElementById('heroBadges').innerHTML = '<span class="pill '+pillCls()+'">'+blocLbl()+'</span>'
+    + '<span class="pill pg">Sem. '+S.curWeek+'/17</span>'
+    + streakBadge + ovBadge + restBadge;
 
   // Week strip Sun→Sat
   const sun=new Date(now);sun.setDate(now.getDate()-wd);
@@ -2934,20 +2939,28 @@ function processImportedRows(rows){
 
 // ════════════════════════════════════════════════════════
 // INIT
-load();
-S.curWeek=calcWeek();
-save();
-renderToday();
-renderProg();
-// ALWAYS dismiss splash after 1.6s — no conditions
-setTimeout(function(){
-  var sp=document.getElementById('spl');
-  if(sp){
-    sp.style.opacity='0';
-    sp.style.transition='opacity 0.5s';
-    setTimeout(function(){ if(sp.parentNode) sp.parentNode.removeChild(sp); }, 500);
+// Dismiss splash IMMEDIATELY as first priority
+(function(){
+  // Dismiss splash as soon as DOM is ready - no waiting
+  function dismissSplash(){
+    var sp=document.getElementById('spl');
+    if(sp){
+      sp.style.transition='opacity 0.6s';
+      sp.style.opacity='0';
+      setTimeout(function(){if(sp&&sp.parentNode)sp.parentNode.removeChild(sp);},650);
+    }
   }
-}, 1600);
+  // Try after 1.4s, and again at 3s as backup
+  setTimeout(dismissSplash, 1400);
+  setTimeout(dismissSplash, 3000);
+})();
+
+// Init app state
+try{ load(); }catch(e){}
+try{ S.curWeek=calcWeek(); }catch(e){}
+try{ save(); }catch(e){}
+try{ renderToday(); }catch(e){ console.error('renderToday failed:',e); }
+try{ renderProg(); }catch(e){ console.error('renderProg failed:',e); }
 // Resync rest timer if it was running before page reload
 if(S.restEndTs && S.restEndTs > Date.now()){
   document.getElementById('restTypeLbl').textContent = S.restType||'REPOS';
