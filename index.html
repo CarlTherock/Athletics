@@ -695,6 +695,7 @@ body::before {
 
 
 
+
 // ════════════════════════════════════════════════════════════
 // PROGRAMME DATA
 // SEMAINE : Dim=J1, Lun=J2, Mar=J3, Mer=J4, Jeu=J5, Ven=REPOS, Sam=REPOS
@@ -1532,6 +1533,11 @@ function initAudio(){
   }catch(e){ _audioCtx=null; }
 }
 
+// Fallback: unlock audio on the very first tap anywhere in the app
+document.addEventListener('touchend', function firstTapUnlock(){
+  initAudio();
+}, {once:true, passive:true});
+
 function playTone(freq, when, dur, vol){
   if(!_audioCtx) return;
   try{
@@ -1548,14 +1554,24 @@ function playTone(freq, when, dur, vol){
 
 function playDone(){
   try{ navigator.vibrate&&navigator.vibrate([150,80,150,80,300]); }catch(e){}
+  if(!_audioCtx){
+    // Audio never initialized (e.g. picker used without starting a workout) — init now as fallback
+    try{ initAudio(); }catch(e){}
+  }
   if(!_audioCtx) return;
-  try{
-    if(_audioCtx.state==='suspended') _audioCtx.resume();
-    var now=_audioCtx.currentTime;
-    playTone(440, now,      0.18, 0.6);
-    playTone(550, now+0.22, 0.18, 0.6);
-    playTone(660, now+0.44, 0.28, 0.7);
-  }catch(e){}
+  var fire = function(){
+    try{
+      var now=_audioCtx.currentTime;
+      playTone(440, now,      0.18, 0.6);
+      playTone(550, now+0.22, 0.18, 0.6);
+      playTone(660, now+0.44, 0.28, 0.7);
+    }catch(e){}
+  };
+  if(_audioCtx.state==='suspended'){
+    _audioCtx.resume().then(fire).catch(fire);
+  } else {
+    fire();
+  }
 }
 
 
@@ -1565,6 +1581,7 @@ save();
 renderToday();
 renderProg();
 setTimeout(()=>{const sp=document.getElementById('spl');if(sp){sp.classList.add('out');setTimeout(()=>sp.remove(),500);}},1600);
+
 
 
 
