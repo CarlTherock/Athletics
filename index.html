@@ -689,25 +689,110 @@ function dayObj(id){return PROG.days[(id||activeDay())-1]}
 const BAR=45;
 const PL=[{w:45,c:'#C8102E',h:115},{w:35,c:'#2563EB',h:96},{w:25,c:'#CA8A04',h:78},{w:10,c:'#16A34A',h:55},{w:5,c:'#7C3AED',h:40},{w:2.5,c:'#6B7280',h:28}];
 function calcPlates(tot){const n=parseFloat(tot);if(isNaN(n)||n<=BAR)return[];let rem=(n-BAR)/2;const out=[];for(const p of PL){while(rem>=p.w-.001){out.push(p);rem-=p.w;rem=Math.round(rem*100)/100;}}return out;}
-function openPlate(wStr,exName){
-  const n=parseFloat(wStr);
-  document.getElementById('plTitle').textContent='🏋️ '+exName;
-  const plates=isNaN(n)?[]:calcPlates(n);
+function renderPlateBody(n, exName){
   let h='';
-  if(isNaN(n)||n<=0){h=`<div style="padding:20px;text-align:center;color:var(--t3)">Poids au ressenti.</div>`;}
-  else{
-    h+=`<div class="pl-for">Pour <strong>${n} lb</strong>, chaque côté :</div>`;
-    const mkP=p=>{const pw=p.w>=45?18:p.w>=25?14:p.w>=10?11:8;const ph=Math.min(42,Math.max(12,p.h*.48));return`<div class="bb-pl" style="width:${pw}px;height:${ph}px;background:${p.c}"></div>`;};
-    const left=[...plates].reverse().map(mkP).join('');
-    const right=plates.map(mkP).join('');
-    h+=`<div class="bb-wrap">${left}<div class="bb-end"></div><div class="bb-col"></div><div class="bb-mid"></div><div class="bb-col"></div><div class="bb-end"></div>${right}</div>`;
+  const plates=isNaN(n)||n<=0?[]:calcPlates(n);
+  
+  // Input field for weight — always shown, dynamic
+  h+=`<div style="padding:0 18px 16px">
+    <div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--t3);text-transform:uppercase;margin-bottom:6px">CHARGE TOTALE (lb)</div>
+    <input class="inp" type="number" inputmode="decimal" value="${isNaN(n)||n<=0?'':n}" placeholder="ex: 225"
+      oninput="updatePlateCalc(this.value,'${exName||''}')" style="font-size:22px;text-align:center">
+  </div>`;
+  
+  if(isNaN(n)||n<=0){
+    h+=`<div style="padding:20px;text-align:center;color:var(--t3);font-size:13px">Entrez un poids pour voir les plaques.</div>`;
+  } else if(n<=BAR){
+    h+=`<div style="padding:16px 18px;text-align:center">
+      <div style="font-size:14px;font-weight:700;color:var(--t2)">Barre seule — ${BAR} lb</div>
+      <div style="font-size:12px;color:var(--t3);margin-top:4px">Aucune plaque nécessaire</div>
+    </div>`;
+  } else {
     const cnt={};for(const p of plates)cnt[p.w]=(cnt[p.w]||0)+1;
-    const used=PL.filter(p=>cnt[p.w]);const maxC=Math.max(1,...Object.values(cnt));
-    if(used.length){h+=`<div class="pl-bars">`;for(const p of used){const c=cnt[p.w];const hp=Math.max(16,(c/maxC)*100);h+=`<div class="pl-bar-col"><div class="pl-bar-val" style="color:${p.c}">${c}×</div><div class="pl-bar" style="height:${hp}%;background:${p.c}">${p.w}</div><div class="pl-bar-lbl">${p.w} lb</div></div>`;}h+=`</div>`;}
-    for(const p of used){const c=cnt[p.w];h+=`<div class="pl-row"><div class="pl-dot" style="background:${p.c}"></div><div class="pl-name">${p.w} lb × ${c} de chaque côté</div><div class="pl-cnt">${c*2} total</div></div>`;}
-    h+=`<div class="pl-row" style="border-top:2px solid var(--b2)"><div class="pl-name" style="font-weight:800">+ Barre (${BAR} lb)</div></div>`;
+    const used=PL.filter(p=>cnt[p.w]);
+    const maxC=Math.max(1,...Object.values(cnt));
+    
+    h+=`<div style="padding:0 18px 8px;font-size:13px;color:var(--t2)">Pour <strong style="color:#fff">${n} lb</strong> — chaque côté :</div>`;
+    
+    // ── VERTICAL BARS (Fitbod style) ──
+    // Bars grow upward, label below, count above
+    h+=`<div style="padding:0 18px 0;display:flex;align-items:flex-end;gap:10px;height:140px;border-bottom:2px solid var(--b2);margin:0 18px 14px">`;
+    for(const p of used){
+      const c=cnt[p.w];
+      const hpct=Math.max(20,(c/maxC)*100);
+      h+=`<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1">
+        <div style="font-size:12px;font-weight:800;color:${p.c}">${c}×</div>
+        <div style="width:100%;background:${p.c};border-radius:7px 7px 0 0;height:${hpct}%;min-height:20px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px">
+          <span style="font-size:13px;font-weight:900;color:#fff">${p.w}</span>
+        </div>
+      </div>`;
+    }
+    h+=`</div>`;
+    
+    // ── BARBELL VISUAL (Fitbod style) ──
+    // Horizontal bar with plates stacked as vertical rectangles
+    // Plates go OUTSIDE — light plates outermost
+    h+=`<div style="padding:0 18px 14px;display:flex;align-items:center;justify-content:center;gap:0;overflow:hidden">`;
+    // LEFT SIDE: plates reversed (lightest outermost = leftmost)
+    const leftPlates=[...plates].reverse();
+    leftPlates.forEach(p=>{
+      const pw=p.w>=45?20:p.w>=25?16:p.w>=10?12:9;
+      const ph=p.w>=45?52:p.w>=25?44:p.w>=10?34:26;
+      h+=`<div style="width:${pw}px;height:${ph}px;background:${p.c};border-radius:3px;border:1.5px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-size:6px;font-weight:900;color:rgba(255,255,255,.9);writing-mode:vertical-lr">${p.w}</span></div>`;
+    });
+    // Bar end + collar + center bar
+    h+=`<div style="height:8px;width:18px;background:linear-gradient(180deg,#D4D4D4,#888);border-radius:2px;flex-shrink:0"></div>`;
+    h+=`<div style="width:8px;height:42px;background:linear-gradient(180deg,#CCC,#777);border-radius:3px;flex-shrink:0"></div>`;
+    h+=`<div style="flex:1;min-width:28px;max-width:70px;height:6px;background:linear-gradient(180deg,#CCC,#888);border-radius:1px"></div>`;
+    h+=`<div style="width:8px;height:42px;background:linear-gradient(180deg,#CCC,#777);border-radius:3px;flex-shrink:0"></div>`;
+    h+=`<div style="height:8px;width:18px;background:linear-gradient(180deg,#D4D4D4,#888);border-radius:2px;flex-shrink:0"></div>`;
+    // RIGHT SIDE: plates normal order (heaviest from collar, lightest outermost)
+    plates.forEach(p=>{
+      const pw=p.w>=45?20:p.w>=25?16:p.w>=10?12:9;
+      const ph=p.w>=45?52:p.w>=25?44:p.w>=10?34:26;
+      h+=`<div style="width:${pw}px;height:${ph}px;background:${p.c};border-radius:3px;border:1.5px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-size:6px;font-weight:900;color:rgba(255,255,255,.9);writing-mode:vertical-lr">${p.w}</span></div>`;
+    });
+    h+=`</div>`;
+    
+    // ── PLATE LIST ──
+    h+=`<div style="padding:0 2px">`;
+    for(const p of used){
+      const c=cnt[p.w];
+      h+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 18px;border-top:1px solid var(--b)">
+        <div style="width:12px;height:12px;border-radius:3px;background:${p.c};flex-shrink:0"></div>
+        <div style="flex:1;font-size:14px;font-weight:700">${p.w} lb × ${c} de chaque côté</div>
+        <div style="font-size:13px;color:var(--t2);font-weight:600">${c*2} plaques</div>
+      </div>`;
+    }
+    h+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 18px;border-top:2px solid var(--b2)">
+      <div style="flex:1;font-size:14px;font-weight:800">Barre incluse</div>
+      <div style="font-size:13px;color:var(--t2);font-weight:600">${BAR} lb</div>
+    </div>`;
+    h+=`</div>`;
   }
-  document.getElementById('plBody').innerHTML=h;
+  return h;
+}
+
+function updatePlateCalc(val, exName){
+  const n=parseFloat(val)||0;
+  // Update title
+  const title=document.getElementById('plTitle');
+  if(title) title.textContent=exName?'🏋️ '+exName:'🏋️ Calculateur plaques';
+  // Re-render body keeping input focused
+  const body=document.getElementById('plBody');
+  if(!body) return;
+  const scrollY=body.scrollTop;
+  body.innerHTML=renderPlateBody(n, exName);
+  body.scrollTop=scrollY;
+  // Refocus input
+  const inp=body.querySelector('input');
+  if(inp){inp.focus();const len=inp.value.length;inp.setSelectionRange(len,len);}
+}
+
+function openPlate(wStr, exName){
+  const n=parseFloat(wStr)||0;
+  document.getElementById('plTitle').textContent=exName?'🏋️ '+exName:'🏋️ Calculateur plaques';
+  document.getElementById('plBody').innerHTML=renderPlateBody(n, exName);
   document.getElementById('plSh').classList.add('on');
 }
 
@@ -864,7 +949,7 @@ function renderWo(){
       </div>
       <div class="ex-acts">
         <div class="ex-act" onclick="openHist('${ex.name}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Historique</div>
-        ${isBar?`<div class="ex-act" onclick="openPlate('${sets[0].w||wNum}','${ex.name}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 5v14M18 5v14M4 9h4M16 9h4M4 15h4M16 15h4"/></svg>Plaques</div>`:''}
+        ${isBar?`<div class="ex-act" onclick="openPlate(document.querySelector('#sr-${ei}-0 .sinp')?.value||'${wNum}','${ex.name}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 5v14M18 5v14M4 9h4M16 9h4M4 15h4M16 15h4"/></svg>Plaques</div>`:''}
         <div class="ex-act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${rInfo.type} · ${rInfo.fmt}</div>
         <div class="ex-act ${doneC===ex.s?'on':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>${doneC}/${ex.s} série${ex.s>1?'s':''}</div>
       </div>
