@@ -11,7 +11,16 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{height:100%}
-body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',Arial,sans-serif;color:#fff;background:#0A0A0A;position:fixed;inset:0;overflow:hidden}
+body{
+  font-family:-apple-system,'SF Pro Text','Helvetica Neue',Arial,sans-serif;
+  color:#fff;background:#0A0A0A;
+  position:fixed;
+  top:0;left:0;right:0;bottom:0;
+  width:100%;
+  height:100%;
+  height:100dvh;
+  overflow:hidden;
+}
 
 /* ─── RESET ─── */
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -367,11 +376,29 @@ body{
 .rest-ov{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.97);display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px}
 .rest-ov.on{display:flex}
 
-/* Layout fixes */
-.screens{bottom:60px !important}
-@supports(padding-bottom: env(safe-area-inset-bottom)){
-  .screens{bottom:calc(60px + env(safe-area-inset-bottom,0px)) !important}
-  .bnav{height:calc(60px + env(safe-area-inset-bottom,0px)) !important;padding-bottom:env(safe-area-inset-bottom,0px) !important}
+/* Layout — works in Safari web + PWA + Android */
+.screens{
+  position:fixed;top:0;left:0;right:0;
+  bottom:calc(54px + env(safe-area-inset-bottom,0px));
+  overflow:hidden;
+}
+.scr{
+  position:absolute;inset:0;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+  display:none;
+  padding-bottom:20px;
+}
+.scr.on{display:block}
+.bnav{
+  position:fixed;bottom:0;left:0;right:0;
+  height:calc(54px + env(safe-area-inset-bottom,0px));
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  background:rgba(10,10,10,.97);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-top:1px solid #272727;
+  display:flex;z-index:10;
 }
 </style>
 </head>
@@ -580,6 +607,7 @@ body{
 
 
 <script>
+
 
 
 
@@ -1264,8 +1292,14 @@ document.addEventListener('visibilitychange', function(){
 var audioCtx = null;
 function getAudioCtx(){
   if(!audioCtx) try{ audioCtx=new(window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+  if(audioCtx && audioCtx.state==='suspended') audioCtx.resume().catch(function(){});
   return audioCtx;
 }
+// Unlock audio on first tap anywhere
+document.addEventListener('touchstart', function unlockAudio(){
+  getAudioCtx();
+  document.removeEventListener('touchstart', unlockAudio);
+}, {once:true, passive:true});
 function playBeep(freq, dur, vol){
   try{
     var ctx=getAudioCtx(); if(!ctx) return;
@@ -1291,6 +1325,7 @@ save();
 renderToday();
 renderProg();
 setTimeout(()=>{const sp=document.getElementById('spl');if(sp){sp.classList.add('out');setTimeout(()=>sp.remove(),500);}},1600);
+
 
 
 
