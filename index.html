@@ -389,22 +389,47 @@ body{
         <div class="rest-t" id="restT" style="text-shadow:0 0 20px rgba(200,16,46,.4)">120</div>
         <div class="rest-lbl">repos · ✏️</div>
       </div>
-      <!-- Edit mode (hidden by default) -->
-      <div id="restEditWrap" style="display:none;flex-direction:column;align-items:center;gap:4px">
-        <div style="font-size:10px;font-weight:800;letter-spacing:.12em;color:var(--rs);text-transform:uppercase;margin-bottom:4px">MODIFIER (sec)</div>
-        <input id="restEditInp" type="number" inputmode="numeric"
-          style="width:110px;font-size:38px;font-weight:900;text-align:center;background:rgba(255,255,255,.08);border:2px solid var(--red);border-radius:var(--r);color:#fff;font-family:inherit;outline:none;padding:6px 8px"
-          onfocus="this.select()"
-          onkeydown="if(event.key==='Enter')confirmRestEdit()">
-        <div style="display:flex;gap:8px;margin-top:6px">
-          <button onclick="setRestPreset(60)" style="padding:5px 10px;border-radius:20px;border:1px solid var(--b);background:var(--bg3);color:var(--t2);font-size:11px;font-weight:700;cursor:pointer">1:00</button>
-          <button onclick="setRestPreset(90)" style="padding:5px 10px;border-radius:20px;border:1px solid var(--b);background:var(--bg3);color:var(--t2);font-size:11px;font-weight:700;cursor:pointer">1:30</button>
-          <button onclick="setRestPreset(120)" style="padding:5px 10px;border-radius:20px;border:1px solid var(--b);background:var(--bg3);color:var(--t2);font-size:11px;font-weight:700;cursor:pointer">2:00</button>
-          <button onclick="setRestPreset(180)" style="padding:5px 10px;border-radius:20px;border:1px solid var(--b);background:var(--bg3);color:var(--t2);font-size:11px;font-weight:700;cursor:pointer">3:00</button>
+      <!-- Edit mode — drum-roll picker like Fitbod -->
+      <div id="restEditWrap" style="display:none;flex-direction:column;align-items:center;gap:8px">
+        <div style="font-size:9px;font-weight:800;letter-spacing:.14em;color:var(--rs);text-transform:uppercase">DURÉE DU REPOS</div>
+        <!-- Picker wheel -->
+        <div style="display:flex;align-items:center;gap:4px;position:relative">
+          <!-- Minutes column -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+            <div style="font-size:8px;color:var(--t3);font-weight:700;letter-spacing:.08em;margin-bottom:2px">MIN</div>
+            <div id="pickerMin" style="height:108px;overflow:hidden;position:relative;width:52px">
+              <div id="pickerMinList" style="display:flex;flex-direction:column;align-items:center;cursor:grab;user-select:none;touch-action:none"></div>
+              <!-- Selection overlay -->
+              <div style="pointer-events:none;position:absolute;top:36px;left:0;right:0;height:36px;border-top:1.5px solid var(--red);border-bottom:1.5px solid var(--red);background:rgba(200,16,46,.08)"></div>
+              <!-- Top/bottom fade -->
+              <div style="pointer-events:none;position:absolute;top:0;left:0;right:0;height:36px;background:linear-gradient(0deg,transparent,rgba(0,0,0,.8))"></div>
+              <div style="pointer-events:none;position:absolute;bottom:0;left:0;right:0;height:36px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.8))"></div>
+            </div>
+          </div>
+          <div style="font-size:26px;font-weight:900;color:var(--t2);margin-top:14px">:</div>
+          <!-- Seconds column -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+            <div style="font-size:8px;color:var(--t3);font-weight:700;letter-spacing:.08em;margin-bottom:2px">SEC</div>
+            <div id="pickerSec" style="height:108px;overflow:hidden;position:relative;width:52px">
+              <div id="pickerSecList" style="display:flex;flex-direction:column;align-items:center;cursor:grab;user-select:none;touch-action:none"></div>
+              <div style="pointer-events:none;position:absolute;top:36px;left:0;right:0;height:36px;border-top:1.5px solid var(--red);border-bottom:1.5px solid var(--red);background:rgba(200,16,46,.08)"></div>
+              <div style="pointer-events:none;position:absolute;top:0;left:0;right:0;height:36px;background:linear-gradient(0deg,transparent,rgba(0,0,0,.8))"></div>
+              <div style="pointer-events:none;position:absolute;bottom:0;left:0;right:0;height:36px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.8))"></div>
+            </div>
+          </div>
         </div>
-        <div style="display:flex;gap:8px;margin-top:4px">
-          <button onclick="confirmRestEdit()" style="padding:7px 20px;border-radius:20px;border:none;background:var(--red);color:#fff;font-size:13px;font-weight:800;cursor:pointer">✓ OK</button>
-          <button onclick="cancelRestEdit()" style="padding:7px 16px;border-radius:20px;border:1px solid var(--b);background:var(--bg3);color:var(--t2);font-size:13px;font-weight:700;cursor:pointer">Annuler</button>
+        <!-- Quick presets -->
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">
+          <button onclick="setRestPreset(60)"  style="padding:5px 11px;border-radius:20px;border:1px solid var(--b);background:var(--bg3);color:var(--t2);font-size:11px;font-weight:700;cursor:pointer">1:00</button>
+          <button onclick="setRestPreset(90)"  style="padding:5px 11px;border-radius:20px;border:1px solid var(--b);background:var(--bg3);color:var(--t2);font-size:11px;font-weight:700;cursor:pointer">1:30</button>
+          <button onclick="setRestPreset(120)" style="padding:5px 11px;border-radius:20px;border:1px solid var(--b);background:var(--bg3);color:var(--t2);font-size:11px;font-weight:700;cursor:pointer">2:00</button>
+          <button onclick="setRestPreset(180)" style="padding:5px 11px;border-radius:20px;border:1px solid var(--b);background:var(--bg3);color:var(--t2);font-size:11px;font-weight:700;cursor:pointer">3:00</button>
+          <button onclick="setRestPreset(240)" style="padding:5px 11px;border-radius:20px;border:1px solid var(--b);background:var(--bg3);color:var(--t2);font-size:11px;font-weight:700;cursor:pointer">4:00</button>
+        </div>
+        <!-- Confirm -->
+        <div style="display:flex;gap:8px">
+          <button onclick="confirmRestEdit()" style="padding:8px 22px;border-radius:20px;border:none;background:var(--red);color:#fff;font-size:13px;font-weight:800;cursor:pointer">✓ Confirmer</button>
+          <button onclick="cancelRestEdit()" style="padding:8px 16px;border-radius:20px;border:1px solid var(--b);background:var(--bg3);color:var(--t2);font-size:13px;font-weight:700;cursor:pointer">Annuler</button>
         </div>
       </div>
     </div>
@@ -1027,17 +1052,78 @@ function addRestTime(sec){
   save();
 }
 
+// ── DRUM-ROLL PICKER ──
+const ITEM_H = 36; // px per item
+let pickerMinVal = 1; // current selected minutes
+let pickerSecVal = 30; // current selected seconds
+
+function buildPickerCol(elId, values, selected){
+  const list = document.getElementById(elId);
+  if(!list) return;
+  list.innerHTML = values.map(v=>`<div style="height:${ITEM_H}px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;flex-shrink:0;width:52px">${String(v).padStart(2,'0')}</div>`).join('');
+  // Scroll to selected
+  const idx = values.indexOf(selected);
+  const wrapper = list.parentElement;
+  wrapper.scrollTop = idx * ITEM_H;
+  attachPickerScroll(wrapper, values, elId==='pickerMinList'?'min':'sec');
+}
+
+function attachPickerScroll(wrapper, values, type){
+  // Snap on scroll end
+  let scrollTimer;
+  wrapper.onscroll = ()=>{
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(()=>{
+      const idx = Math.round(wrapper.scrollTop / ITEM_H);
+      const clamped = Math.max(0, Math.min(values.length-1, idx));
+      wrapper.scrollTo({top: clamped*ITEM_H, behavior:'smooth'});
+      if(type==='min') pickerMinVal = values[clamped];
+      else pickerSecVal = values[clamped];
+      playTick();
+    }, 80);
+  };
+  // Touch drag for iOS
+  let startY=0, startScroll=0, dragging=false;
+  wrapper.addEventListener('touchstart', e=>{
+    startY=e.touches[0].clientY;
+    startScroll=wrapper.scrollTop;
+    dragging=true;
+  },{passive:true});
+  wrapper.addEventListener('touchmove', e=>{
+    if(!dragging)return;
+    const dy=startY-e.touches[0].clientY;
+    wrapper.scrollTop=startScroll+dy;
+  },{passive:true});
+  wrapper.addEventListener('touchend', ()=>{ dragging=false; });
+  // Mouse drag fallback
+  let mouseDown=false, mouseY=0, mouseScroll=0;
+  wrapper.addEventListener('mousedown', e=>{mouseDown=true;mouseY=e.clientY;mouseScroll=wrapper.scrollTop;e.preventDefault();});
+  window.addEventListener('mousemove', e=>{if(!mouseDown)return;wrapper.scrollTop=mouseScroll+(mouseY-e.clientY);});
+  window.addEventListener('mouseup', ()=>{mouseDown=false;});
+}
+
 function openRestEdit(e){
   e.stopPropagation();
-  // Show edit mode
-  const rem=Math.max(0,Math.round((S.restEndTs-Date.now())/1000));
+  const rem = Math.max(0, Math.round((S.restEndTs - Date.now())/1000));
+  pickerMinVal = Math.floor(rem/60);
+  pickerSecVal = rem % 60;
+  // Round seconds to nearest 5 for cleaner UX
+  pickerSecVal = Math.round(pickerSecVal/5)*5;
+  if(pickerSecVal>=60){pickerSecVal=0;pickerMinVal++;}
+
+  // Build columns
+  const mins = Array.from({length:10},(_,i)=>i);   // 0–9 min
+  const secs = [0,5,10,15,20,25,30,45,60].concat(   // common values
+    Array.from({length:60},(_,i)=>i)                 // + all seconds
+  ).filter((v,i,a)=>a.indexOf(v)===i).sort((a,b)=>a-b);
+
+  buildPickerCol('pickerMinList', mins, pickerMinVal);
+  buildPickerCol('pickerSecList', secs, pickerSecVal);
+
   document.getElementById('restDisplayWrap').style.display='none';
   document.getElementById('restEditWrap').style.display='flex';
   document.getElementById('restNext').style.opacity='0';
   document.getElementById('restBtns').style.opacity='0';
-  const inp=document.getElementById('restEditInp');
-  inp.value=rem;
-  setTimeout(()=>{inp.focus();inp.select();},50);
 }
 
 function cancelRestEdit(){
@@ -1048,21 +1134,20 @@ function cancelRestEdit(){
 }
 
 function setRestPreset(sec){
-  document.getElementById('restEditInp').value=sec;
+  // Update picker state and immediately confirm
+  pickerMinVal = Math.floor(sec/60);
+  pickerSecVal = sec % 60;
   confirmRestEdit();
 }
 
 function confirmRestEdit(){
-  const val=parseInt(document.getElementById('restEditInp').value)||0;
-  if(val<=0){cancelRestEdit();return;}
-  // Reset timer to new value
-  S.restEndTs=Date.now()+val*1000;
-  S.rTotal=val;
+  const sec = Math.max(5, pickerMinVal*60 + pickerSecVal);
+  S.restEndTs = Date.now() + sec*1000;
+  S.rTotal = sec;
   save();
   cancelRestEdit();
-  // Force immediate UI update
-  const t=document.getElementById('restT');if(t)t.textContent=val;
-  const arc=document.getElementById('restArc');if(arc)arc.style.strokeDashoffset=0;
+  const t=document.getElementById('restT'); if(t)t.textContent=sec;
+  const arc=document.getElementById('restArc'); if(arc)arc.style.strokeDashoffset=0;
 }
 function skipRest(){
   if(S.restInt) clearInterval(S.restInt);
