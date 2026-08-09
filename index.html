@@ -49,12 +49,12 @@ body{
   position:fixed;bottom:0;left:0;right:0;
   min-height:54px;
   padding-bottom:env(safe-area-inset-bottom,0px);
-  background:rgba(10,10,10,.97);
+  background:#0F0F0F;
   backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
   border-top:1px solid var(--b);
   display:flex;align-items:stretch;
   box-sizing:content-box;
-  z-index:10;
+  z-index:50;
 }
 .sh-bg{position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.75);display:none;align-items:flex-end}
 .sh-bg.on{display:flex}
@@ -378,25 +378,6 @@ body{
 @keyframes splashGo{0%,65%{opacity:1;pointer-events:auto}90%,100%{opacity:0;pointer-events:none;visibility:hidden}}
 
 
-/* Safe area protection — standalone PWA mode */
-body::before{
-  content:'';
-  position:fixed;
-  top:0;left:0;right:0;
-  height:env(safe-area-inset-top,0px);
-  background:#0A0A0A;
-  z-index:99999;
-  pointer-events:none;
-}
-body::after{
-  content:'';
-  position:fixed;
-  bottom:0;left:0;right:0;
-  height:env(safe-area-inset-bottom,0px);
-  background:#0A0A0A;
-  z-index:99999;
-  pointer-events:none;
-}
 </style>
 </head>
 <body>
