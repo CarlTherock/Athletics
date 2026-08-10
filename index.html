@@ -297,10 +297,9 @@ body{
 .pl-for{font-size:14px;color:var(--t2);text-align:center;padding:0 18px 14px}
 .pl-for strong{color:#fff;font-weight:800}
 /* Barbell : LEFT=[plates_heavy→light][bar_end][collar][mid_bar]   RIGHT=[mid_bar][collar][bar_end][plates_light→heavy] */
-.bb-wrap{display:flex;align-items:center;justify-content:flex-start;margin:6px 18px 18px;gap:0;overflow:hidden;position:relative}
+.bb-wrap{display:flex;align-items:center;justify-content:center;margin:6px 18px 18px;gap:0;overflow:hidden;position:relative}
 .bb-end{height:20px;width:50px;background:linear-gradient(180deg,#3a3a3a,#0a0a0a);border-radius:3px}
-.bb-mid{flex:1;min-width:60px;height:16px;background:linear-gradient(180deg,#2c2c2c,#050505);border-radius:2px;position:relative;display:flex;align-items:center;justify-content:center}
-.bb-mid::after{content:'CTR';position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:13px;font-weight:900;letter-spacing:.14em;color:var(--red)}
+.bb-mid{width:52px;height:16px;background:linear-gradient(180deg,#2c2c2c,#050505);border-radius:2px;position:relative;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:900;letter-spacing:.08em;color:var(--red)}
 .bb-col{background:linear-gradient(180deg,#333,#0a0a0a);border-radius:3px;flex-shrink:0}
 .bb-pl{display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:5px;flex-shrink:0;font-size:13px;font-weight:900;color:rgba(255,255,255,.95);border:3px solid rgba(255,255,255,.15)}
 /* Vertical bars chart */
@@ -526,7 +525,7 @@ body::before {
 
 <!-- PLATE SHEET -->
 <div class="sh-bg" id="plSh" onclick="if(event.target===this)this.classList.remove('on')">
-  <div class="sh"><div class="sh-handle"></div><div class="sh-title" id="plTitle">Plaques</div><div id="plBody" style="padding-bottom:8px"></div></div>
+  <div class="sh"><div class="sh-handle"></div><div class="sh-title" id="plTitle">Plates</div><div id="plBody" style="padding-bottom:8px"></div></div>
 </div>
 
 <!-- HISTORY SHEET -->
@@ -906,25 +905,49 @@ function setBarWeight(val){
   BAR = n;
   S.barWeight = n;
   save();
-  if(__lastPlateArgs) openPlate(__lastPlateArgs.wStr, __lastPlateArgs.exName);
+  renderPlateCalc();
 }
 
-function openPlate(wStr,exName){
-  __lastPlateArgs = {wStr,exName};
-  const n=parseFloat(wStr);
+function openPlate(wStr,exName,repStr){
+  __lastPlateArgs = {wStr,exName,repStr};
   document.getElementById('plTitle').textContent='🏋️ '+exName;
+  const n0=parseFloat(wStr)||'';
+  const head=`<div style="display:flex;gap:10px;justify-content:center;align-items:flex-end;padding:0 18px 14px">
+    <div style="flex:1;max-width:130px">
+      <div style="font-size:10px;color:var(--t3);font-weight:700;margin-bottom:4px;text-align:center;letter-spacing:.05em">POIDS (LB)</div>
+      <input type="number" id="plWIn" value="${n0}" step="2.5" inputmode="decimal" oninput="renderPlateCalc()" style="width:100%;text-align:center;background:var(--bg3);border:1px solid var(--b);border-radius:10px;padding:9px 6px;color:#fff;font-size:17px;font-weight:800;outline:none;box-sizing:border-box">
+    </div>
+    <div style="flex:1;max-width:100px">
+      <div style="font-size:10px;color:var(--t3);font-weight:700;margin-bottom:4px;text-align:center;letter-spacing:.05em">REPS</div>
+      <input type="text" id="plRIn" value="${repStr||''}" oninput="renderPlateCalc()" style="width:100%;text-align:center;background:var(--bg3);border:1px solid var(--b);border-radius:10px;padding:9px 6px;color:#fff;font-size:17px;font-weight:800;outline:none;box-sizing:border-box">
+    </div>
+  </div>
+  <div id="plCalcOut"></div>`;
+  document.getElementById('plBody').innerHTML=head;
+  renderPlateCalc();
+  raiseSheet('plSh');
+  document.getElementById('plSh').classList.add('on');
+}
+
+function renderPlateCalc(){
+  const wEl=document.getElementById('plWIn');
+  const rEl=document.getElementById('plRIn');
+  const out=document.getElementById('plCalcOut');
+  if(!wEl||!out) return;
+  if(__lastPlateArgs){__lastPlateArgs.wStr=wEl.value;__lastPlateArgs.repStr=rEl?rEl.value:__lastPlateArgs.repStr;}
+  const n=parseFloat(wEl.value);
   const plates=isNaN(n)?[]:calcPlates(n);
   let h='';
   if(isNaN(n)||n<=0){
-    h=`<div style="padding:20px;text-align:center;color:var(--t3)">Poids au ressenti.</div>`;
+    h=`<div style="padding:6px 20px 20px;text-align:center;color:var(--t3)">Poids au ressenti.</div>`;
   } else {
-    h+=`<div class="pl-for">Pour <strong>${n} lb</strong>, chaque côté :</div>`;
+    h+=`<div class="pl-for">Chaque côté :</div>`;
     // BARBELL: plates on OUTSIDE — structure: [plates reversed=heavy first][bar_end][collar][mid][collar][bar_end][plates light→heavy]
     const mkPl=(p,side)=>{const pw=p.w>=45?44:p.w>=25?34:p.w>=10?27:19;const ph=Math.min(100,Math.max(30,p.h*1.15));const lbl=pw>=27?p.w:'';return `<div class="bb-pl" style="width:${pw}px;height:${ph}px;background:${p.c}">${lbl}</div>`;};
     const collarPw=19,collarPh=Math.min(100,Math.max(30,40*1.15)); // sized to match the 5lb plate exactly
     const colHtml=`<div class="bb-col" style="width:${collarPw}px;height:${collarPh}px"></div>`;
     const sidePl=plates.map(p=>mkPl(p,'R')).join(''); // heavy→light, heaviest against the collar
-    h+=`<div class="bb-wrap"><div class="bb-mid"></div>${colHtml}${sidePl}<div class="bb-end"></div></div>`;
+    h+=`<div class="bb-wrap"><div class="bb-mid">CTR</div>${colHtml}${sidePl}<div class="bb-end"></div></div>`;
     // Bars chart
     const cnt={};for(const p of plates)cnt[p.w]=(cnt[p.w]||0)+1;
     const used=PL.filter(p=>cnt[p.w]);const maxC=Math.max(1,...Object.values(cnt));
@@ -942,9 +965,7 @@ function openPlate(wStr,exName){
       </select>
     </div>`;
   }
-  document.getElementById('plBody').innerHTML=h;
-  raiseSheet('plSh');
-  document.getElementById('plSh').classList.add('on');
+  out.innerHTML=h;
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1208,8 +1229,8 @@ function renderWo(){
         <div class="ex-act" onclick="openExLibrary(${actId},${ei})">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>Remplacer
         </div>
-        ${isBar?`<div class="ex-act" onclick="openPlate('${sets[0].w||wNum}','${ex.name}')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 5v14M18 5v14M4 9h4M16 9h4M4 15h4M16 15h4"/></svg>Plaques
+        ${isBar?`<div class="ex-act" onclick="openPlate('${sets[0].w||wNum}','${ex.name}','${sets[0].r||ex.r}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 5v14M18 5v14M4 9h4M16 9h4M4 15h4M16 15h4"/></svg>Plates
         </div>`:''}
         <div class="ex-act" onclick="openRestPresetPicker('${ex.name}',${restInfo.sec})">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${restInfo.type} · ${restInfo.fmt}
@@ -1342,7 +1363,7 @@ function openDaySh(id){
         </div>
       </div>
       <div style="display:flex;gap:7px;margin-top:8px;flex-wrap:wrap">
-        ${!ex.bw&&!ex.rpe?`<button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:11px" onclick="openPlate('${parseFloat(w)||0}','${ex.name}')">🏋️ Plaques</button>`:''}
+        ${!ex.bw&&!ex.rpe?`<button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:11px" onclick="openPlate('${parseFloat(w)||0}','${ex.name}','${ex.r}')">🏋️ Plates</button>`:''}
         <button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:11px;display:inline-flex;align-items:center;gap:5px" onclick="openExLibrary(${id},${exIdx})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>Remplacer</button>
       </div>
       <div style="height:1px;background:var(--b);margin-top:11px"></div>
