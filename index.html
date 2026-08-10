@@ -540,6 +540,26 @@ body::before {
   <div class="sh"><div class="sh-handle"></div><div class="sh-title" id="dayShT"></div><div id="dayShB"></div></div>
 </div>
 
+<!-- CUSTOM PROGRAM BUILDER SHEET -->
+<div class="sh-bg" id="buildSh" onclick="if(event.target===this)this.classList.remove('on')">
+  <div class="sh sh-plate">
+    <div class="sh-handle"></div>
+    <div class="sh-title" id="buildShT">Créer un programme</div>
+    <div style="flex:1;overflow-y:auto">
+      <div style="padding:0 18px 12px">
+        <input type="text" id="buildNameIn" placeholder="Nom du programme" style="width:100%;background:var(--bg3);border:1px solid var(--b);border-radius:10px;padding:11px 14px;color:#fff;font-size:15px;font-weight:700;outline:none;box-sizing:border-box">
+      </div>
+      <div id="buildExList" style="padding:0 12px"></div>
+      <div style="padding:8px 18px 4px">
+        <button class="btn btn-ghost btn-lg" onclick="openExLibraryForBuilder()" style="border-radius:var(--r);border-style:dashed">+ Ajouter un exercice</button>
+      </div>
+    </div>
+    <div style="padding:10px 18px calc(10px + var(--safe))">
+      <button class="btn btn-red btn-lg" onclick="saveBuilder()" style="width:100%">✓ Enregistrer le programme</button>
+    </div>
+  </div>
+</div>
+
 <!-- CHANGE DAY SHEET -->
 <div class="sh-bg" id="chgSh" onclick="if(event.target===this)this.classList.remove('on')">
   <div class="sh">
@@ -687,6 +707,11 @@ body::before {
   </div>
   <span class="lbl">JOURNÉES V4</span>
   <div id="progDays"></div>
+  <span class="lbl">MES PROGRAMMES</span>
+  <div style="margin:0 12px 10px">
+    <button class="btn btn-ghost btn-lg" onclick="openBuilder()" style="border-radius:var(--r);border-style:dashed">+ Créer un programme</button>
+  </div>
+  <div id="custProgList"></div>
   <span class="lbl">DONNÉES</span>
   <div class="card" style="margin:0 12px 12px">
     <div style="font-size:14px;font-weight:800;margin-bottom:5px">Export / Import</div>
@@ -846,7 +871,7 @@ const MUSCLES=[
 // ════════════════════════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════════════════════════
-let S={curDay:1,curWeek:1,ovDay:null,woStart:null,woInt:null,restInt:null,rRem:0,rTotal:0,sets:{},sessions:[],photos:[],hist:{},dayOrder:{},exWOverrides:{},exROverrides:{},exSOverrides:{}};
+let S={curDay:1,curWeek:1,ovDay:null,woStart:null,woInt:null,restInt:null,rRem:0,rTotal:0,sets:{},sessions:[],photos:[],hist:{},dayOrder:{},exWOverrides:{},exROverrides:{},exSOverrides:{},customPrograms:[]};
 const KEY="ctr300v4";
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function load(){try{const d=localStorage.getItem(KEY);if(d){const p=JSON.parse(d);Object.assign(S,p);}}catch(e){}}
@@ -892,7 +917,14 @@ function fmt(s){return Math.floor(s/60)+':'+(s%60<10?'0':'')+s%60}
 function tod(){return new Date().toLocaleDateString('fr-CA')}
 function calcWeek(){const start=new Date(PROG.startDate),now=new Date();const diff=Math.floor((now-start)/86400000);return diff<0?1:Math.min(17,Math.floor(diff/7)+1);}
 function activeDay(){return S.ovDay||S.curDay}
-function dayObj(id){return PROG.days[(id||activeDay())-1]}
+function dayObj(id){
+  id = id!==undefined && id!==null ? id : activeDay();
+  if(typeof id==='string' && id.charAt(0)==='c'){
+    const idx=parseInt(id.slice(1));
+    return (S.customPrograms && S.customPrograms[idx]) || {id,name:'Programme supprimé',sub:'',exercises:[]};
+  }
+  return PROG.days[id-1];
+}
 
 // ════════════════════════════════════════════════════════════
 // PLATES — plaques vers l'EXTÉRIEUR
@@ -1141,7 +1173,7 @@ function renderToday(){
       const w=getW(ex,b);
       const img=getExerciseImage(ex.name);
       return `<div class="dcard" data-name="${origEx.name.replace(/"/g,'&quot;')}">
-        <div class="dcard-h" onclick="if(!window.__dcardDragged__)openDaySh(${actId})">
+        <div class="dcard-h" onclick="if(!window.__dcardDragged__)openDaySh(${JSON.stringify(actId)})">
           <div class="dnum-img"><img src="${img}" loading="lazy" onerror="this.style.display='none'"></div>
           <div class="dcard-info">
             <div class="dcard-name">${(ex.new||isReplaced)?'★ ':''}${ex.name}</div>
@@ -1254,7 +1286,7 @@ function renderWo(){
   const actId=activeDay();
   const day=dayObj(actId);
   const b=bloc();
-  document.getElementById('woTitle').textContent=`J${actId} — ${day.name}`;
+  document.getElementById('woTitle').textContent=(typeof actId==='string'&&actId.charAt(0)==='c')?day.name:`J${actId} — ${day.name}`;
   document.getElementById('woBlocLbl').textContent=blocLbl();
   const prevSess=S.sessions.filter(s=>s.dayId===actId).slice(-1)[0];
   let html='';
@@ -1292,10 +1324,10 @@ function renderWo(){
         <div class="ex-act" onclick="openHist('${ex.name}')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Historique
         </div>
-        <div class="ex-act" onclick="openExLibrary(${actId},${ei})">
+        <div class="ex-act" onclick="openExLibrary(${JSON.stringify(actId)},${ei})">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>Remplacer
         </div>
-        ${isBar?`<div class="ex-act" onclick="openPlate('${sets[0].w||wNum}','${ex.name}','${sets[0].r||ex.r}','${getDisplayS(ex)}',${actId})">
+        ${isBar?`<div class="ex-act" onclick="openPlate('${sets[0].w||wNum}','${ex.name}','${sets[0].r||ex.r}','${getDisplayS(ex)}',${JSON.stringify(actId)})">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 5v14M18 5v14M4 9h4M16 9h4M4 15h4M16 15h4"/></svg>Plates
         </div>`:''}
         <div class="ex-act" onclick="openRestPresetPicker('${ex.name}',${restInfo.sec})">
@@ -1429,8 +1461,8 @@ function openDaySh(id){
         </div>
       </div>
       <div style="display:flex;gap:7px;margin-top:8px;flex-wrap:wrap">
-        ${!ex.bw&&!ex.rpe?`<button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:11px" onclick="openPlate('${parseFloat(w)||0}','${ex.name}','${getDisplayR(ex)}','${getDisplayS(ex)}',${id})">🏋️ Plates</button>`:''}
-        <button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:11px;display:inline-flex;align-items:center;gap:5px" onclick="openExLibrary(${id},${exIdx})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>Remplacer</button>
+        ${!ex.bw&&!ex.rpe?`<button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:11px" onclick="openPlate('${parseFloat(w)||0}','${ex.name}','${getDisplayR(ex)}','${getDisplayS(ex)}',${JSON.stringify(id)})">🏋️ Plates</button>`:''}
+        <button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:11px;display:inline-flex;align-items:center;gap:5px" onclick="openExLibrary(${JSON.stringify(id)},${exIdx})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>Remplacer</button>
       </div>
       <div style="height:1px;background:var(--b);margin-top:11px"></div>
     </div>`;}).join('')}
@@ -1457,7 +1489,7 @@ function renderStats(){
   const maxS=Math.max(...MUSCLES.map(m=>m.s));
   document.getElementById('mheat').innerHTML=MUSCLES.map(m=>{const pct=(m.s/maxS*100).toFixed(0);const cls=m.s>=100?'up':m.s>=85?'neu':'dn';return `<div class="mh-row"><div class="mh-n">${m.n}</div><div class="mh-bg"><div class="mh-fill" style="width:${pct}%;background:${m.c}"></div></div><div class="mh-s ${cls}">${m.s}</div><div class="mh-tr ${parseFloat(m.d)>=0?'up':'dn'}">${m.d}</div></div>`;}).join('');
   const rec=[...S.sessions].reverse().slice(0,5);
-  document.getElementById('recentSess').innerHTML=rec.length?rec.map(s=>`<div class="card" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between"><div><div style="font-size:13px;font-weight:800">J${s.dayId} — ${s.dayName}</div><div style="font-size:10px;color:var(--t3);margin-top:1px">${s.date} · Sem. ${s.week} · Bloc ${s.bloc}</div></div><div style="color:var(--rs);font-weight:700;font-size:13px">${s.duration} min</div></div></div>`).join(''):`<div class="card"><div style="text-align:center;padding:12px 0;color:var(--t3);font-size:12px">Lance ton premier workout!</div></div>`;
+  document.getElementById('recentSess').innerHTML=rec.length?rec.map(s=>`<div class="card" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between"><div><div style="font-size:13px;font-weight:800">${(typeof s.dayId==='string'&&s.dayId.charAt(0)==='c')?s.dayName:'J'+s.dayId+' — '+s.dayName}</div><div style="font-size:10px;color:var(--t3);margin-top:1px">${s.date} · Sem. ${s.week} · Bloc ${s.bloc}</div></div><div style="color:var(--rs);font-weight:700;font-size:13px">${s.duration} min</div></div></div>`).join(''):`<div class="card"><div style="text-align:center;padding:12px 0;color:var(--t3);font-size:12px">Lance ton premier workout!</div></div>`;
 }
 
 function renderChart(name){
@@ -1499,6 +1531,30 @@ function renderProg(){
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
       </div>
       <div class="pd-exs">${d.exercises.map(ex=>`<div class="echip ${ex.new?'nw':''}">${ex.new?'★ ':''}${ex.name}</div>`).join('')}</div>
+    </div>`).join('');
+  renderCustProgList();
+}
+
+function renderCustProgList(){
+  const list=document.getElementById('custProgList');
+  if(!list) return;
+  const progs=S.customPrograms||[];
+  if(!progs.length){
+    list.innerHTML=`<div style="margin:0 12px 12px;text-align:center;color:var(--t3);font-size:12px;padding:10px 0">Aucun programme personnalisé — crée-en un ci-dessus.</div>`;
+    return;
+  }
+  list.innerHTML=progs.map((p,idx)=>`
+    <div class="pd-card" style="cursor:default">
+      <div class="pd-h" style="cursor:default">
+        <div class="pd-num" style="background:var(--bg4)"><div class="pd-j">PROG.</div><div class="pd-n" style="font-size:16px">${p.exercises.length}</div></div>
+        <div class="pd-info"><div class="pd-name">${p.name}</div><div class="pd-sub">${p.exercises.length} exercice${p.exercises.length>1?'s':''}</div></div>
+      </div>
+      <div class="pd-exs">${p.exercises.map(ex=>`<div class="echip">${ex.name}</div>`).join('')}</div>
+      <div style="display:flex;gap:7px;padding:0 14px 13px">
+        <button class="btn btn-red btn-md" style="flex:1;border-radius:var(--r)" onclick="startCustProg(${idx})">▶ Commencer</button>
+        <button class="btn btn-ghost btn-md" style="border-radius:var(--r);padding:0 14px" onclick="openBuilder(${idx})">✏️</button>
+        <button class="btn btn-ghost btn-md" style="border-radius:var(--r);padding:0 14px" onclick="deleteCustProg(${idx})">🗑️</button>
+      </div>
     </div>`).join('');
 }
 
@@ -2399,6 +2455,9 @@ let exLibTargetName = null;
 let exLibTargetIdx = null;
 let exLibTargetDay = null;
 let exLibActiveTab = null;
+let exLibMode = 'replace'; // 'replace' | 'add'
+let builderDraft = null;   // {name, exercises:[{name,s,r,restType}]}
+let builderEditIdx = null; // index into S.customPrograms when editing, else null
 let __shZ = 800;
 function raiseSheet(id){
   const el = document.getElementById(id);
@@ -2451,8 +2510,13 @@ function renderExLibSearchResults(results){
     html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-top:6px">';
     results.forEach(function(r){
       var ex = r.ex;
-      var isCurrent = (ex.name === exLibTargetName);
-      html += '<div onclick="selectReplacementExercise(\''+ex.name.replace(/'/g,"\\'")+'\')" style="'
+      var isCurrent = exLibMode==='add'
+        ? (builderDraft && builderDraft.exercises.some(function(e){return e.name===ex.name;}))
+        : (ex.name === exLibTargetName);
+      var clickFn = exLibMode==='add'
+        ? "toggleBuilderExercise('"+ex.name.replace(/'/g,"\\'")+"')"
+        : "selectReplacementExercise('"+ex.name.replace(/'/g,"\\'")+"')";
+      html += '<div onclick="'+clickFn+'" style="'
         + 'background:var(--bg3);border:1.5px solid '+(isCurrent?'var(--red)':'var(--b)')+';border-radius:var(--r);overflow:hidden;'
         + 'cursor:pointer;position:relative;display:flex;flex-direction:column">'
         + (isCurrent ? '<div style="position:absolute;top:6px;right:6px;width:18px;height:18px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;z-index:2"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>' : '')
@@ -2471,12 +2535,185 @@ function renderExLibSearchResults(results){
 }
 
 function openExLibrary(dayId, exIdx){
+  exLibMode = 'replace';
   var day = dayObj(dayId);
   var origEx = day.exercises[exIdx];
   exLibTargetDay = dayId;
   exLibTargetIdx = exIdx;
   var repl = S.exReplacements && S.exReplacements[dayId+'::'+origEx.name];
   exLibTargetName = repl || origEx.name;
+  var muscles = Object.keys(EX_LIBRARY);
+  exLibActiveTab = muscles[0];
+  var searchEl = document.getElementById('exLibSearch');
+  if(searchEl) searchEl.value = '';
+  document.getElementById('exLibTabs').style.display = 'flex';
+  renderExLibTabs(muscles);
+  renderExLibGrid(exLibActiveTab);
+  raiseSheet('exLibSh');
+  document.getElementById('exLibSh').classList.add('on');
+}
+
+function openBuilder(idx){
+  builderEditIdx = (idx!==undefined && idx!==null) ? idx : null;
+  if(builderEditIdx!==null && S.customPrograms && S.customPrograms[builderEditIdx]){
+    builderDraft = JSON.parse(JSON.stringify(S.customPrograms[builderEditIdx]));
+    document.getElementById('buildShT').textContent = 'Modifier le programme';
+  } else {
+    builderDraft = {name:'', exercises:[]};
+    document.getElementById('buildShT').textContent = 'Créer un programme';
+  }
+  document.getElementById('buildNameIn').value = builderDraft.name;
+  renderBuilderList();
+  raiseSheet('buildSh');
+  document.getElementById('buildSh').classList.add('on');
+}
+
+function toggleBuilderExercise(name){
+  if(!builderDraft) return;
+  var i = builderDraft.exercises.findIndex(function(e){return e.name===name;});
+  if(i>-1){
+    builderDraft.exercises.splice(i,1);
+  } else {
+    builderDraft.exercises.push({name:name, s:3, r:'8-12', w:{A:0,B:0,C:0,D:0}, restType:'comp', note:''});
+  }
+  renderExLibGrid(exLibActiveTab);
+  renderBuilderList();
+}
+
+function renderBuilderList(){
+  const el=document.getElementById('buildExList');
+  if(!el || !builderDraft) return;
+  if(!builderDraft.exercises.length){
+    el.innerHTML = '<div style="text-align:center;color:var(--t3);font-size:12px;padding:14px 0">Aucun exercice encore.</div>';
+    return;
+  }
+  el.innerHTML = builderDraft.exercises.map((ex,i)=>{
+    const img=getExerciseImage(ex.name);
+    return `<div class="dcard" data-name="${ex.name.replace(/"/g,'&quot;')}" style="margin-bottom:8px">
+      <div class="dcard-h" style="cursor:default">
+        <div class="dnum-img"><img src="${img}" loading="lazy" onerror="this.style.display='none'"></div>
+        <div class="dcard-info">
+          <div class="dcard-name">${ex.name}</div>
+          <div style="display:flex;gap:6px;margin-top:5px;align-items:center">
+            <input type="number" value="${ex.s}" min="1" onclick="this.select()" oninput="updBuilderEx(${i},'s',this.value)" style="width:40px;text-align:center;background:var(--bg3);border:1px solid var(--b);border-radius:7px;padding:5px 2px;color:#fff;font-size:12px;font-weight:700">
+            <span style="font-size:10px;color:var(--t3)">séries</span>
+            <input type="text" value="${ex.r}" onclick="this.select()" oninput="updBuilderEx(${i},'r',this.value)" style="width:48px;text-align:center;background:var(--bg3);border:1px solid var(--b);border-radius:7px;padding:5px 2px;color:#fff;font-size:12px;font-weight:700">
+            <span style="font-size:10px;color:var(--t3)">reps</span>
+          </div>
+        </div>
+        <div class="dcard-grip" onclick="removeBuilderEx(${i})" style="color:var(--rs)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  bindBuilderReorder();
+}
+
+function updBuilderEx(i,field,val){
+  if(!builderDraft || !builderDraft.exercises[i]) return;
+  if(field==='s'){ const n=parseInt(val); builderDraft.exercises[i].s = isNaN(n)?1:n; }
+  else { builderDraft.exercises[i].r = val; }
+}
+
+function removeBuilderEx(i){
+  if(!builderDraft) return;
+  builderDraft.exercises.splice(i,1);
+  renderBuilderList();
+  if(document.getElementById('exLibSh').classList.contains('on')) renderExLibGrid(exLibActiveTab);
+}
+
+function bindBuilderReorder(){
+  const container=document.getElementById('buildExList');
+  if(!container) return;
+  const cards=Array.from(container.querySelectorAll('.dcard'));
+  cards.forEach(card=>{
+    let timer=null,sx=0,sy=0,pid=null;
+    function preMove(ev){ if(Math.abs(ev.clientX-sx)>10||Math.abs(ev.clientY-sy)>10) cancelPress(); }
+    function cancelPress(){ clearTimeout(timer); window.removeEventListener('pointermove',preMove); window.removeEventListener('pointerup',cancelPress); }
+    function onMove(ev){
+      ev.preventDefault();
+      const dy=ev.clientY-sy;
+      card.style.transform=`translateY(${dy}px)`;
+      const cRect=card.getBoundingClientRect();
+      const next=card.nextElementSibling, prev=card.previousElementSibling;
+      if(next && next.classList.contains('dcard')){
+        const nRect=next.getBoundingClientRect();
+        if(cRect.top+cRect.height/2 > nRect.top+nRect.height/2){ container.insertBefore(next,card); sy=ev.clientY; card.style.transform='translateY(0px)'; }
+      }
+      if(prev && prev.classList.contains('dcard')){
+        const pRect=prev.getBoundingClientRect();
+        if(cRect.top+cRect.height/2 < pRect.top+pRect.height/2){ container.insertBefore(card,prev); sy=ev.clientY; card.style.transform='translateY(0px)'; }
+      }
+    }
+    function onUp(){
+      try{card.releasePointerCapture(pid);}catch(e){}
+      card.classList.remove('dcard-dragging');
+      card.style.transform='';
+      window.removeEventListener('pointermove',onMove);
+      window.removeEventListener('pointerup',onUp);
+      window.__dcardDragged__=true;
+      setTimeout(()=>{window.__dcardDragged__=false;},250);
+      const names=Array.from(container.querySelectorAll('.dcard')).map(c=>c.dataset.name);
+      if(builderDraft) builderDraft.exercises.sort((a,b)=>names.indexOf(a.name)-names.indexOf(b.name));
+    }
+    function startDrag(ev){
+      pid=ev.pointerId;
+      try{card.setPointerCapture(pid);}catch(e){}
+      card.classList.add('dcard-dragging');
+      if(navigator.vibrate) navigator.vibrate(10);
+      window.addEventListener('pointermove',onMove,{passive:false});
+      window.addEventListener('pointerup',onUp,{once:true});
+    }
+    card.addEventListener('pointerdown',(ev)=>{
+      if(ev.pointerType==='mouse'&&ev.button!==0) return;
+      sx=ev.clientX; sy=ev.clientY;
+      window.addEventListener('pointermove',preMove);
+      window.addEventListener('pointerup',cancelPress,{once:true});
+      timer=setTimeout(()=>{cancelPress();startDrag(ev);},420);
+    });
+  });
+}
+
+function saveBuilder(){
+  if(!builderDraft) return;
+  const nameEl=document.getElementById('buildNameIn');
+  const name=(nameEl?nameEl.value:'').trim();
+  if(!name){ alert('Donne un nom au programme.'); return; }
+  if(!builderDraft.exercises.length){ alert('Ajoute au moins un exercice.'); return; }
+  builderDraft.name=name;
+  S.customPrograms = S.customPrograms||[];
+  if(builderEditIdx!==null){
+    S.customPrograms[builderEditIdx]=builderDraft;
+  } else {
+    S.customPrograms.push(builderDraft);
+  }
+  save();
+  document.getElementById('buildSh').classList.remove('on');
+  builderDraft=null; builderEditIdx=null;
+  renderCustProgList();
+}
+
+function deleteCustProg(idx){
+  if(!confirm('Supprimer ce programme ?')) return;
+  S.customPrograms.splice(idx,1);
+  save();
+  renderCustProgList();
+}
+
+function startCustProg(idx){
+  if(!S.customPrograms || !S.customPrograms[idx]) return;
+  S.ovDay = 'c'+idx;
+  save();
+  startWo();
+}
+
+function openExLibraryForBuilder(){
+  if(!builderDraft) return;
+  exLibMode = 'add';
+  exLibTargetDay = null;
+  exLibTargetIdx = null;
+  exLibTargetName = null;
   var muscles = Object.keys(EX_LIBRARY);
   exLibActiveTab = muscles[0];
   var searchEl = document.getElementById('exLibSearch');
@@ -2510,8 +2747,13 @@ function renderExLibGrid(muscle){
   var color = data.color;
   var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-top:6px">';
   data.exercises.forEach(function(ex){
-    var isCurrent = (ex.name === exLibTargetName);
-    html += '<div onclick="selectReplacementExercise(\''+ex.name.replace(/'/g,"\\'")+'\')" style="'
+    var isCurrent = exLibMode==='add'
+      ? (builderDraft && builderDraft.exercises.some(function(e){return e.name===ex.name;}))
+      : (ex.name === exLibTargetName);
+    var clickFn = exLibMode==='add'
+      ? "toggleBuilderExercise('"+ex.name.replace(/'/g,"\\'")+"')"
+      : "selectReplacementExercise('"+ex.name.replace(/'/g,"\\'")+"')";
+    html += '<div onclick="'+clickFn+'" style="'
       + 'background:var(--bg3);border:1.5px solid '+(isCurrent?'var(--red)':'var(--b)')+';border-radius:var(--r);overflow:hidden;'
       + 'cursor:pointer;position:relative;display:flex;flex-direction:column">'
       + (isCurrent ? '<div style="position:absolute;top:6px;right:6px;width:18px;height:18px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;z-index:2"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>' : '')
