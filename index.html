@@ -842,7 +842,7 @@ const MUSCLES=[
 // ════════════════════════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════════════════════════
-let S={curDay:1,curWeek:1,ovDay:null,woStart:null,woInt:null,restInt:null,rRem:0,rTotal:0,sets:{},sessions:[],photos:[],hist:{},dayOrder:{}};
+let S={curDay:1,curWeek:1,ovDay:null,woStart:null,woInt:null,restInt:null,rRem:0,rTotal:0,sets:{},sessions:[],photos:[],hist:{},dayOrder:{},exWOverrides:{},exROverrides:{}};
 const KEY="ctr300v4";
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function load(){try{const d=localStorage.getItem(KEY);if(d){const p=JSON.parse(d);Object.assign(S,p);}}catch(e){}}
@@ -855,11 +855,15 @@ function blocLbl(){return{A:'BLOC A · S1–S4 · 72%',B:'BLOC B · S5–S8 · 8
 
 function getW(ex,b){
   b=b||bloc();
+  if(S.exWOverrides && S.exWOverrides[ex.name]!==undefined) return S.exWOverrides[ex.name]+' lb';
   if(ex.bw) return 'Poids corps';
   if(ex.rpe) return 'Au ressenti';
   if(ex.extra) return '+'+(ex.w[b]||0)+' lb';
   if(b==='D') return Math.round((ex.w.A||0)*.55/2.5)*2.5+' lb';
   return (ex.w[b]||0)+' lb';
+}
+function getDisplayR(ex){
+  return (S.exROverrides && S.exROverrides[ex.name]) || ex.r;
 }
 
 // TEMPS DE REPOS — correct selon type et bloc
@@ -910,8 +914,8 @@ function setBarWeight(val){
   renderPlateCalc();
 }
 
-function openPlate(wStr,exName,repStr){
-  __lastPlateArgs = {wStr,exName,repStr};
+function openPlate(wStr,exName,repStr,dayId){
+  __lastPlateArgs = {wStr,exName,repStr,dayId};
   document.getElementById('plTitle').textContent='🏋️ '+exName;
   const n0=parseFloat(wStr)||'';
   const head=`<div style="display:flex;gap:10px;justify-content:center;align-items:flex-end;padding:0 18px 14px">
@@ -938,28 +942,36 @@ function openPlate(wStr,exName,repStr){
 }
 
 function confirmPlateSync(){
-  syncPlateToSet();
-  const btn=document.getElementById('plConfirmBtn');
-  if(btn){
-    btn.style.background='var(--red)';btn.style.borderColor='var(--red)';btn.style.color='#fff';
-    if(navigator.vibrate) navigator.vibrate(10);
-    setTimeout(()=>{if(btn){btn.style.background='none';btn.style.borderColor='var(--b2)';btn.style.color='var(--t3)';}},700);
-  }
-}
-
-function syncPlateToSet(){
-  if(!__lastPlateArgs || !__lastPlateArgs.exName) return;
-  const arr = S.sets[__lastPlateArgs.exName];
-  if(!arr || !arr.length) return;
-  let idx = arr.findIndex(s=>!s.done);
-  if(idx===-1) idx = arr.length-1;
+  if(!__lastPlateArgs) return;
   const wEl=document.getElementById('plWIn');
   const rEl=document.getElementById('plRIn');
   const wv=wEl?parseFloat(wEl.value):NaN;
-  const rv=rEl?parseInt(rEl.value):NaN;
-  if(!isNaN(wv)) arr[idx].w=wv;
-  if(!isNaN(rv)) arr[idx].r=rv;
+  const rv=rEl?rEl.value.trim():'';
+  const exName=__lastPlateArgs.exName;
+  const dayId=__lastPlateArgs.dayId;
+
+  // Persistent program-level override — affects this exercise everywhere, including before starting a workout
+  S.exWOverrides=S.exWOverrides||{};
+  S.exROverrides=S.exROverrides||{};
+  if(!isNaN(wv)) S.exWOverrides[exName]=wv;
+  if(rv) S.exROverrides[exName]=rv;
+
+  // Also sync the active logged set, if currently mid-workout
+  const arr=S.sets[exName];
+  if(arr && arr.length){
+    let idx=arr.findIndex(s=>!s.done);
+    if(idx===-1) idx=arr.length-1;
+    if(!isNaN(wv)) arr[idx].w=wv;
+    const rvNum=parseInt(rv);
+    if(!isNaN(rvNum)) arr[idx].r=rvNum;
+  }
+
   save();
+  if(navigator.vibrate) navigator.vibrate(10);
+  document.getElementById('plSh').classList.remove('on');
+
+  renderToday();
+  if(dayId && document.getElementById('daySh').classList.contains('on')) openDaySh(dayId);
   renderWo();
 }
 
@@ -1117,7 +1129,7 @@ function renderToday(){
           <div class="dnum-img"><img src="${img}" loading="lazy" onerror="this.style.display='none'"></div>
           <div class="dcard-info">
             <div class="dcard-name">${(ex.new||isReplaced)?'★ ':''}${ex.name}</div>
-            <div class="dcard-sub">${ex.s} × ${ex.r} · <span style="color:var(--rs);font-weight:700">${w}</span></div>
+            <div class="dcard-sub">${ex.s} × ${getDisplayR(ex)} · <span style="color:var(--rs);font-weight:700">${w}</span></div>
           </div>
           <div class="dcard-grip"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="8" cy="6" r="1.8"/><circle cx="16" cy="6" r="1.8"/><circle cx="8" cy="12" r="1.8"/><circle cx="16" cy="12" r="1.8"/><circle cx="8" cy="18" r="1.8"/><circle cx="16" cy="18" r="1.8"/></svg></div>
         </div>
@@ -1263,7 +1275,7 @@ function renderWo(){
         <div class="ex-act" onclick="openExLibrary(${actId},${ei})">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>Remplacer
         </div>
-        ${isBar?`<div class="ex-act" onclick="openPlate('${sets[0].w||wNum}','${ex.name}','${sets[0].r||ex.r}')">
+        ${isBar?`<div class="ex-act" onclick="openPlate('${sets[0].w||wNum}','${ex.name}','${sets[0].r||ex.r}',${actId})">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 5v14M18 5v14M4 9h4M16 9h4M4 15h4M16 15h4"/></svg>Plates
         </div>`:''}
         <div class="ex-act" onclick="openRestPresetPicker('${ex.name}',${restInfo.sec})">
@@ -1391,13 +1403,13 @@ function openDaySh(id){
         <img src="${img}" style="width:60px;height:60px;object-fit:cover;border-radius:9px;flex-shrink:0;background:var(--bg3)" loading="lazy" onerror="this.style.opacity='.3'">
         <div style="flex:1">
           <div style="font-size:14px;font-weight:800">${(ex.new||isReplaced)?'★ ':''}${ex.name}</div>
-          <div style="font-size:11px;color:var(--t2);margin-top:2px">${ex.s} × ${ex.r} · <span style="color:var(--rs);font-weight:700">${w}</span></div>
+          <div style="font-size:11px;color:var(--t2);margin-top:2px">${ex.s} × ${getDisplayR(ex)} · <span style="color:var(--rs);font-weight:700">${w}</span></div>
           <div style="font-size:10px;color:var(--t3);margin-top:2px">${rInfo.type} · ${rInfo.fmt}</div>
           <div style="font-size:10px;color:var(--t3);margin-top:3px;font-style:italic">${ex.note}</div>
         </div>
       </div>
       <div style="display:flex;gap:7px;margin-top:8px;flex-wrap:wrap">
-        ${!ex.bw&&!ex.rpe?`<button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:11px" onclick="openPlate('${parseFloat(w)||0}','${ex.name}','${ex.r}')">🏋️ Plates</button>`:''}
+        ${!ex.bw&&!ex.rpe?`<button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:11px" onclick="openPlate('${parseFloat(w)||0}','${ex.name}','${getDisplayR(ex)}',${id})">🏋️ Plates</button>`:''}
         <button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:11px;display:inline-flex;align-items:center;gap:5px" onclick="openExLibrary(${id},${exIdx})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>Remplacer</button>
       </div>
       <div style="height:1px;background:var(--b);margin-top:11px"></div>
