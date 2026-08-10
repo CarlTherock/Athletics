@@ -299,7 +299,7 @@ body{
 /* Barbell : LEFT=[plates_heavy→light][bar_end][collar][mid_bar]   RIGHT=[mid_bar][collar][bar_end][plates_light→heavy] */
 .bb-wrap{display:flex;align-items:center;justify-content:center;margin:6px 18px 18px;gap:0;overflow:hidden;position:relative}
 .bb-end{height:20px;width:50px;background:linear-gradient(180deg,#3a3a3a,#0a0a0a);border-radius:3px}
-.bb-mid{width:78px;height:20px;background:linear-gradient(180deg,#2c2c2c,#050505);border-radius:2px;position:relative;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;letter-spacing:.08em;color:var(--red)}
+.bb-mid{width:94px;height:24px;background:linear-gradient(180deg,#2c2c2c,#050505);border-radius:2px;position:relative;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;letter-spacing:.08em;color:#fff}
 .sh-plate{height:86vh;max-height:86vh;overflow-y:hidden;display:flex;flex-direction:column}
 .sh-plate #plBody{flex:1;overflow-y:auto}
 .bb-col{background:linear-gradient(180deg,#333,#0a0a0a);border-radius:3px;flex-shrink:0}
@@ -963,7 +963,7 @@ function renderPlateCalc(){
     h+=`<div class="pl-for">Chaque côté :</div>`;
     // BARBELL: plates on OUTSIDE — structure: [plates reversed=heavy first][bar_end][collar][mid][collar][bar_end][plates light→heavy]
     const mkPl=(p,side)=>{const pw=30;const ph=Math.round(30+(p.h-28)*1.149);return `<div class="bb-pl" style="width:${pw}px;height:${ph}px;background:${p.c}">${p.w}</div>`;};
-    const collarPw=30,collarPh=Math.round(30+(40-28)*1.149); // sized to match the 5lb plate exactly
+    const collarPw=22,collarPh=Math.round(30+(40-28)*1.149); // ~3/4 the width of a plate, height matches the 5lb plate
     const colHtml=`<div class="bb-col" style="width:${collarPw}px;height:${collarPh}px"></div>`;
     const sidePl=[...plates].reverse().map(p=>mkPl(p,'L')).join(''); // light→heavy outward, heaviest against the collar
     h+=`<div class="bb-wrap"><div class="bb-end"></div>${sidePl}${colHtml}<div class="bb-mid">${BAR}</div></div>`;
