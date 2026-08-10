@@ -1471,6 +1471,38 @@ function openHist(n){
 }
 
 // Day sheet
+function parseRepRange(r){
+  const s=String(r);
+  const m=s.match(/(\d+)\s*[-–]\s*(\d+)/);
+  if(m) return {min:parseInt(m[1]),max:parseInt(m[2])};
+  const n=parseInt(s);
+  return isNaN(n)?null:{min:n,max:n};
+}
+
+function suggestOptimized(name,ex){
+  const h=S.hist[name];
+  if(!h||!h.length) return null;
+  const recent=h.slice(-3);
+  const last=recent[recent.length-1];
+  if(!last.w||!last.r) return null;
+  const range=parseRepRange(getDisplayR(ex));
+  const inc=ex.restType==='heavy'?5:2.5;
+  const hitTopLastTwo=recent.length>=2&&recent.slice(-2).every(e=>range&&e.r>=range.max);
+  let w=last.w,reason='';
+  if(range&&last.r>=range.max){
+    w=last.w+inc;
+    reason=hitTopLastTwo?'top de la cible 2 séances de suite → charge augmentée':'top de la cible atteint → charge augmentée';
+  } else if(range&&last.r<range.min){
+    const missedTwice=recent.length>=2&&recent.slice(-2).every(e=>range&&e.r<range.min);
+    if(missedTwice){w=Math.round(last.w*0.92/2.5)*2.5;reason='sous la cible 2 séances de suite → léger déload';}
+    else{w=last.w;reason='sous la cible → poids maintenu';}
+  } else {
+    w=last.w;reason='dans la cible → poids maintenu, vise plus de reps';
+  }
+  w=Math.max(0,Math.round(w/2.5)*2.5);
+  return {w,changed:w!==last.w,reason};
+}
+
 function findLastSessionSets(name){
   for(let i=S.sessions.length-1;i>=0;i--){
     const ex=(S.sessions[i].exercises||[]).find(e=>e.name===name);
@@ -1485,6 +1517,7 @@ function regenDay(id,mode){
   S.exWOverrides=S.exWOverrides||{};
   S.exROverrides=S.exROverrides||{};
   S.exSOverrides=S.exSOverrides||{};
+  const summary=[];
 
   day.exercises.forEach(origEx=>{
     const replName=S.exReplacements&&S.exReplacements[id+'::'+origEx.name];
@@ -1496,6 +1529,12 @@ function regenDay(id,mode){
       delete S.exSOverrides[name];
     } else if(mode==='weight'){
       delete S.exWOverrides[name];
+    } else if(mode==='optimize'){
+      if(origEx.bw||origEx.rpe) return;
+      const sug=suggestOptimized(name,origEx);
+      if(!sug) return;
+      S.exWOverrides[name]=sug.w;
+      summary.push({name,...sug});
     } else if(mode==='keep'){
       const lastSets=findLastSessionSets(name);
       if(lastSets&&lastSets.length){
@@ -1518,6 +1557,15 @@ function regenDay(id,mode){
   });
 
   save();
+  if(mode==='optimize'){
+    if(!summary.length){
+      alert('Pas encore assez d\'historique sur ces exercices pour proposer une optimisation. Complète quelques séances d\'abord.');
+    } else {
+      const up=summary.filter(s=>s.changed&&s.w>0).length;
+      const lines=summary.map(s=>`${s.changed?(s.w>0?'↑':'↓'):'='} ${s.name}: ${s.w} lb — ${s.reason}`).join('\n');
+      alert(`Optimisation appliquée (${summary.length} exercice${summary.length>1?'s':''}) :\n\n${lines}`);
+    }
+  }
   if(navigator.vibrate) navigator.vibrate(10);
   openDaySh(id);
   renderToday();
@@ -1533,6 +1581,7 @@ function openDaySh(id){
     <div style="padding:0 14px 12px;display:flex;gap:6px;flex-wrap:wrap">
       <button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:10px" onclick="regenDay(${JSON.stringify(id)},'keep')">↺ Garder mes poids</button>
       <button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:10px" onclick="regenDay(${JSON.stringify(id)},'weight')">⚖️ Nouveau poids seulement</button>
+      <button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:10px" onclick="regenDay(${JSON.stringify(id)},'optimize')">🧠 Optimiser</button>
       <button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:10px" onclick="regenDay(${JSON.stringify(id)},'all')">📋 Poids d'origine</button>
     </div>
     ${day.exercises.map((origEx,exIdx)=>{const replName=S.exReplacements&&S.exReplacements[id+'::'+origEx.name];const ex=replName?Object.assign({},origEx,{name:replName}):origEx;const isReplaced=!!replName;const w=getW(ex,b);const img=getExerciseImage(ex.name);const rInfo=getRestLabel(ex,b);return `<div style="padding:0 14px;margin-bottom:12px">
