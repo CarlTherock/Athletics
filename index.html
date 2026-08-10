@@ -923,12 +923,28 @@ function openPlate(wStr,exName,repStr){
       <div style="font-size:10px;color:var(--t3);font-weight:700;margin-bottom:4px;text-align:center;letter-spacing:.05em">REPS</div>
       <input type="text" id="plRIn" value="${repStr||''}" oninput="renderPlateCalc()" onclick="this.select()" onfocus="this.select()" style="width:100%;text-align:center;background:var(--bg3);border:1px solid var(--b);border-radius:10px;padding:9px 6px;color:#fff;font-size:17px;font-weight:800;outline:none;box-sizing:border-box">
     </div>
+    <div>
+      <div style="height:14px"></div>
+      <button id="plConfirmBtn" onclick="confirmPlateSync()" style="width:42px;height:42px;border-radius:50%;border:2px solid var(--b2);background:none;color:var(--t3);flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+      </button>
+    </div>
   </div>
   <div id="plCalcOut"></div>`;
   document.getElementById('plBody').innerHTML=head;
   renderPlateCalc();
   raiseSheet('plSh');
   document.getElementById('plSh').classList.add('on');
+}
+
+function confirmPlateSync(){
+  syncPlateToSet();
+  const btn=document.getElementById('plConfirmBtn');
+  if(btn){
+    btn.style.background='var(--red)';btn.style.borderColor='var(--red)';btn.style.color='#fff';
+    if(navigator.vibrate) navigator.vibrate(10);
+    setTimeout(()=>{if(btn){btn.style.background='none';btn.style.borderColor='var(--b2)';btn.style.color='var(--t3)';}},700);
+  }
 }
 
 function syncPlateToSet(){
@@ -953,7 +969,6 @@ function renderPlateCalc(){
   const out=document.getElementById('plCalcOut');
   if(!wEl||!out) return;
   if(__lastPlateArgs){__lastPlateArgs.wStr=wEl.value;__lastPlateArgs.repStr=rEl?rEl.value:__lastPlateArgs.repStr;}
-  syncPlateToSet();
   const n=parseFloat(wEl.value);
   const plates=isNaN(n)?[]:calcPlates(n);
   let h='';
