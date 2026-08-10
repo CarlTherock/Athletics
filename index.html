@@ -383,7 +383,7 @@ body::before {
   z-index: -1;
 }
 
-#startBtnFixed{
+#startBtnFixed,#activeBannerFixed{
   bottom:calc(54px + env(safe-area-inset-bottom,0px));
 }
 
@@ -573,6 +573,18 @@ body::before {
   <button class="btn btn-red btn-lg" id="startBtn" onclick="startWo()" style="width:100%">▶ Commencer l'entraînement</button>
   <div onclick="toggleWeekSummary()" style="width:36px;height:4px;background:var(--b2);border-radius:2px;margin-top:6px;cursor:pointer"></div>
 </div>
+<div id="activeBannerFixed" style="display:none;position:fixed;left:0;right:0;padding:10px 12px;background:linear-gradient(180deg,transparent,#0A0A0A 20%);z-index:40">
+  <div style="background:rgba(200,16,46,.14);border:1px solid rgba(200,16,46,.4);border-radius:var(--r);padding:12px 14px;display:flex;align-items:center;justify-content:space-between">
+    <div>
+      <div style="font-size:10px;font-weight:800;letter-spacing:.12em;color:var(--rs);text-transform:uppercase;margin-bottom:3px">ENTRAÎNEMENT EN COURS</div>
+      <div style="font-size:22px;font-weight:900;font-variant-numeric:tabular-nums" id="activeBannerTimer">0:00</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ol btn-md" onclick="go('wo')" style="border-radius:var(--r);padding:0 14px;white-space:nowrap">Reprendre</button>
+      <button class="btn btn-red btn-md" onclick="finishWo()" style="border-radius:var(--r);padding:0 14px;white-space:nowrap">✓ Terminer</button>
+    </div>
+  </div>
+</div>
 
 <nav class="bnav">
   <button class="nb on" id="nb-today" onclick="go('today')">
@@ -613,14 +625,6 @@ body::before {
   </div>
   <span class="lbl">SÉANCE DU JOUR</span>
   <div id="todayCards"></div>
-  <!-- Active workout timer banner (visible when workout running) -->
-  <div id="activeBanner" style="display:none;margin:0 12px 8px;background:rgba(200,16,46,.12);border:1px solid rgba(200,16,46,.4);border-radius:var(--r);padding:12px 14px;display:none;align-items:center;justify-content:space-between">
-    <div>
-      <div style="font-size:10px;font-weight:800;letter-spacing:.12em;color:var(--rs);text-transform:uppercase;margin-bottom:3px">ENTRAÎNEMENT EN COURS</div>
-      <div style="font-size:22px;font-weight:900;font-variant-numeric:tabular-nums" id="activeBannerTimer">0:00</div>
-    </div>
-    <button class="btn btn-red btn-md" onclick="go('wo')" style="border-radius:var(--r);padding:0 16px">Reprendre →</button>
-  </div>
   <div style="height:96px"></div>
   <span class="lbl">SEMAINE EN COURS</span>
   <div style="background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);margin:0 12px 12px;overflow:hidden" id="weekList"></div>
@@ -842,7 +846,7 @@ const MUSCLES=[
 // ════════════════════════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════════════════════════
-let S={curDay:1,curWeek:1,ovDay:null,woStart:null,woInt:null,restInt:null,rRem:0,rTotal:0,sets:{},sessions:[],photos:[],hist:{},dayOrder:{},exWOverrides:{},exROverrides:{}};
+let S={curDay:1,curWeek:1,ovDay:null,woStart:null,woInt:null,restInt:null,rRem:0,rTotal:0,sets:{},sessions:[],photos:[],hist:{},dayOrder:{},exWOverrides:{},exROverrides:{},exSOverrides:{}};
 const KEY="ctr300v4";
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function load(){try{const d=localStorage.getItem(KEY);if(d){const p=JSON.parse(d);Object.assign(S,p);}}catch(e){}}
@@ -864,6 +868,9 @@ function getW(ex,b){
 }
 function getDisplayR(ex){
   return (S.exROverrides && S.exROverrides[ex.name]) || ex.r;
+}
+function getDisplayS(ex){
+  return (S.exSOverrides && S.exSOverrides[ex.name]) || ex.s;
 }
 
 // TEMPS DE REPOS — correct selon type et bloc
@@ -914,22 +921,26 @@ function setBarWeight(val){
   renderPlateCalc();
 }
 
-function openPlate(wStr,exName,repStr,dayId){
-  __lastPlateArgs = {wStr,exName,repStr,dayId};
+function openPlate(wStr,exName,repStr,sStr,dayId){
+  __lastPlateArgs = {wStr,exName,repStr,sStr,dayId};
   document.getElementById('plTitle').textContent='🏋️ '+exName;
   const n0=parseFloat(wStr)||'';
-  const head=`<div style="display:flex;gap:10px;justify-content:center;align-items:flex-end;padding:0 18px 14px">
-    <div style="flex:1;max-width:130px">
-      <div style="font-size:10px;color:var(--t3);font-weight:700;margin-bottom:4px;text-align:center;letter-spacing:.05em">POIDS (LB)</div>
-      <input type="number" id="plWIn" value="${n0}" step="2.5" inputmode="decimal" oninput="renderPlateCalc()" onclick="this.select()" onfocus="this.select()" style="width:100%;text-align:center;background:var(--bg3);border:1px solid var(--b);border-radius:10px;padding:9px 6px;color:#fff;font-size:17px;font-weight:800;outline:none;box-sizing:border-box">
+  const head=`<div style="display:flex;gap:7px;justify-content:center;align-items:flex-end;padding:0 14px 14px">
+    <div style="flex:1;max-width:90px">
+      <div style="font-size:9px;color:var(--t3);font-weight:700;margin-bottom:4px;text-align:center;letter-spacing:.05em">SÉRIES</div>
+      <input type="number" id="plSIn" value="${sStr||''}" inputmode="numeric" oninput="renderPlateCalc()" onclick="this.select()" onfocus="this.select()" style="width:100%;text-align:center;background:var(--bg3);border:1px solid var(--b);border-radius:10px;padding:9px 4px;color:#fff;font-size:17px;font-weight:800;outline:none;box-sizing:border-box">
     </div>
     <div style="flex:1;max-width:100px">
-      <div style="font-size:10px;color:var(--t3);font-weight:700;margin-bottom:4px;text-align:center;letter-spacing:.05em">REPS</div>
-      <input type="text" id="plRIn" value="${repStr||''}" oninput="renderPlateCalc()" onclick="this.select()" onfocus="this.select()" style="width:100%;text-align:center;background:var(--bg3);border:1px solid var(--b);border-radius:10px;padding:9px 6px;color:#fff;font-size:17px;font-weight:800;outline:none;box-sizing:border-box">
+      <div style="font-size:9px;color:var(--t3);font-weight:700;margin-bottom:4px;text-align:center;letter-spacing:.05em">POIDS (LB)</div>
+      <input type="number" id="plWIn" value="${n0}" step="2.5" inputmode="decimal" oninput="renderPlateCalc()" onclick="this.select()" onfocus="this.select()" style="width:100%;text-align:center;background:var(--bg3);border:1px solid var(--b);border-radius:10px;padding:9px 4px;color:#fff;font-size:17px;font-weight:800;outline:none;box-sizing:border-box">
+    </div>
+    <div style="flex:1;max-width:90px">
+      <div style="font-size:9px;color:var(--t3);font-weight:700;margin-bottom:4px;text-align:center;letter-spacing:.05em">REPS</div>
+      <input type="text" id="plRIn" value="${repStr||''}" oninput="renderPlateCalc()" onclick="this.select()" onfocus="this.select()" style="width:100%;text-align:center;background:var(--bg3);border:1px solid var(--b);border-radius:10px;padding:9px 4px;color:#fff;font-size:17px;font-weight:800;outline:none;box-sizing:border-box">
     </div>
     <div>
-      <div style="height:14px"></div>
-      <button id="plConfirmBtn" onclick="confirmPlateSync()" style="width:42px;height:42px;border-radius:50%;border:2px solid var(--b2);background:none;color:var(--t3);flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s">
+      <div style="height:13px"></div>
+      <button id="plConfirmBtn" onclick="confirmPlateSync()" style="width:42px;height:42px;border-radius:50%;border:2px solid var(--green);background:none;color:var(--green);flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
       </button>
     </div>
@@ -945,16 +956,20 @@ function confirmPlateSync(){
   if(!__lastPlateArgs) return;
   const wEl=document.getElementById('plWIn');
   const rEl=document.getElementById('plRIn');
+  const sEl=document.getElementById('plSIn');
   const wv=wEl?parseFloat(wEl.value):NaN;
   const rv=rEl?rEl.value.trim():'';
+  const sv=sEl?parseInt(sEl.value):NaN;
   const exName=__lastPlateArgs.exName;
   const dayId=__lastPlateArgs.dayId;
 
   // Persistent program-level override — affects this exercise everywhere, including before starting a workout
   S.exWOverrides=S.exWOverrides||{};
   S.exROverrides=S.exROverrides||{};
+  S.exSOverrides=S.exSOverrides||{};
   if(!isNaN(wv)) S.exWOverrides[exName]=wv;
   if(rv) S.exROverrides[exName]=rv;
+  if(!isNaN(sv)&&sv>0) S.exSOverrides[exName]=sv;
 
   // Also sync the active logged set, if currently mid-workout
   const arr=S.sets[exName];
@@ -1045,6 +1060,7 @@ function go(name){
   document.getElementById('sc-'+name).classList.add('on');
   document.getElementById('nb-'+name).classList.add('on');
   ({today:renderToday,stats:renderStats,photos:renderPhotos,prog:renderProg})[name]?.();
+  showActiveBanner(!!S.woStart);
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1129,7 +1145,7 @@ function renderToday(){
           <div class="dnum-img"><img src="${img}" loading="lazy" onerror="this.style.display='none'"></div>
           <div class="dcard-info">
             <div class="dcard-name">${(ex.new||isReplaced)?'★ ':''}${ex.name}</div>
-            <div class="dcard-sub">${ex.s} × ${getDisplayR(ex)} · <span style="color:var(--rs);font-weight:700">${w}</span></div>
+            <div class="dcard-sub">${getDisplayS(ex)} × ${getDisplayR(ex)} · <span style="color:var(--rs);font-weight:700">${w}</span></div>
           </div>
           <div class="dcard-grip"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="8" cy="6" r="1.8"/><circle cx="16" cy="6" r="1.8"/><circle cx="8" cy="12" r="1.8"/><circle cx="16" cy="12" r="1.8"/><circle cx="8" cy="18" r="1.8"/><circle cx="16" cy="18" r="1.8"/></svg></div>
         </div>
@@ -1218,15 +1234,19 @@ function startWo(){
 }
 
 function showActiveBanner(on){
-  const b=document.getElementById('activeBanner');
-  const sw=document.getElementById('startBtnWrap');
-  if(!b||!sw)return;
-  if(on&&S.woStart){
-    b.style.display='flex';
+  const sw=document.getElementById('startBtnFixed');
+  const ab=document.getElementById('activeBannerFixed');
+  if(!sw||!ab)return;
+  const onWoScreen=document.getElementById('sc-wo')?.classList.contains('on');
+  if(onWoScreen){
     sw.style.display='none';
+    ab.style.display='none';
+  } else if(on&&S.woStart){
+    sw.style.display='none';
+    ab.style.display='block';
   } else {
-    b.style.display='none';
-    sw.style.display='block';
+    sw.style.display='flex';
+    ab.style.display='none';
   }
 }
 
@@ -1275,7 +1295,7 @@ function renderWo(){
         <div class="ex-act" onclick="openExLibrary(${actId},${ei})">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>Remplacer
         </div>
-        ${isBar?`<div class="ex-act" onclick="openPlate('${sets[0].w||wNum}','${ex.name}','${sets[0].r||ex.r}',${actId})">
+        ${isBar?`<div class="ex-act" onclick="openPlate('${sets[0].w||wNum}','${ex.name}','${sets[0].r||ex.r}','${getDisplayS(ex)}',${actId})">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 5v14M18 5v14M4 9h4M16 9h4M4 15h4M16 15h4"/></svg>Plates
         </div>`:''}
         <div class="ex-act" onclick="openRestPresetPicker('${ex.name}',${restInfo.sec})">
@@ -1403,13 +1423,13 @@ function openDaySh(id){
         <img src="${img}" style="width:60px;height:60px;object-fit:cover;border-radius:9px;flex-shrink:0;background:var(--bg3)" loading="lazy" onerror="this.style.opacity='.3'">
         <div style="flex:1">
           <div style="font-size:14px;font-weight:800">${(ex.new||isReplaced)?'★ ':''}${ex.name}</div>
-          <div style="font-size:11px;color:var(--t2);margin-top:2px">${ex.s} × ${getDisplayR(ex)} · <span style="color:var(--rs);font-weight:700">${w}</span></div>
+          <div style="font-size:11px;color:var(--t2);margin-top:2px">${getDisplayS(ex)} × ${getDisplayR(ex)} · <span style="color:var(--rs);font-weight:700">${w}</span></div>
           <div style="font-size:10px;color:var(--t3);margin-top:2px">${rInfo.type} · ${rInfo.fmt}</div>
           <div style="font-size:10px;color:var(--t3);margin-top:3px;font-style:italic">${ex.note}</div>
         </div>
       </div>
       <div style="display:flex;gap:7px;margin-top:8px;flex-wrap:wrap">
-        ${!ex.bw&&!ex.rpe?`<button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:11px" onclick="openPlate('${parseFloat(w)||0}','${ex.name}','${getDisplayR(ex)}',${id})">🏋️ Plates</button>`:''}
+        ${!ex.bw&&!ex.rpe?`<button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:11px" onclick="openPlate('${parseFloat(w)||0}','${ex.name}','${getDisplayR(ex)}','${getDisplayS(ex)}',${id})">🏋️ Plates</button>`:''}
         <button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:11px;display:inline-flex;align-items:center;gap:5px" onclick="openExLibrary(${id},${exIdx})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>Remplacer</button>
       </div>
       <div style="height:1px;background:var(--b);margin-top:11px"></div>
@@ -2724,6 +2744,17 @@ S.curWeek=calcWeek();
 save();
 renderToday();
 renderProg();
+if(S.woStart){
+  showActiveBanner(true);
+  if(S.woInt)clearInterval(S.woInt);
+  S.woInt=setInterval(()=>{
+    const el=Math.floor((Date.now()-S.woStart)/1000);
+    const t=document.getElementById('woTimer');if(t)t.textContent=fmt(el);
+    const bt=document.getElementById('activeBannerTimer');if(bt)bt.textContent=fmt(el);
+  },1000);
+} else {
+  showActiveBanner(false);
+}
 setTimeout(()=>{const sp=document.getElementById('spl');if(sp){sp.classList.add('out');setTimeout(()=>sp.remove(),500);}},1600);
 
 
