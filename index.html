@@ -339,6 +339,16 @@ body{
 .mh-fill{height:100%;border-radius:3px;transition:width .6s}
 .mh-s{width:30px;text-align:right;font-size:11px;font-weight:700}
 .mh-tr{width:20px;text-align:right;font-size:11px}
+.cal-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:3px}
+.cal-col{display:flex;flex-direction:column;gap:3px}
+.cal-cell{aspect-ratio:1;border-radius:2px;background:var(--bg4)}
+.cal-cell.on1{background:rgba(200,16,46,.35)}
+.cal-cell.on2{background:rgba(200,16,46,.6)}
+.cal-cell.on3{background:var(--red)}
+.pr-row{background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:11px 13px;margin-bottom:7px;display:flex;align-items:center;justify-content:space-between}
+.pr-name{font-size:13px;font-weight:700}
+.pr-date{font-size:10px;color:var(--t3);margin-top:2px}
+.pr-val{color:var(--rs);font-weight:900;font-size:15px}
 
 /* ══════════════════════════════════════════
    PHOTOS
@@ -668,6 +678,19 @@ body::before {
 <div class="scr" id="sc-stats">
   <div class="tb"><div class="tb-logo">CTR <em>Stats</em></div><div style="font-size:10px;color:var(--t3)">Plan 300</div></div>
   <div class="sg" style="margin-top:12px" id="statCards"></div>
+  <span class="lbl">CONSTANCE</span>
+  <div class="ch-wrap">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:9px">
+      <div style="font-size:22px;font-weight:900" id="streakVal">🔥 0</div>
+      <div style="font-size:11px;color:var(--t3)" id="streakLbl">semaines consécutives</div>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+  </div>
+  <span class="lbl">VOLUME HEBDOMADAIRE</span>
+  <div class="ch-wrap">
+    <div style="font-size:11px;color:var(--t3);margin-bottom:3px">lb soulevées, 8 dernières semaines</div>
+    <div class="ch-bars" id="volBars"></div>
+  </div>
   <span class="lbl">PROGRESSION</span>
   <div class="ch-wrap">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
@@ -679,8 +702,10 @@ body::before {
     </div>
     <div class="ch-bars" id="chBars"></div>
   </div>
-  <span class="lbl">GROUPES MUSCULAIRES</span>
+  <span class="lbl">GROUPES MUSCULAIRES · CETTE SEMAINE</span>
   <div class="mh" id="mheat"></div>
+  <span class="lbl">RECORDS RÉCENTS</span>
+  <div id="prList" style="margin:0 12px 10px"></div>
   <span class="lbl">SÉANCES RÉCENTES</span>
   <div id="recentSess" style="margin:0 12px 12px"></div>
 </div>
@@ -857,15 +882,18 @@ const PROG = {
   ]
 };
 
-const MUSCLES=[
-  {n:"Poitrine",  s:111,d:"+2",c:"#3B82F6"},
-  {n:"Épaules",   s:100,d:"+8",c:"#60A5FA"},
-  {n:"Biceps",    s:95, d:"+3",c:"#3B82F6"},
-  {n:"Triceps",   s:97, d:"-3",c:"#F97316"},
-  {n:"Dos",       s:89, d:"-1",c:"#F97316"},
-  {n:"Quadriceps",s:82, d:"-5",c:"#C8102E"},
-  {n:"Ischio",    s:82, d:"-4",c:"#C8102E"},
-  {n:"Fessiers",  s:81, d:"-3",c:"#C8102E"},
+const MUSCLE_GROUPS=[
+  {n:"Poitrine",  c:"#3B82F6",target:14},
+  {n:"Dos",       c:"#F97316",target:16},
+  {n:"Épaules",   c:"#60A5FA",target:14},
+  {n:"Biceps",    c:"#3B82F6",target:10},
+  {n:"Triceps",   c:"#F97316",target:10},
+  {n:"Quadriceps",c:"#C8102E",target:14},
+  {n:"Ischio-jambiers",c:"#C8102E",target:12},
+  {n:"Fessiers",  c:"#C8102E",target:12},
+  {n:"Abdominaux",c:"#84CC16",target:10},
+  {n:"Mollets",   c:"#84CC16",target:10},
+  {n:"Avant-bras",c:"#84CC16",target:6},
 ];
 
 // ════════════════════════════════════════════════════════════
@@ -1476,18 +1504,153 @@ function openDaySh(id){
 // ════════════════════════════════════════════════════════════
 // STATS
 // ════════════════════════════════════════════════════════════
+// ── Dashboard helpers: everything computed from real logged data, nothing hardcoded ──
+let __exToMuscle=null;
+function exToMuscle(name){
+  if(!__exToMuscle){
+    __exToMuscle={};
+    Object.keys(EX_LIBRARY).forEach(m=>{
+      EX_LIBRARY[m].exercises.forEach(ex=>{__exToMuscle[ex.name]=m;});
+    });
+  }
+  return __exToMuscle[name]||null;
+}
+function est1RM(name){
+  const h=S.hist[name];
+  if(!h||!h.length) return null;
+  let best=0;
+  h.forEach(e=>{
+    if(!e.w||!e.r) return;
+    const e1=e.r<=1?e.w:e.w*(1+e.r/30);
+    if(e1>best) best=e1;
+  });
+  return best>0?Math.round(best/2.5)*2.5:null;
+}
+function weekStart(d){const x=new Date(d);const day=(x.getDay()+6)%7;x.setDate(x.getDate()-day);x.setHours(0,0,0,0);return x;}
+function computeMuscleStats(){
+  const now=Date.now(),oneWeek=7*24*3600*1000;
+  const cur={},prev={};
+  MUSCLE_GROUPS.forEach(m=>{cur[m.n]=0;prev[m.n]=0;});
+  S.sessions.forEach(sess=>{
+    const t=new Date(sess.date+'T12:00:00').getTime();
+    const age=now-t;
+    if(age<0||age>2*oneWeek) return;
+    const bucket=age<=oneWeek?cur:prev;
+    (sess.exercises||[]).forEach(ex=>{
+      const m=exToMuscle(ex.name);
+      if(!m||!(m in bucket)) return;
+      const doneSets=(ex.sets||[]).filter(s=>s.w&&s.r).length;
+      bucket[m]+=doneSets;
+    });
+  });
+  return MUSCLE_GROUPS.map(m=>{
+    const c=cur[m.n]||0,p=prev[m.n]||0;
+    const pct=Math.min(999,Math.round(c/m.target*100));
+    const diff=p>0?Math.round((c-p)/p*100):(c>0?100:0);
+    return {n:m.n,c:m.c,sets:c,target:m.target,pct,diff};
+  });
+}
+function computeWeeklyVolume(weeks){
+  const now=new Date();const start=weekStart(now);
+  const buckets=[];
+  for(let i=weeks-1;i>=0;i--){
+    const ws=new Date(start);ws.setDate(ws.getDate()-i*7);
+    const we=new Date(ws);we.setDate(we.getDate()+7);
+    buckets.push({ws,we,vol:0});
+  }
+  S.sessions.forEach(sess=>{
+    const t=new Date(sess.date+'T12:00:00');
+    const b=buckets.find(b=>t>=b.ws&&t<b.we);
+    if(!b) return;
+    (sess.exercises||[]).forEach(ex=>{
+      (ex.sets||[]).forEach(s=>{if(s.w&&s.r) b.vol+=s.w*s.r;});
+    });
+  });
+  return buckets.map(b=>({label:(b.ws.getMonth()+1)+'/'+b.ws.getDate(),vol:Math.round(b.vol)}));
+}
+function computeConsistency(weeksBack){
+  const now=new Date();const start=weekStart(now);
+  const trained=new Set(S.sessions.map(s=>s.date));
+  const cols=[];
+  for(let w=weeksBack-1;w>=0;w--){
+    const ws=new Date(start);ws.setDate(ws.getDate()-w*7);
+    const col=[];
+    for(let d=0;d<7;d++){
+      const day=new Date(ws);day.setDate(day.getDate()+d);
+      const key=day.toLocaleDateString('fr-CA');
+      col.push(day<=now && trained.has(key));
+    }
+    cols.push(col);
+  }
+  return cols;
+}
+function computeStreak(){
+  const weeksWithSession={};
+  S.sessions.forEach(s=>{
+    const t=new Date(s.date+'T12:00:00');
+    const ws=weekStart(t).toISOString().slice(0,10);
+    weeksWithSession[ws]=(weeksWithSession[ws]||0)+1;
+  });
+  let streak=0;let cursor=weekStart(new Date());
+  while(true){
+    const key=cursor.toISOString().slice(0,10);
+    if((weeksWithSession[key]||0)>=3){streak++;cursor.setDate(cursor.getDate()-7);}
+    else break;
+  }
+  return streak;
+}
+function getRecentPRs(n){
+  const prs=[];
+  Object.keys(S.hist).forEach(name=>{
+    (S.hist[name]||[]).forEach(e=>{if(e.isPR) prs.push({name,...e});});
+  });
+  prs.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  return prs.slice(0,n);
+}
+
 function renderStats(){
   let vol=0;S.sessions.forEach(s=>s.exercises?.forEach(ex=>ex.sets?.forEach(set=>{if(set.w&&set.r)vol+=set.w*set.r;})));
+  const benchE=est1RM('Bench Press'),squatE=est1RM('Back Squat');
   document.getElementById('statCards').innerHTML=`
     <div class="sc"><div class="sc-l">Séances</div><div class="sc-v">${S.sessions.length}</div><div class="sc-d neu">Plan 300</div></div>
     <div class="sc"><div class="sc-l">Volume</div><div class="sc-v">${vol>0?Math.round(vol/1000)+'k':'0'}</div><div class="sc-d neu">lb soulevées</div></div>
-    <div class="sc"><div class="sc-l">Bench 1RM</div><div class="sc-v" id="sc-b">270</div><div class="sc-d up">lb estimé</div></div>
-    <div class="sc"><div class="sc-l">Squat 1RM</div><div class="sc-v">222</div><div class="sc-d up">lb estimé</div></div>`;
-  const bh=S.hist['Bench Press'];
-  if(bh?.length){const l=bh.slice(-1)[0];const e=Math.round(l.w*(1+l.r/30)/2.5)*2.5;const el=document.getElementById('sc-b');if(el)el.textContent=e;}
+    <div class="sc"><div class="sc-l">Bench 1RM</div><div class="sc-v">${benchE||'—'}</div><div class="sc-d ${benchE?'up':'neu'}">${benchE?'lb estimé':'aucune donnée'}</div></div>
+    <div class="sc"><div class="sc-l">Squat 1RM</div><div class="sc-v">${squatE||'—'}</div><div class="sc-d ${squatE?'up':'neu'}">${squatE?'lb estimé':'aucune donnée'}</div></div>`;
+
   renderChart('Bench Press');
-  const maxS=Math.max(...MUSCLES.map(m=>m.s));
-  document.getElementById('mheat').innerHTML=MUSCLES.map(m=>{const pct=(m.s/maxS*100).toFixed(0);const cls=m.s>=100?'up':m.s>=85?'neu':'dn';return `<div class="mh-row"><div class="mh-n">${m.n}</div><div class="mh-bg"><div class="mh-fill" style="width:${pct}%;background:${m.c}"></div></div><div class="mh-s ${cls}">${m.s}</div><div class="mh-tr ${parseFloat(m.d)>=0?'up':'dn'}">${m.d}</div></div>`;}).join('');
+
+  // Streak + consistency calendar
+  const streak=computeStreak();
+  document.getElementById('streakVal').textContent=(streak>0?'🔥 ':'')+streak;
+  document.getElementById('streakLbl').textContent=streak===1?'semaine consécutive · 3+ séances':'semaines consécutives · 3+ séances';
+  const cols=computeConsistency(12);
+  document.getElementById('calGrid').innerHTML=cols.map(col=>
+    '<div class="cal-col">'+col.map(on=>`<div class="cal-cell ${on?'on3':''}"></div>`).join('')+'</div>'
+  ).join('');
+
+  // Weekly volume trend
+  const wv=computeWeeklyVolume(8);
+  const maxV=Math.max(1,...wv.map(w=>w.vol));
+  document.getElementById('volBars').innerHTML=wv.map((w,i)=>{
+    const pct=8+((w.vol/maxV)*88);const isL=i===wv.length-1;
+    return `<div class="ch-col"><div class="ch-val">${w.vol>=1000?Math.round(w.vol/1000)+'k':w.vol}</div><div class="ch-bar ${isL?'lat':''}" style="height:${pct}%"></div><div class="ch-lbl">${w.label}</div></div>`;
+  }).join('');
+
+  // Muscle groups — computed live from actual logged sets, not hardcoded
+  const mstats=computeMuscleStats();
+  document.getElementById('mheat').innerHTML=mstats.map(m=>{
+    const barPct=Math.min(100,m.pct);
+    const cls=m.pct>=100?'up':m.pct>=60?'neu':'dn';
+    const trend=m.diff>0?'+'+m.diff+'%':m.diff+'%';
+    return `<div class="mh-row"><div class="mh-n">${m.n}</div><div class="mh-bg"><div class="mh-fill" style="width:${barPct}%;background:${m.c}"></div></div><div class="mh-s ${cls}">${m.sets}/${m.target}</div><div class="mh-tr ${m.diff>=0?'up':'dn'}">${trend}</div></div>`;
+  }).join('');
+
+  // Recent PRs
+  const prs=getRecentPRs(6);
+  document.getElementById('prList').innerHTML=prs.length?prs.map(p=>
+    `<div class="pr-row"><div><div class="pr-name">🏆 ${p.name}</div><div class="pr-date">${p.date}</div></div><div class="pr-val">${p.w} lb × ${p.r}</div></div>`
+  ).join(''):`<div class="card"><div style="text-align:center;padding:12px 0;color:var(--t3);font-size:12px">Complète des séries pour voir tes records ici.</div></div>`;
+
   const rec=[...S.sessions].reverse().slice(0,5);
   document.getElementById('recentSess').innerHTML=rec.length?rec.map(s=>`<div class="card" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between"><div><div style="font-size:13px;font-weight:800">${(typeof s.dayId==='string'&&s.dayId.charAt(0)==='c')?s.dayName:'J'+s.dayId+' — '+s.dayName}</div><div style="font-size:10px;color:var(--t3);margin-top:1px">${s.date} · Sem. ${s.week} · Bloc ${s.bloc}</div></div><div style="color:var(--rs);font-weight:700;font-size:13px">${s.duration} min</div></div></div>`).join(''):`<div class="card"><div style="text-align:center;padding:12px 0;color:var(--t3);font-size:12px">Lance ton premier workout!</div></div>`;
 }
