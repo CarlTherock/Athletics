@@ -1471,6 +1471,14 @@ function openHist(n){
 }
 
 // Day sheet
+function findLastSessionSets(name){
+  for(let i=S.sessions.length-1;i>=0;i--){
+    const ex=(S.sessions[i].exercises||[]).find(e=>e.name===name);
+    if(ex&&ex.sets&&ex.sets.length) return ex.sets;
+  }
+  return null;
+}
+
 function regenDay(id,mode){
   const day=dayObj(id);
   if(!day) return;
@@ -1489,11 +1497,22 @@ function regenDay(id,mode){
     } else if(mode==='weight'){
       delete S.exWOverrides[name];
     } else if(mode==='keep'){
-      const h=S.hist[name];
-      if(h&&h.length){
-        const last=h.slice(-1)[0];
-        if(last.w) S.exWOverrides[name]=last.w;
-        if(last.r) S.exROverrides[name]=String(last.r);
+      const lastSets=findLastSessionSets(name);
+      if(lastSets&&lastSets.length){
+        const valid=lastSets.filter(s=>s.w&&s.r);
+        if(valid.length){
+          const last=valid[valid.length-1];
+          S.exWOverrides[name]=last.w;
+          S.exROverrides[name]=String(last.r);
+          S.exSOverrides[name]=valid.length;
+        }
+      } else {
+        const h=S.hist[name];
+        if(h&&h.length){
+          const last=h.slice(-1)[0];
+          if(last.w) S.exWOverrides[name]=last.w;
+          if(last.r) S.exROverrides[name]=String(last.r);
+        }
       }
     }
   });
@@ -1514,7 +1533,7 @@ function openDaySh(id){
     <div style="padding:0 14px 12px;display:flex;gap:6px;flex-wrap:wrap">
       <button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:10px" onclick="regenDay(${JSON.stringify(id)},'keep')">↺ Garder mes poids</button>
       <button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:10px" onclick="regenDay(${JSON.stringify(id)},'weight')">⚖️ Nouveau poids seulement</button>
-      <button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:10px" onclick="regenDay(${JSON.stringify(id)},'all')">✨ Tout régénérer</button>
+      <button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:10px" onclick="regenDay(${JSON.stringify(id)},'all')">📋 Poids d'origine</button>
     </div>
     ${day.exercises.map((origEx,exIdx)=>{const replName=S.exReplacements&&S.exReplacements[id+'::'+origEx.name];const ex=replName?Object.assign({},origEx,{name:replName}):origEx;const isReplaced=!!replName;const w=getW(ex,b);const img=getExerciseImage(ex.name);const rInfo=getRestLabel(ex,b);return `<div style="padding:0 14px;margin-bottom:12px">
       <div style="display:flex;align-items:center;gap:11px">
