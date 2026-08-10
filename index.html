@@ -916,11 +916,11 @@ function openPlate(wStr,exName,repStr){
   const head=`<div style="display:flex;gap:10px;justify-content:center;align-items:flex-end;padding:0 18px 14px">
     <div style="flex:1;max-width:130px">
       <div style="font-size:10px;color:var(--t3);font-weight:700;margin-bottom:4px;text-align:center;letter-spacing:.05em">POIDS (LB)</div>
-      <input type="number" id="plWIn" value="${n0}" step="2.5" inputmode="decimal" oninput="renderPlateCalc()" style="width:100%;text-align:center;background:var(--bg3);border:1px solid var(--b);border-radius:10px;padding:9px 6px;color:#fff;font-size:17px;font-weight:800;outline:none;box-sizing:border-box">
+      <input type="number" id="plWIn" value="${n0}" step="2.5" inputmode="decimal" oninput="renderPlateCalc()" onclick="this.select()" onfocus="this.select()" style="width:100%;text-align:center;background:var(--bg3);border:1px solid var(--b);border-radius:10px;padding:9px 6px;color:#fff;font-size:17px;font-weight:800;outline:none;box-sizing:border-box">
     </div>
     <div style="flex:1;max-width:100px">
       <div style="font-size:10px;color:var(--t3);font-weight:700;margin-bottom:4px;text-align:center;letter-spacing:.05em">REPS</div>
-      <input type="text" id="plRIn" value="${repStr||''}" oninput="renderPlateCalc()" style="width:100%;text-align:center;background:var(--bg3);border:1px solid var(--b);border-radius:10px;padding:9px 6px;color:#fff;font-size:17px;font-weight:800;outline:none;box-sizing:border-box">
+      <input type="text" id="plRIn" value="${repStr||''}" oninput="renderPlateCalc()" onclick="this.select()" onfocus="this.select()" style="width:100%;text-align:center;background:var(--bg3);border:1px solid var(--b);border-radius:10px;padding:9px 6px;color:#fff;font-size:17px;font-weight:800;outline:none;box-sizing:border-box">
     </div>
   </div>
   <div id="plCalcOut"></div>`;
@@ -930,12 +930,29 @@ function openPlate(wStr,exName,repStr){
   document.getElementById('plSh').classList.add('on');
 }
 
+function syncPlateToSet(){
+  if(!__lastPlateArgs || !__lastPlateArgs.exName) return;
+  const arr = S.sets[__lastPlateArgs.exName];
+  if(!arr || !arr.length) return;
+  let idx = arr.findIndex(s=>!s.done);
+  if(idx===-1) idx = arr.length-1;
+  const wEl=document.getElementById('plWIn');
+  const rEl=document.getElementById('plRIn');
+  const wv=wEl?parseFloat(wEl.value):NaN;
+  const rv=rEl?parseInt(rEl.value):NaN;
+  if(!isNaN(wv)) arr[idx].w=wv;
+  if(!isNaN(rv)) arr[idx].r=rv;
+  save();
+  renderWo();
+}
+
 function renderPlateCalc(){
   const wEl=document.getElementById('plWIn');
   const rEl=document.getElementById('plRIn');
   const out=document.getElementById('plCalcOut');
   if(!wEl||!out) return;
   if(__lastPlateArgs){__lastPlateArgs.wStr=wEl.value;__lastPlateArgs.repStr=rEl?rEl.value:__lastPlateArgs.repStr;}
+  syncPlateToSet();
   const n=parseFloat(wEl.value);
   const plates=isNaN(n)?[]:calcPlates(n);
   let h='';
@@ -1258,10 +1275,10 @@ function renderWo(){
             <div class="hex ${hx}" onclick="cycleT('${ex.name}',${si})">${set.type==='warmup'?'W':set.type==='drop'?'D':si+1}</div>
             <div class="set-prev">${pSet?pSet.w+'lb':wStr}</div>
             <input class="sinp${set.done?' sd':''}" type="number" inputmode="decimal" value="${set.w||''}" placeholder="${wNum||''}"
-              oninput="updS('${ex.name}',${si},'w',this.value)">
+              onclick="this.select()" onfocus="this.select()" oninput="updS('${ex.name}',${si},'w',this.value)">
             <div class="set-unit">lb</div>
             <input class="sinp${set.done?' sd':''}" type="number" inputmode="numeric" value="${set.r||''}" placeholder="0"
-              oninput="updS('${ex.name}',${si},'r',this.value)">
+              onclick="this.select()" onfocus="this.select()" oninput="updS('${ex.name}',${si},'r',this.value)">
             <button class="chk${set.done?' on':''}" onclick="chkSet('${ex.name}',${ei},${si})">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
             </button>
