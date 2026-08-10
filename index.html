@@ -1511,95 +1511,167 @@ function findLastSessionSets(name){
   return null;
 }
 
-function regenDay(id,mode){
-  const day=dayObj(id);
-  if(!day) return;
-  S.exWOverrides=S.exWOverrides||{};
-  S.exROverrides=S.exROverrides||{};
-  S.exSOverrides=S.exSOverrides||{};
-  const summary=[];
+let regenPreview=null;   // {exName:{w,r,s}} — live preview, not yet saved
+let regenMode=null;      // currently selected option in the panel
+let regenDayId=null;
 
-  day.exercises.forEach(origEx=>{
+function renderDayExList(id,day,b,preview){
+  return day.exercises.map((origEx,exIdx)=>{
     const replName=S.exReplacements&&S.exReplacements[id+'::'+origEx.name];
-    const name=replName||origEx.name;
-
-    if(mode==='all'){
-      delete S.exWOverrides[name];
-      delete S.exROverrides[name];
-      delete S.exSOverrides[name];
-    } else if(mode==='weight'){
-      delete S.exWOverrides[name];
-    } else if(mode==='optimize'){
-      if(origEx.bw||origEx.rpe) return;
-      const sug=suggestOptimized(name,origEx);
-      if(!sug) return;
-      S.exWOverrides[name]=sug.w;
-      summary.push({name,...sug});
-    } else if(mode==='keep'){
-      const lastSets=findLastSessionSets(name);
-      if(lastSets&&lastSets.length){
-        const valid=lastSets.filter(s=>s.w&&s.r);
-        if(valid.length){
-          const last=valid[valid.length-1];
-          S.exWOverrides[name]=last.w;
-          S.exROverrides[name]=String(last.r);
-          S.exSOverrides[name]=valid.length;
-        }
-      } else {
-        const h=S.hist[name];
-        if(h&&h.length){
-          const last=h.slice(-1)[0];
-          if(last.w) S.exWOverrides[name]=last.w;
-          if(last.r) S.exROverrides[name]=String(last.r);
-        }
-      }
-    }
-  });
-
-  save();
-  if(mode==='optimize'){
-    if(!summary.length){
-      alert('Pas encore assez d\'historique sur ces exercices pour proposer une optimisation. Complète quelques séances d\'abord.');
-    } else {
-      const up=summary.filter(s=>s.changed&&s.w>0).length;
-      const lines=summary.map(s=>`${s.changed?(s.w>0?'↑':'↓'):'='} ${s.name}: ${s.w} lb — ${s.reason}`).join('\n');
-      alert(`Optimisation appliquée (${summary.length} exercice${summary.length>1?'s':''}) :\n\n${lines}`);
-    }
-  }
-  if(navigator.vibrate) navigator.vibrate(10);
-  openDaySh(id);
-  renderToday();
-}
-
-function openDaySh(id){
-  const day=dayObj(id);const b=bloc();
-  document.getElementById('dayShT').textContent=`Jour ${id} — ${day.name}`;
-  document.getElementById('dayShB').innerHTML=`
-    <div style="padding:0 14px 9px;display:flex;gap:5px;flex-wrap:wrap">
-      <span class="pill ${b==='A'?'pa':b==='B'?'pb':b==='C'?'pc':'pd2'}">${blocLbl()}</span>
-    </div>
-    <div style="padding:0 14px 12px;display:flex;gap:6px;flex-wrap:wrap">
-      <button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:10px" onclick="regenDay(${JSON.stringify(id)},'keep')">↺ Garder mes poids</button>
-      <button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:10px" onclick="regenDay(${JSON.stringify(id)},'weight')">⚖️ Nouveau poids seulement</button>
-      <button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:10px" onclick="regenDay(${JSON.stringify(id)},'optimize')">🧠 Optimiser</button>
-      <button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:10px" onclick="regenDay(${JSON.stringify(id)},'all')">📋 Poids d'origine</button>
-    </div>
-    ${day.exercises.map((origEx,exIdx)=>{const replName=S.exReplacements&&S.exReplacements[id+'::'+origEx.name];const ex=replName?Object.assign({},origEx,{name:replName}):origEx;const isReplaced=!!replName;const w=getW(ex,b);const img=getExerciseImage(ex.name);const rInfo=getRestLabel(ex,b);return `<div style="padding:0 14px;margin-bottom:12px">
+    const ex=replName?Object.assign({},origEx,{name:replName}):origEx;
+    const isReplaced=!!replName;
+    const pv=preview&&preview[ex.name];
+    const w=(pv&&pv.w!=null)?pv.w+' lb':getW(ex,b);
+    const dispR=(pv&&pv.r!=null)?pv.r:getDisplayR(ex);
+    const dispS=(pv&&pv.s!=null)?pv.s:getDisplayS(ex);
+    const previewing=!!pv;
+    const img=getExerciseImage(ex.name);
+    const rInfo=getRestLabel(ex,b);
+    return `<div style="padding:0 14px;margin-bottom:12px">
       <div style="display:flex;align-items:center;gap:11px">
         <img src="${img}" style="width:60px;height:60px;object-fit:cover;border-radius:9px;flex-shrink:0;background:var(--bg3)" loading="lazy" onerror="this.style.opacity='.3'">
         <div style="flex:1">
           <div style="font-size:14px;font-weight:800">${(ex.new||isReplaced)?'★ ':''}${ex.name}</div>
-          <div style="font-size:11px;color:var(--t2);margin-top:2px">${getDisplayS(ex)} × ${getDisplayR(ex)} · <span style="color:var(--rs);font-weight:700">${w}</span></div>
+          <div style="font-size:11px;color:var(--t2);margin-top:2px;transition:color .2s">${dispS} × ${dispR} · <span style="color:${previewing?'var(--gold)':'var(--rs)'};font-weight:700">${w}</span>${previewing?' <span style="color:var(--gold);font-size:9px">●</span>':''}</div>
           <div style="font-size:10px;color:var(--t3);margin-top:2px">${rInfo.type} · ${rInfo.fmt}</div>
           <div style="font-size:10px;color:var(--t3);margin-top:3px;font-style:italic">${ex.note}</div>
         </div>
       </div>
       <div style="display:flex;gap:7px;margin-top:8px;flex-wrap:wrap">
-        ${!ex.bw&&!ex.rpe?`<button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:11px" onclick="openPlate('${parseFloat(w)||0}','${ex.name}','${getDisplayR(ex)}','${getDisplayS(ex)}',${JSON.stringify(id)})">🏋️ Plates</button>`:''}
+        ${!ex.bw&&!ex.rpe?`<button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:11px" onclick="openPlate('${parseFloat(w)||0}','${ex.name}','${dispR}','${dispS}',${JSON.stringify(id)})">🏋️ Plates</button>`:''}
         <button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:11px;display:inline-flex;align-items:center;gap:5px" onclick="openExLibrary(${JSON.stringify(id)},${exIdx})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>Remplacer</button>
       </div>
       <div style="height:1px;background:var(--b);margin-top:11px"></div>
-    </div>`;}).join('')}
+    </div>`;
+  }).join('');
+}
+
+const REGEN_OPTIONS=[
+  {mode:'keep',icon:'↺',label:'Garder mes poids, reps et séries',sub:'reprend ta dernière séance loggée'},
+  {mode:'optimize',icon:'🧠',label:'Optimiser',sub:'analyse ton historique et propose une progression'},
+  {mode:'weight',icon:'⚖️',label:'Nouveau poids seulement',sub:'recalcule le poids du bloc, garde reps/séries'},
+  {mode:'all',icon:'📋',label:'Poids d\'origine',sub:'revient aux valeurs du programme'},
+];
+
+function renderRegenPanel(id){
+  const el=document.getElementById('regenPanel');
+  if(!el) return;
+  if(regenDayId!==id){ regenDayId=id; regenMode=null; regenPreview=null; }
+  el.innerHTML=`
+    <div class="sh-plate-opt">
+      ${REGEN_OPTIONS.map(o=>`
+        <div onclick="selectRegenOption(${JSON.stringify(id)},'${o.mode}')" style="display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:var(--r);cursor:pointer;background:${regenMode===o.mode?'rgba(200,16,46,.12)':'var(--bg2)'};border:1.5px solid ${regenMode===o.mode?'var(--red)':'var(--b)'};margin-bottom:7px">
+          <div style="font-size:18px;flex-shrink:0">${o.icon}</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700">${o.label}</div>
+            <div style="font-size:10px;color:var(--t3);margin-top:1px">${o.sub}</div>
+          </div>
+          ${regenMode===o.mode?'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':''}
+        </div>`).join('')}
+      ${regenMode?`<button class="btn btn-red btn-lg" style="width:100%;margin-top:4px" onclick="confirmRegenPanel(${JSON.stringify(id)})">✓ Appliquer et commencer</button>`:''}
+      <button class="btn btn-ghost btn-md" style="width:100%;margin-top:7px;border-radius:var(--r)" onclick="closeRegenPanel(${JSON.stringify(id)})">Annuler</button>
+    </div>`;
+}
+
+function toggleRegenPanel(id){
+  const el=document.getElementById('regenPanel');
+  const listEl=document.getElementById('dayExList');
+  if(!el) return;
+  const isOpen=el.style.display==='block';
+  if(isOpen){ closeRegenPanel(id); return; }
+  el.style.display='block';
+  regenDayId=id; regenMode=null; regenPreview=null;
+  renderRegenPanel(id);
+}
+
+function closeRegenPanel(id){
+  const el=document.getElementById('regenPanel');
+  if(el){el.style.display='none';el.innerHTML='';}
+  regenMode=null; regenPreview=null;
+  const day=dayObj(id);const b=bloc();
+  const listEl=document.getElementById('dayExList');
+  if(listEl) listEl.innerHTML=renderDayExList(id,day,b,null);
+}
+
+function computeRegenPreview(id,mode){
+  const day=dayObj(id);
+  const preview={};
+  const b=bloc();
+  day.exercises.forEach(origEx=>{
+    const replName=S.exReplacements&&S.exReplacements[id+'::'+origEx.name];
+    const ex=replName?Object.assign({},origEx,{name:replName}):origEx;
+    const name=ex.name;
+    if(mode==='all'||mode==='weight'){
+      const savedOv=S.exWOverrides?S.exWOverrides[name]:undefined;
+      if(S.exWOverrides) delete S.exWOverrides[name];
+      const baseW=parseFloat(getW(ex,b));
+      if(savedOv!==undefined){S.exWOverrides=S.exWOverrides||{};S.exWOverrides[name]=savedOv;}
+      if(mode==='all') preview[name]={w:isNaN(baseW)?null:baseW,r:origEx.r,s:origEx.s};
+      else preview[name]={w:isNaN(baseW)?null:baseW,r:getDisplayR(ex),s:getDisplayS(ex)};
+    } else if(mode==='optimize'){
+      if(ex.bw||ex.rpe) return;
+      const sug=suggestOptimized(name,ex);
+      if(sug) preview[name]={w:sug.w,r:getDisplayR(ex),s:getDisplayS(ex)};
+    } else if(mode==='keep'){
+      const lastSets=findLastSessionSets(name);
+      if(lastSets&&lastSets.length){
+        const valid=lastSets.filter(s=>s.w&&s.r);
+        if(valid.length){const last=valid[valid.length-1];preview[name]={w:last.w,r:String(last.r),s:valid.length};}
+      } else {
+        const h=S.hist[name];
+        if(h&&h.length){const last=h.slice(-1)[0];if(last.w) preview[name]={w:last.w,r:String(last.r||ex.r)};}
+      }
+    }
+  });
+  return preview;
+}
+
+function selectRegenOption(id,mode){
+  regenMode=mode;
+  regenPreview=computeRegenPreview(id,mode);
+  if(navigator.vibrate) navigator.vibrate(6);
+  renderRegenPanel(id);
+  const day=dayObj(id);const b=bloc();
+  const listEl=document.getElementById('dayExList');
+  if(listEl) listEl.innerHTML=renderDayExList(id,day,b,regenPreview);
+}
+
+function confirmRegenPanel(id){
+  if(!regenMode||!regenPreview) return;
+  S.exWOverrides=S.exWOverrides||{};
+  S.exROverrides=S.exROverrides||{};
+  S.exSOverrides=S.exSOverrides||{};
+  Object.keys(regenPreview).forEach(name=>{
+    const pv=regenPreview[name];
+    if(regenMode==='all'){
+      delete S.exWOverrides[name];delete S.exROverrides[name];delete S.exSOverrides[name];
+    } else {
+      if(pv.w!=null&&pv.w!==''&&!isNaN(pv.w)) S.exWOverrides[name]=parseFloat(pv.w);
+      if(pv.r!=null) S.exROverrides[name]=String(pv.r);
+      if(pv.s!=null) S.exSOverrides[name]=pv.s;
+    }
+  });
+  save();
+  regenMode=null;regenPreview=null;
+  if(navigator.vibrate) navigator.vibrate(10);
+  document.getElementById('daySh').classList.remove('on');
+  S.ovDay=id;save();
+  startWo();
+}
+
+function openDaySh(id){
+  const day=dayObj(id);const b=bloc();
+  regenMode=null;regenPreview=null;regenDayId=id;
+  document.getElementById('dayShT').textContent=`Jour ${id} — ${day.name}`;
+  document.getElementById('dayShB').innerHTML=`
+    <div style="padding:0 14px 9px;display:flex;gap:5px;flex-wrap:wrap">
+      <span class="pill ${b==='A'?'pa':b==='B'?'pb':b==='C'?'pc':'pd2'}">${blocLbl()}</span>
+    </div>
+    <div style="padding:0 14px 12px">
+      <button class="btn btn-ghost btn-md" style="border-radius:var(--r);display:inline-flex;align-items:center;gap:6px" onclick="toggleRegenPanel(${JSON.stringify(id)})">🔄 Ajuster les poids</button>
+    </div>
+    <div id="regenPanel" style="display:none;padding:0 14px 14px"></div>
+    <div id="dayExList">${renderDayExList(id,day,b,null)}</div>
     <div style="padding:0 12px 12px">
       <button class="btn btn-red btn-lg" onclick="S.ovDay=${id};save();document.getElementById('daySh').classList.remove('on');startWo()">Commencer Jour ${id}</button>
     </div>`;
