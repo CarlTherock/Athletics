@@ -299,7 +299,8 @@ body{
 /* Barbell : LEFT=[plates_heavy→light][bar_end][collar][mid_bar]   RIGHT=[mid_bar][collar][bar_end][plates_light→heavy] */
 .bb-wrap{display:flex;align-items:center;justify-content:center;margin:6px 18px 18px;gap:0;overflow:hidden;position:relative}
 .bb-end{height:20px;width:50px;background:linear-gradient(180deg,#3a3a3a,#0a0a0a);border-radius:3px}
-.bb-mid{width:52px;height:16px;background:linear-gradient(180deg,#2c2c2c,#050505);border-radius:2px;position:relative;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:900;letter-spacing:.08em;color:var(--red)}
+.bb-mid{width:78px;height:20px;background:linear-gradient(180deg,#2c2c2c,#050505);border-radius:2px;position:relative;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;letter-spacing:.08em;color:var(--red)}
+.bb-wlbl{font-size:15px;font-weight:800;color:#fff;margin-left:10px;white-space:nowrap;flex-shrink:0}
 .bb-col{background:linear-gradient(180deg,#333,#0a0a0a);border-radius:3px;flex-shrink:0}
 .bb-pl{display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:5px;flex-shrink:0;font-size:13px;font-weight:900;color:rgba(255,255,255,.95);border:3px solid rgba(255,255,255,.15)}
 /* Vertical bars chart */
@@ -943,11 +944,11 @@ function renderPlateCalc(){
   } else {
     h+=`<div class="pl-for">Chaque côté :</div>`;
     // BARBELL: plates on OUTSIDE — structure: [plates reversed=heavy first][bar_end][collar][mid][collar][bar_end][plates light→heavy]
-    const mkPl=(p,side)=>{const pw=p.w>=45?44:p.w>=25?34:p.w>=10?27:19;const ph=Math.min(100,Math.max(30,p.h*1.15));const lbl=pw>=27?p.w:'';return `<div class="bb-pl" style="width:${pw}px;height:${ph}px;background:${p.c}">${lbl}</div>`;};
-    const collarPw=19,collarPh=Math.min(100,Math.max(30,40*1.15)); // sized to match the 5lb plate exactly
+    const mkPl=(p,side)=>{const pw=p.w>=45?44:p.w>=25?34:p.w>=10?27:19;const ph=Math.round(30+(p.h-28)*1.149);const lbl=pw>=27?p.w:'';return `<div class="bb-pl" style="width:${pw}px;height:${ph}px;background:${p.c}">${lbl}</div>`;};
+    const collarPw=19,collarPh=Math.round(30+(40-28)*1.149); // sized to match the 5lb plate exactly
     const colHtml=`<div class="bb-col" style="width:${collarPw}px;height:${collarPh}px"></div>`;
-    const sidePl=plates.map(p=>mkPl(p,'R')).join(''); // heavy→light, heaviest against the collar
-    h+=`<div class="bb-wrap"><div class="bb-mid">CTR</div>${colHtml}${sidePl}<div class="bb-end"></div></div>`;
+    const sidePl=[...plates].reverse().map(p=>mkPl(p,'L')).join(''); // light→heavy outward, heaviest against the collar
+    h+=`<div class="bb-wrap"><div class="bb-end"></div>${sidePl}${colHtml}<div class="bb-mid">CTR</div><div class="bb-wlbl">${BAR} lb</div></div>`;
     // Bars chart
     const cnt={};for(const p of plates)cnt[p.w]=(cnt[p.w]||0)+1;
     const used=PL.filter(p=>cnt[p.w]);const maxC=Math.max(1,...Object.values(cnt));
