@@ -300,7 +300,8 @@ body{
 .bb-wrap{display:flex;align-items:center;justify-content:center;margin:6px 18px 18px;gap:0;overflow:hidden;position:relative}
 .bb-end{height:20px;width:50px;background:linear-gradient(180deg,#3a3a3a,#0a0a0a);border-radius:3px}
 .bb-mid{width:78px;height:20px;background:linear-gradient(180deg,#2c2c2c,#050505);border-radius:2px;position:relative;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;letter-spacing:.08em;color:var(--red)}
-.bb-wlbl{font-size:15px;font-weight:800;color:#fff;margin-left:10px;white-space:nowrap;flex-shrink:0}
+.sh-plate{height:86vh;max-height:86vh;overflow-y:hidden;display:flex;flex-direction:column}
+.sh-plate #plBody{flex:1;overflow-y:auto}
 .bb-col{background:linear-gradient(180deg,#333,#0a0a0a);border-radius:3px;flex-shrink:0}
 .bb-pl{display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:5px;flex-shrink:0;font-size:10px;font-weight:900;color:rgba(255,255,255,.95);border:3px solid rgba(255,255,255,.15)}
 /* Vertical bars chart */
@@ -526,7 +527,7 @@ body::before {
 
 <!-- PLATE SHEET -->
 <div class="sh-bg" id="plSh" onclick="if(event.target===this)this.classList.remove('on')">
-  <div class="sh"><div class="sh-handle"></div><div class="sh-title" id="plTitle">Plates</div><div id="plBody" style="padding-bottom:8px"></div></div>
+  <div class="sh sh-plate"><div class="sh-handle"></div><div class="sh-title" id="plTitle">Plates</div><div id="plBody" style="padding-bottom:8px"></div></div>
 </div>
 
 <!-- HISTORY SHEET -->
@@ -965,7 +966,7 @@ function renderPlateCalc(){
     const collarPw=30,collarPh=Math.round(30+(40-28)*1.149); // sized to match the 5lb plate exactly
     const colHtml=`<div class="bb-col" style="width:${collarPw}px;height:${collarPh}px"></div>`;
     const sidePl=[...plates].reverse().map(p=>mkPl(p,'L')).join(''); // light→heavy outward, heaviest against the collar
-    h+=`<div class="bb-wrap"><div class="bb-end"></div>${sidePl}${colHtml}<div class="bb-mid"></div><div class="bb-wlbl">${BAR} lb</div></div>`;
+    h+=`<div class="bb-wrap"><div class="bb-end"></div>${sidePl}${colHtml}<div class="bb-mid">${BAR}</div></div>`;
     // Bars chart
     const cnt={};for(const p of plates)cnt[p.w]=(cnt[p.w]||0)+1;
     const used=PL.filter(p=>cnt[p.w]);const maxC=Math.max(1,...Object.values(cnt));
