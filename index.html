@@ -221,7 +221,7 @@ body{
 /* ══════════════════════════════════════════
    WORKOUT
 ══════════════════════════════════════════ */
-.wo-top{position:sticky;top:0;z-index:60;background:rgba(10,10,10,.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--b);padding:10px 13px;display:flex;align-items:center;gap:9px}
+.wo-top{position:sticky;top:0;z-index:80;background:rgba(10,10,10,.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--b);padding:calc(10px + env(safe-area-inset-top,0px)) 13px 10px;display:flex;align-items:center;gap:9px}
 .wo-title{font-size:13px;font-weight:800;flex:1}
 .wo-timer{font-size:12px;font-weight:700;color:var(--rs);font-variant-numeric:tabular-nums}
 .prog-bar{height:2px;background:var(--b);overflow:hidden}
