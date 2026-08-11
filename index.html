@@ -602,7 +602,7 @@ body::before {
 </div>
 
 <!-- CUSTOM PROGRAM BUILDER SHEET -->
-<div class="sh-bg" id="buildSh" onclick="if(event.target===this)this.classList.remove('on')">
+<div class="sh-bg" id="buildSh" onclick="if(event.target===this)closeBuildSh()">
   <div class="sh sh-plate">
     <div class="sh-handle"></div>
     <div class="sh-title" id="buildShT">Créer un programme</div>
@@ -616,8 +616,20 @@ body::before {
       </div>
     </div>
     <div style="padding:10px 18px calc(10px + var(--safe))">
-      <button class="btn btn-red btn-lg" onclick="saveBuilder()" style="width:100%">✓ Enregistrer le programme</button>
-      <button class="btn btn-ghost btn-md" onclick="quickStartBuilder()" style="width:100%;margin-top:8px;border-radius:var(--r)">▶ Démarrer sans sauvegarder</button>
+      <button class="btn btn-red btn-lg" id="saveBuilderBtn" onclick="saveBuilder()" style="width:100%">✓ Enregistrer le programme</button>
+      <button class="btn btn-ghost btn-md" id="quickStartBtnRow" onclick="quickStartBuilder()" style="width:100%;margin-top:8px;border-radius:var(--r)">▶ Démarrer sans sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+<!-- FULL MULTI-DAY PROGRAM BUILDER -->
+<div class="sh-bg" id="fullProgSh" onclick="if(event.target===this)this.classList.remove('on')">
+  <div class="sh sh-plate">
+    <div class="sh-handle"></div>
+    <div class="sh-title" id="fullProgShT">Nouveau programme complet</div>
+    <div style="flex:1;overflow-y:auto;padding:0 18px 16px" id="fullProgSetupBody"></div>
+    <div style="padding:10px 18px calc(10px + var(--safe))">
+      <button class="btn btn-red btn-lg" onclick="saveFullProgram()" style="width:100%">✓ Enregistrer le programme complet</button>
     </div>
   </div>
 </div>
@@ -799,13 +811,19 @@ body::before {
     <div class="calm-grid" id="calGridMonth"></div>
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:14px">
       <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t3)"><div style="width:8px;height:8px;border-radius:50%;background:var(--red)"></div>Plan 300</div>
-      <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t3)"><div style="width:8px;height:8px;border-radius:50%;background:#60A5FA"></div>Personnalisé</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t3)"><div style="width:8px;height:8px;border-radius:50%;background:#60A5FA"></div>Séance rapide</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t3)"><div style="width:8px;height:8px;border-radius:50%;background:var(--gold)"></div>Programme complet</div>
       <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t3)"><div style="width:8px;height:8px;border-radius:50%;background:var(--t4)"></div>Repos</div>
     </div>
   </div>
   <span class="lbl">JOURNÉES DU PROGRAMME</span>
   <div id="progDays"></div>
-  <span class="lbl">MES PROGRAMMES</span>
+  <span class="lbl">PROGRAMMES COMPLETS (MULTI-JOURS)</span>
+  <div style="margin:0 12px 10px">
+    <button class="btn btn-ghost btn-lg" onclick="openFullProgBuilder()" style="border-radius:var(--r);border-style:dashed">+ Nouveau programme complet</button>
+  </div>
+  <div id="fullProgListBody"></div>
+  <span class="lbl">SÉANCES RAPIDES</span>
   <div style="margin:0 12px 10px">
     <button class="btn btn-ghost btn-lg" onclick="openBuilder()" style="border-radius:var(--r);border-style:dashed">+ Créer un programme</button>
   </div>
@@ -972,7 +990,7 @@ const MUSCLE_GROUPS=[
 // ════════════════════════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════════════════════════
-let S={curDay:1,curWeek:1,ovDay:null,woStart:null,woInt:null,restInt:null,rRem:0,rTotal:0,sets:{},sessions:[],photos:[],hist:{},dayOrder:{},exWOverrides:{},exROverrides:{},exSOverrides:{},customPrograms:[],calendar:{}};
+let S={curDay:1,curWeek:1,ovDay:null,woStart:null,woInt:null,restInt:null,rRem:0,rTotal:0,sets:{},sessions:[],photos:[],hist:{},dayOrder:{},exWOverrides:{},exROverrides:{},exSOverrides:{},customPrograms:[],calendar:{},fullPrograms:[]};
 const KEY="ctr300v4";
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function load(){try{const d=localStorage.getItem(KEY);if(d){const p=JSON.parse(d);Object.assign(S,p);}}catch(e){}}
@@ -1022,6 +1040,13 @@ let quickProgram=null; // temporary, non-persisted program used by 'Démarrer sa
 function dayObj(id){
   id = id!==undefined && id!==null ? id : activeDay();
   if(id==='quick') return quickProgram || {name:'Séance rapide',sub:'',exercises:[]};
+  if(typeof id==='string' && id.charAt(0)==='f' && id.indexOf('-')>-1){
+    const parts=id.slice(1).split('-');
+    const progIdx=parseInt(parts[0]),dayIdx=parseInt(parts[1]);
+    const fp=S.fullPrograms && S.fullPrograms[progIdx];
+    const d=fp && fp.days && fp.days[dayIdx];
+    return d ? {name:d.name,sub:fp.name,exercises:d.exercises} : {name:'Programme supprimé',sub:'',exercises:[]};
+  }
   if(typeof id==='string' && id.charAt(0)==='c'){
     const idx=parseInt(id.slice(1));
     return (S.customPrograms && S.customPrograms[idx]) || {id,name:'Programme supprimé',sub:'',exercises:[]};
@@ -1220,6 +1245,7 @@ function renderToday(){
   } else if(calEntry){
     if(calEntry.type==='rest'){actId=activeDay();isRest=true;}
     else if(calEntry.type==='custom'){actId='c'+calEntry.progIdx;isRest=false;}
+    else if(calEntry.type==='fullprog'){actId='f'+calEntry.progIdx+'-'+calEntry.dayIdx;isRest=false;}
     else {actId=calEntry.dayId;isRest=false;}
   } else {
     actId=activeDay();
@@ -1240,7 +1266,7 @@ function renderToday(){
   bpill.className='pill '+(b==='A'?'pa':b==='B'?'pb':b==='C'?'pc':'pd2');
 
   document.getElementById('heroPhase').textContent=S.curWeek<=8?'PHASE 1 — FORCE & MASSE':'PHASE 2 — COUPE 300';
-  const isCustomAct=typeof actId==='string'&&actId.charAt(0)==='c';
+  const isCustomAct=typeof actId==='string'&&(actId.charAt(0)==='c'||actId.charAt(0)==='f');
   document.getElementById('heroDay').textContent=isRest?'Repos actif':(isCustomAct?day.name:`Jour ${actId} — ${day.name}`);
   document.getElementById('heroSub').textContent=isRest?'LISS 35–45 min · Mobilité 15 min':day.sub;
   document.getElementById('heroBadges').innerHTML=`
@@ -1401,7 +1427,7 @@ function renderWo(){
   const actId=activeDay();
   const day=dayObj(actId);
   const b=bloc();
-  document.getElementById('woTitle').textContent=(typeof actId==='string'&&actId.charAt(0)==='c')?day.name:`J${actId} — ${day.name}`;
+  document.getElementById('woTitle').textContent=(typeof actId==='string'&&(actId.charAt(0)==='c'||actId.charAt(0)==='f'))?day.name:`J${actId} — ${day.name}`;
   document.getElementById('woBlocLbl').textContent=blocLbl();
   const prevSess=S.sessions.filter(s=>s.dayId===actId).slice(-1)[0];
   let html='';
@@ -1872,7 +1898,7 @@ function renderStats(){
   ).join(''):`<div class="card"><div style="text-align:center;padding:12px 0;color:var(--t3);font-size:12px">Complète des séries pour voir tes records ici.</div></div>`;
 
   const rec=[...S.sessions].reverse().slice(0,5);
-  document.getElementById('recentSess').innerHTML=rec.length?rec.map(s=>`<div class="card" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between"><div><div style="font-size:13px;font-weight:800">${(typeof s.dayId==='string'&&s.dayId.charAt(0)==='c')?s.dayName:'J'+s.dayId+' — '+s.dayName}</div><div style="font-size:10px;color:var(--t3);margin-top:1px">${s.date} · Sem. ${s.week} · Bloc ${s.bloc}</div></div><div style="color:var(--rs);font-weight:700;font-size:13px">${s.duration} min</div></div></div>`).join(''):`<div class="card"><div style="text-align:center;padding:12px 0;color:var(--t3);font-size:12px">Lance ton premier workout!</div></div>`;
+  document.getElementById('recentSess').innerHTML=rec.length?rec.map(s=>`<div class="card" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between"><div><div style="font-size:13px;font-weight:800">${(typeof s.dayId==='string'&&(s.dayId.charAt(0)==='c'||s.dayId.charAt(0)==='f'))?s.dayName:'J'+s.dayId+' — '+s.dayName}</div><div style="font-size:10px;color:var(--t3);margin-top:1px">${s.date} · Sem. ${s.week} · Bloc ${s.bloc}</div></div><div style="color:var(--rs);font-weight:700;font-size:13px">${s.duration} min</div></div></div>`).join(''):`<div class="card"><div style="text-align:center;padding:12px 0;color:var(--t3);font-size:12px">Lance ton premier workout!</div></div>`;
 }
 
 function renderChart(name){
@@ -1932,7 +1958,7 @@ function calCellHtml(dateObj){
   const entry=S.calendar&&S.calendar[dateKey];
   let dotColor;
   if(entry){
-    dotColor=entry.type==='rest'?'var(--t4)':entry.type==='custom'?'#60A5FA':'var(--red)';
+    dotColor=entry.type==='rest'?'var(--t4)':entry.type==='custom'?'#60A5FA':entry.type==='fullprog'?'var(--gold)':'var(--red)';
   } else {
     const auto=WD2DAY[dateObj.getDay()];
     dotColor=(auto===null)?'var(--t4)':'var(--red)';
@@ -1989,8 +2015,21 @@ function openCalDayOptions(dateKey){
     h+=`<button class="btn ${isSel?'btn-red':'btn-ghost'} btn-sm" style="border-radius:20px" onclick="setCalEntry('${dateKey}',{type:'day',dayId:${d.id}})">J${d.id}</button>`;
   });
   h+='</div>';
+  const fullProgs=S.fullPrograms||[];
+  if(fullProgs.length){
+    h+='<div style="font-size:10px;color:var(--t3);font-weight:800;letter-spacing:.08em;margin:6px 0 6px 2px">PROGRAMMES COMPLETS</div>';
+    fullProgs.forEach((fp,pIdx)=>{
+      h+=`<div style="font-size:11px;font-weight:800;color:var(--t2);margin:4px 0 5px 2px">${fp.name}</div>`;
+      h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">';
+      fp.days.forEach((d,dIdx)=>{
+        const isSel=entry&&entry.type==='fullprog'&&entry.progIdx===pIdx&&entry.dayIdx===dIdx;
+        h+=`<button class="btn ${isSel?'btn-red':'btn-ghost'} btn-sm" style="border-radius:20px" onclick="setCalEntry('${dateKey}',{type:'fullprog',progIdx:${pIdx},dayIdx:${dIdx}})">${d.name}</button>`;
+      });
+      h+='</div>';
+    });
+  }
   if(progs.length){
-    h+='<div style="font-size:10px;color:var(--t3);font-weight:800;letter-spacing:.08em;margin:6px 0 6px 2px">PROGRAMMES PERSONNALISÉS</div>';
+    h+='<div style="font-size:10px;color:var(--t3);font-weight:800;letter-spacing:.08em;margin:6px 0 6px 2px">SÉANCES RAPIDES</div>';
     progs.forEach((p,idx)=>{
       const isSel=entry&&entry.type==='custom'&&entry.progIdx===idx;
       h+=`<div onclick="setCalEntry('${dateKey}',{type:'custom',progIdx:${idx}})" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r);cursor:pointer;background:${isSel?'rgba(96,165,250,.14)':'var(--bg2)'};border:1px solid ${isSel?'#60A5FA':'var(--b)'};margin-bottom:7px">
@@ -2041,6 +2080,7 @@ function renderProg(){
       <div class="pd-exs">${d.exercises.map(ex=>`<div class="echip ${ex.new?'nw':''}">${ex.new?'★ ':''}${ex.name}</div>`).join('')}</div>
     </div>`).join('');
   renderCustProgList();
+  renderFullProgList();
 }
 
 function openSwapMenu(){
@@ -3225,6 +3265,10 @@ let exLibActiveTab = null;
 let exLibMode = 'replace'; // 'replace' | 'add'
 let builderDraft = null;   // {name, exercises:[{name,s,r,restType}]}
 let builderEditIdx = null; // index into S.customPrograms when editing, else null
+let builderContext = 'standalone'; // 'standalone' | 'fullprog'
+let fullProgDraft = null;  // {name, startDate, endDate, days:[{name, exercises:[]}]}
+let fullProgEditIdx = null;
+let fullProgActiveDayIdx = null;
 let __shZ = 800;
 function openImgView(src){
   document.getElementById('imgViewImg').src=src;
@@ -3328,7 +3372,149 @@ function openExLibrary(dayId, exIdx){
   document.getElementById('exLibSh').classList.add('on');
 }
 
+function closeBuildSh(){
+  document.getElementById('buildSh').classList.remove('on');
+  if(builderContext==='fullprog' && fullProgDraft){
+    raiseSheet('fullProgSh');
+    document.getElementById('fullProgSh').classList.add('on');
+  }
+  builderDraft=null;
+}
+
+function openFullProgBuilder(idx){
+  fullProgEditIdx = (idx!==undefined && idx!==null) ? idx : null;
+  if(fullProgEditIdx!==null && S.fullPrograms && S.fullPrograms[fullProgEditIdx]){
+    fullProgDraft = JSON.parse(JSON.stringify(S.fullPrograms[fullProgEditIdx]));
+    document.getElementById('fullProgShT').textContent = 'Modifier le programme';
+  } else {
+    fullProgDraft = {name:'', startDate:'', endDate:'', days:[{name:'Jour 1', exercises:[]}]};
+    document.getElementById('fullProgShT').textContent = 'Nouveau programme complet';
+  }
+  renderFullProgSetup();
+  raiseSheet('fullProgSh');
+  document.getElementById('fullProgSh').classList.add('on');
+}
+
+function renderFullProgSetup(){
+  const el=document.getElementById('fullProgSetupBody');
+  if(!el||!fullProgDraft) return;
+  el.innerHTML=`
+    <input type="text" id="fpNameIn" placeholder="Nom du programme (ex: Sarah — Force)" value="${(fullProgDraft.name||'').replace(/"/g,'&quot;')}" oninput="fullProgDraft.name=this.value" style="width:100%;background:var(--bg3);border:1px solid var(--b);border-radius:10px;padding:11px 14px;color:#fff;font-size:15px;font-weight:700;outline:none;box-sizing:border-box;margin-bottom:10px">
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <div style="flex:1">
+        <div style="font-size:10px;color:var(--t3);font-weight:700;margin-bottom:4px">DÉBUT</div>
+        <input type="date" id="fpStartIn" value="${fullProgDraft.startDate||''}" oninput="fullProgDraft.startDate=this.value" style="width:100%;background:var(--bg3);border:1px solid var(--b);border-radius:10px;padding:9px;color:#fff;font-size:13px;outline:none;box-sizing:border-box">
+      </div>
+      <div style="flex:1">
+        <div style="font-size:10px;color:var(--t3);font-weight:700;margin-bottom:4px">FIN</div>
+        <input type="date" id="fpEndIn" value="${fullProgDraft.endDate||''}" oninput="fullProgDraft.endDate=this.value" style="width:100%;background:var(--bg3);border:1px solid var(--b);border-radius:10px;padding:9px;color:#fff;font-size:13px;outline:none;box-sizing:border-box">
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg2);border:1px solid var(--b);border-radius:10px;padding:10px 14px;margin-bottom:14px">
+      <div style="font-size:13px;font-weight:700">Nombre de journées</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <button onclick="adjustFullProgDays(-1)" style="width:30px;height:30px;border-radius:50%;background:var(--bg4);border:none;color:#fff;font-size:16px;cursor:pointer">−</button>
+        <div style="font-size:16px;font-weight:900;min-width:20px;text-align:center">${fullProgDraft.days.length}</div>
+        <button onclick="adjustFullProgDays(1)" style="width:30px;height:30px;border-radius:50%;background:var(--bg4);border:none;color:#fff;font-size:16px;cursor:pointer">+</button>
+      </div>
+    </div>
+    <div style="font-size:10px;color:var(--t3);font-weight:800;letter-spacing:.08em;margin-bottom:7px">JOURNÉES — appuie pour ajouter les exercices</div>
+    <div id="fullProgDayList"></div>`;
+  renderFullProgDayList();
+}
+
+function adjustFullProgDays(delta){
+  if(!fullProgDraft) return;
+  const newCount=Math.max(1,Math.min(7,fullProgDraft.days.length+delta));
+  while(fullProgDraft.days.length<newCount) fullProgDraft.days.push({name:'Jour '+(fullProgDraft.days.length+1),exercises:[]});
+  while(fullProgDraft.days.length>newCount) fullProgDraft.days.pop();
+  renderFullProgSetup();
+}
+
+function renderFullProgDayList(){
+  const el=document.getElementById('fullProgDayList');
+  if(!el||!fullProgDraft) return;
+  el.innerHTML=fullProgDraft.days.map((d,i)=>`
+    <div onclick="openFullProgDayEditor(${i})" style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);margin-bottom:7px;cursor:pointer">
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:700">${d.name}</div>
+        <div style="font-size:10px;color:var(--t3);margin-top:1px">${d.exercises.length} exercice${d.exercises.length!==1?'s':''}</div>
+      </div>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>`).join('');
+}
+
+function openFullProgDayEditor(dayIdx){
+  if(!fullProgDraft) return;
+  fullProgActiveDayIdx=dayIdx;
+  builderContext='fullprog';
+  builderEditIdx=null;
+  builderDraft=JSON.parse(JSON.stringify(fullProgDraft.days[dayIdx]));
+  document.getElementById('buildShT').textContent='Modifier la journée';
+  document.getElementById('buildNameIn').value=builderDraft.name;
+  document.getElementById('buildNameIn').placeholder='Nom de la journée (ex: Push A)';
+  document.getElementById('quickStartBtnRow').style.display='none';
+  document.getElementById('saveBuilderBtn').textContent='✓ Enregistrer la journée';
+  renderBuilderList();
+  document.getElementById('fullProgSh').classList.remove('on');
+  raiseSheet('buildSh');
+  document.getElementById('buildSh').classList.add('on');
+}
+
+function saveFullProgram(){
+  if(!fullProgDraft) return;
+  const name=(document.getElementById('fpNameIn')?.value||'').trim();
+  if(!name){ alert('Donne un nom au programme.'); return; }
+  if(!fullProgDraft.days.length || fullProgDraft.days.some(d=>!d.exercises.length)){
+    alert('Chaque journée doit avoir au moins un exercice.');
+    return;
+  }
+  fullProgDraft.name=name;
+  fullProgDraft.startDate=document.getElementById('fpStartIn')?.value||'';
+  fullProgDraft.endDate=document.getElementById('fpEndIn')?.value||'';
+  S.fullPrograms=S.fullPrograms||[];
+  if(fullProgEditIdx!==null){
+    S.fullPrograms[fullProgEditIdx]=fullProgDraft;
+  } else {
+    S.fullPrograms.push(fullProgDraft);
+  }
+  save();
+  document.getElementById('fullProgSh').classList.remove('on');
+  fullProgDraft=null;fullProgEditIdx=null;
+  renderFullProgList();
+}
+
+function deleteFullProg(idx){
+  if(!confirm('Supprimer ce programme complet ?')) return;
+  S.fullPrograms.splice(idx,1);
+  save();
+  renderFullProgList();
+}
+
+function renderFullProgList(){
+  const el=document.getElementById('fullProgListBody');
+  if(!el) return;
+  const progs=S.fullPrograms||[];
+  if(!progs.length){
+    el.innerHTML=`<div style="text-align:center;color:var(--t3);font-size:12px;padding:10px 0">Aucun programme complet encore — crée-en un ci-dessus.</div>`;
+    return;
+  }
+  el.innerHTML=progs.map((p,idx)=>`
+    <div class="pd-card" style="cursor:default">
+      <div class="pd-h" style="cursor:default">
+        <div class="pd-num" style="background:var(--bg4)"><div class="pd-j">PROG.</div><div class="pd-n" style="font-size:13px">${p.days.length}j</div></div>
+        <div class="pd-info"><div class="pd-name">${p.name}</div><div class="pd-sub">${p.startDate||'?'} → ${p.endDate||'?'}</div></div>
+      </div>
+      <div class="pd-exs">${p.days.map(d=>`<div class="echip">${d.name}</div>`).join('')}</div>
+      <div style="display:flex;gap:7px;padding:0 14px 13px">
+        <button class="btn btn-ghost btn-md" style="flex:1;border-radius:var(--r)" onclick="openFullProgBuilder(${idx})">✏️ Modifier</button>
+        <button class="btn btn-ghost btn-md" style="border-radius:var(--r);padding:0 14px" onclick="deleteFullProg(${idx})">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+
 function openBuilder(idx){
+  builderContext = 'standalone';
   builderEditIdx = (idx!==undefined && idx!==null) ? idx : null;
   if(builderEditIdx!==null && S.customPrograms && S.customPrograms[builderEditIdx]){
     builderDraft = JSON.parse(JSON.stringify(S.customPrograms[builderEditIdx]));
@@ -3338,6 +3524,9 @@ function openBuilder(idx){
     document.getElementById('buildShT').textContent = 'Créer un programme';
   }
   document.getElementById('buildNameIn').value = builderDraft.name;
+  document.getElementById('buildNameIn').placeholder = 'Nom du programme';
+  document.getElementById('quickStartBtnRow').style.display = 'block';
+  document.getElementById('saveBuilderBtn').textContent = '✓ Enregistrer le programme';
   renderBuilderList();
   raiseSheet('buildSh');
   document.getElementById('buildSh').classList.add('on');
@@ -3466,9 +3655,21 @@ function saveBuilder(){
   if(!builderDraft) return;
   const nameEl=document.getElementById('buildNameIn');
   const name=(nameEl?nameEl.value:'').trim();
-  if(!name){ alert('Donne un nom au programme.'); return; }
+  if(!name){ alert(builderContext==='fullprog'?'Donne un nom à cette journée.':'Donne un nom au programme.'); return; }
   if(!builderDraft.exercises.length){ alert('Ajoute au moins un exercice.'); return; }
   builderDraft.name=name;
+
+  if(builderContext==='fullprog'){
+    if(!fullProgDraft){ return; }
+    fullProgDraft.days[fullProgActiveDayIdx]=builderDraft;
+    document.getElementById('buildSh').classList.remove('on');
+    builderDraft=null;
+    renderFullProgDayList();
+    raiseSheet('fullProgSh');
+    document.getElementById('fullProgSh').classList.add('on');
+    return;
+  }
+
   S.customPrograms = S.customPrograms||[];
   if(builderEditIdx!==null){
     S.customPrograms[builderEditIdx]=builderDraft;
