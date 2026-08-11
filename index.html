@@ -712,9 +712,15 @@ body::before {
   <div class="wo-top">
     <button class="btn btn-ghost btn-sm" onclick="go('today')" style="padding:0 11px">←</button>
     <div style="margin-left:7px;flex:1"><div class="wo-title" id="woTitle">—</div><div class="wo-timer" id="woTimer">0:00</div></div>
+    <button class="btn btn-ghost btn-sm" onclick="toggleFocusMode()" id="focusToggleBtn" style="padding:0 9px;margin-right:6px" title="Un exercice à la fois"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="3"/></svg></button>
     <button class="btn btn-ol btn-sm" onclick="finishWo()">Terminer ✓</button>
   </div>
   <div class="prog-bar"><div class="prog-fill" id="woProg" style="width:0%"></div></div>
+  <div id="focusNav" style="display:none;align-items:center;justify-content:space-between;gap:10px;padding:9px 14px;background:var(--bg2);border-bottom:1px solid var(--b)">
+    <button class="btn btn-ghost btn-sm" style="border-radius:50%;width:32px;height:32px;padding:0" onclick="focusNav(-1)">‹</button>
+    <div id="focusNavLbl" style="font-size:12px;font-weight:800;color:var(--t2)">1 / 6</div>
+    <button class="btn btn-ghost btn-sm" style="border-radius:50%;width:32px;height:32px;padding:0" onclick="focusNav(1)">›</button>
+  </div>
   <span class="lbl" id="woBlocLbl">BLOC A · 72%</span>
   <div id="woExs"></div>
   <div style="padding:6px 12px 12px"><button class="btn btn-red btn-lg" onclick="finishWo()">✓ Terminer la séance</button></div>
@@ -965,7 +971,7 @@ const MUSCLE_GROUPS=[
 // ════════════════════════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════════════════════════
-let S={curDay:1,curWeek:1,ovDay:null,woStart:null,woInt:null,restInt:null,rRem:0,rTotal:0,sets:{},sessions:[],photos:[],hist:{},dayOrder:{},exWOverrides:{},exROverrides:{},exSOverrides:{},customPrograms:[],calendar:{}};
+let S={curDay:1,curWeek:1,ovDay:null,woStart:null,woInt:null,restInt:null,rRem:0,rTotal:0,sets:{},sessions:[],photos:[],hist:{},dayOrder:{},exWOverrides:{},exROverrides:{},exSOverrides:{},customPrograms:[],calendar:{},woFocusPref:false};
 const KEY="ctr300v4";
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function load(){try{const d=localStorage.getItem(KEY);if(d){const p=JSON.parse(d);Object.assign(S,p);}}catch(e){}}
@@ -1360,6 +1366,7 @@ function startWo(){
   initAudio();
   reqWakeLock();
   S.woStart=Date.now();S.sets={};
+  woFocusMode=!!S.woFocusPref;woFocusIdx=0;
   go('wo');renderWo();
   if(S.woInt)clearInterval(S.woInt);
   // Timer for workout screen
@@ -1482,7 +1489,63 @@ function renderWo(){
     </div>`;
   });
   document.getElementById('woExs').innerHTML=html;
+  applyFocusMode();
   updProg();
+}
+
+let woFocusMode=false,woFocusIdx=0;
+
+function toggleFocusMode(){
+  woFocusMode=!woFocusMode;
+  woFocusIdx=0;
+  S.woFocusPref=woFocusMode;
+  save();
+  applyFocusMode();
+}
+
+function focusNav(delta){
+  const blocks=document.querySelectorAll('#woExs .ex-blk');
+  const n=blocks.length;
+  if(!n) return;
+  woFocusIdx=Math.max(0,Math.min(n-1,woFocusIdx+delta));
+  applyFocusMode();
+  if(navigator.vibrate) navigator.vibrate(6);
+}
+
+function bindFocusSwipe(){
+  const el=document.getElementById('woExs');
+  if(!el||el.dataset.swipeBound) return;
+  el.dataset.swipeBound='1';
+  let sx=0,sy=0,tracking=false;
+  el.addEventListener('pointerdown',(e)=>{
+    if(!woFocusMode) return;
+    sx=e.clientX;sy=e.clientY;tracking=true;
+  });
+  el.addEventListener('pointerup',(e)=>{
+    if(!woFocusMode||!tracking) return;
+    tracking=false;
+    const dx=e.clientX-sx,dy=e.clientY-sy;
+    if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5) focusNav(dx<0?1:-1);
+  });
+}
+
+function applyFocusMode(){
+  bindFocusSwipe();
+  const blocks=document.querySelectorAll('#woExs .ex-blk');
+  const nav=document.getElementById('focusNav');
+  const btn=document.getElementById('focusToggleBtn');
+  if(!blocks.length) return;
+  if(woFocusIdx>=blocks.length) woFocusIdx=blocks.length-1;
+  if(woFocusMode){
+    blocks.forEach((el,i)=>{el.style.display=(i===woFocusIdx)?'block':'none';});
+    nav.style.display='flex';
+    document.getElementById('focusNavLbl').textContent=`${woFocusIdx+1} / ${blocks.length}`;
+    if(btn){btn.style.background='rgba(200,16,46,.15)';btn.style.color='var(--rs)';btn.style.borderColor='var(--red)';}
+  } else {
+    blocks.forEach(el=>{el.style.display='block';});
+    nav.style.display='none';
+    if(btn){btn.style.background='';btn.style.color='';btn.style.borderColor='';}
+  }
 }
 
 function cycleT(n,si){const s=S.sets[n]?.[si];if(!s)return;s.type={working:'warmup',warmup:'drop',drop:'working'}[s.type];save();renderWo();}
