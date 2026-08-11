@@ -1425,8 +1425,8 @@ function renderWo(){
     const doneC=sets.filter(s=>s.done).length;
 
     html+=`<div class="ex-blk">
-      <div class="ex-hero">
-        <img src="${img}" alt="${ex.name}" loading="lazy" onerror="this.style.opacity='.2'" onclick="openImgView('${img}')" style="cursor:pointer">
+      <div class="ex-hero" onclick="openImgView('${img}')" style="cursor:pointer">
+        <img src="${img}" alt="${ex.name}" loading="lazy" onerror="this.style.opacity='.2'">
         <div class="ex-hero-grad"></div>
         <div class="ex-hero-info">
           <div class="ex-name">${ex.name}</div>
