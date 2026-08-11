@@ -554,6 +554,12 @@ body::before {
 </div>
 
 <!-- DAY SHEET -->
+<!-- FULLSCREEN IMAGE VIEWER -->
+<div id="imgViewOv" onclick="closeImgView()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.97);z-index:2000;align-items:center;justify-content:center">
+  <button onclick="event.stopPropagation();closeImgView()" style="position:absolute;top:calc(16px + env(safe-area-inset-top,0px));right:16px;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.12);border:none;color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center;z-index:2001;cursor:pointer">✕</button>
+  <img id="imgViewImg" src="" style="max-width:94%;max-height:88%;object-fit:contain" onclick="closeImgView()">
+</div>
+
 <div class="sh-bg" id="daySh" onclick="if(event.target===this)this.classList.remove('on')">
   <div class="sh"><div class="sh-handle"></div><div class="sh-title" id="dayShT"></div><div id="dayShB"></div></div>
 </div>
@@ -1420,7 +1426,7 @@ function renderWo(){
 
     html+=`<div class="ex-blk">
       <div class="ex-hero">
-        <img src="${img}" alt="${ex.name}" loading="lazy" onerror="this.style.opacity='.2'">
+        <img src="${img}" alt="${ex.name}" loading="lazy" onerror="this.style.opacity='.2'" onclick="openImgView('${img}')" style="cursor:pointer">
         <div class="ex-hero-grad"></div>
         <div class="ex-hero-info">
           <div class="ex-name">${ex.name}</div>
@@ -1612,7 +1618,7 @@ function renderDayExList(id,day,b,preview){
         </div>
       </div>
       <div style="display:flex;justify-content:center;margin-bottom:9px">
-        <img src="${img}" style="width:100%;max-width:340px;height:150px;object-fit:contain;border-radius:11px;background:var(--bg3)" loading="lazy" onerror="this.style.opacity='.3'">
+        <img src="${img}" style="width:100%;max-width:340px;height:150px;object-fit:contain;border-radius:11px;background:var(--bg3);cursor:pointer" loading="lazy" onerror="this.style.opacity='.3'" onclick="openImgView('${img}')">
       </div>
       <div style="text-align:center">
         <div style="font-size:12px;color:var(--t2)">${dispS} × ${dispR} · <span style="color:var(--rs);font-weight:700">${w}</span></div>
@@ -3219,6 +3225,14 @@ let exLibMode = 'replace'; // 'replace' | 'add'
 let builderDraft = null;   // {name, exercises:[{name,s,r,restType}]}
 let builderEditIdx = null; // index into S.customPrograms when editing, else null
 let __shZ = 800;
+function openImgView(src){
+  document.getElementById('imgViewImg').src=src;
+  document.getElementById('imgViewOv').style.display='flex';
+}
+function closeImgView(){
+  document.getElementById('imgViewOv').style.display='none';
+}
+
 function raiseSheet(id){
   const el = document.getElementById(id);
   if(el) el.style.zIndex = (++__shZ);
