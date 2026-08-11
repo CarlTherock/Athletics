@@ -340,6 +340,14 @@ body{
 .mh-s{width:30px;text-align:right;font-size:11px;font-weight:700}
 .mh-tr{width:20px;text-align:right;font-size:11px}
 .cal-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:3px}
+.calm-dow{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:0 4px;margin-bottom:6px}
+.calm-dow div{text-align:center;font-size:10px;font-weight:800;color:var(--t3)}
+.calm-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:0 4px}
+.calm-cell{aspect-ratio:1;border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;background:var(--bg2);border:1px solid var(--b)}
+.calm-cell.empty{visibility:hidden;cursor:default}
+.calm-cell.today{border-color:var(--red);border-width:2px}
+.calm-cell-n{font-size:12px;font-weight:700}
+.calm-cell-dot{width:6px;height:6px;border-radius:50%;margin-top:2px}
 .cal-col{display:flex;flex-direction:column;gap:3px}
 .cal-cell{aspect-ratio:1;border-radius:2px;background:var(--bg4)}
 .cal-cell.on1{background:rgba(200,16,46,.35)}
@@ -568,6 +576,36 @@ body::before {
   </div>
 </div>
 
+<!-- CALENDAR -->
+<div class="sh-bg" id="calSh" onclick="if(event.target===this)this.classList.remove('on')">
+  <div class="sh sh-plate">
+    <div class="sh-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 16px 10px">
+      <button class="btn btn-ghost btn-sm" style="border-radius:50%;width:34px;height:34px;padding:0" onclick="calNavMonth(-1)">‹</button>
+      <div class="sh-title" id="calMonthLbl" style="padding:0"></div>
+      <button class="btn btn-ghost btn-sm" style="border-radius:50%;width:34px;height:34px;padding:0" onclick="calNavMonth(1)">›</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:0 10px 16px">
+      <div class="calm-dow"><div>D</div><div>L</div><div>M</div><div>M</div><div>J</div><div>V</div><div>S</div></div>
+      <div class="calm-grid" id="calGridMonth"></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;padding:0 4px">
+        <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t3)"><div style="width:8px;height:8px;border-radius:50%;background:var(--red)"></div>Plan 300</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t3)"><div style="width:8px;height:8px;border-radius:50%;background:#60A5FA"></div>Personnalisé</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t3)"><div style="width:8px;height:8px;border-radius:50%;background:var(--t4)"></div>Repos</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CALENDAR: DAY OPTIONS -->
+<div class="sh-bg" id="calDaySh" onclick="if(event.target===this)this.classList.remove('on')">
+  <div class="sh">
+    <div class="sh-handle"></div>
+    <div class="sh-title" id="calDayShT">Assigner cette date</div>
+    <div id="calDayShBody" style="padding:0 14px 18px"></div>
+  </div>
+</div>
+
 <!-- QUICK ACCESS: SAVED PROGRAMS (from Today screen contextual menu) -->
 <div class="sh-bg" id="otherProgSh" onclick="if(event.target===this)this.classList.remove('on')">
   <div class="sh">
@@ -759,6 +797,9 @@ body::before {
     <div style="background:rgba(200,16,46,.08);border:1px solid rgba(200,16,46,.2);border-radius:var(--r);padding:9px;text-align:center"><div style="font-size:9px;color:var(--rs);font-weight:800;letter-spacing:.1em;margin-bottom:3px">PHASE 2</div><div style="font-size:14px;font-weight:900">8 sem.</div><div style="font-size:9px;color:var(--t3);margin-top:2px">Coupe 300</div></div>
     <div style="background:rgba(212,165,32,.08);border:1px solid rgba(212,165,32,.2);border-radius:var(--r);padding:9px;text-align:center"><div style="font-size:9px;color:var(--gold);font-weight:800;letter-spacing:.1em;margin-bottom:3px">PEAK</div><div style="font-size:14px;font-weight:900">1 sem.</div><div style="font-size:9px;color:var(--t3);margin-top:2px">🏆 7 Déc.</div></div>
   </div>
+  <div style="margin:8px 12px 4px">
+    <button class="btn btn-ghost btn-lg" onclick="openCalSh()" style="width:100%;border-radius:var(--r);display:flex;align-items:center;justify-content:center;gap:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>📅 Calendrier</button>
+  </div>
   <span class="lbl">JOURNÉES V4</span>
   <div id="progDays"></div>
   <span class="lbl">MES PROGRAMMES</span>
@@ -928,7 +969,7 @@ const MUSCLE_GROUPS=[
 // ════════════════════════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════════════════════════
-let S={curDay:1,curWeek:1,ovDay:null,woStart:null,woInt:null,restInt:null,rRem:0,rTotal:0,sets:{},sessions:[],photos:[],hist:{},dayOrder:{},exWOverrides:{},exROverrides:{},exSOverrides:{},customPrograms:[]};
+let S={curDay:1,curWeek:1,ovDay:null,woStart:null,woInt:null,restInt:null,rRem:0,rTotal:0,sets:{},sessions:[],photos:[],hist:{},dayOrder:{},exWOverrides:{},exROverrides:{},exSOverrides:{},customPrograms:[],calendar:{}};
 const KEY="ctr300v4";
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function load(){try{const d=localStorage.getItem(KEY);if(d){const p=JSON.parse(d);Object.assign(S,p);}}catch(e){}}
@@ -1161,16 +1202,27 @@ function renderToday(){
   const b=bloc();
   const now=new Date();
   const wd=now.getDay(); // 0=Sun ... 6=Sat
+  const todayKey=now.toLocaleDateString('fr-CA');
+  const calEntry=(!S.ovDay && S.calendar) ? S.calendar[todayKey] : null;
 
-  // Auto-set curDay from weekday if no override
-  if(!S.ovDay){
+  // Auto-set curDay from weekday if no override and no calendar assignment
+  if(!S.ovDay && !calEntry){
     const auto=WD2DAY[wd];
     if(auto!==null&&auto!==undefined) S.curDay=auto;
   }
 
-  const actId=activeDay();
+  let actId,isRest;
+  if(S.ovDay){
+    actId=activeDay();isRest=false;
+  } else if(calEntry){
+    if(calEntry.type==='rest'){actId=activeDay();isRest=true;}
+    else if(calEntry.type==='custom'){actId='c'+calEntry.progIdx;isRest=false;}
+    else {actId=calEntry.dayId;isRest=false;}
+  } else {
+    actId=activeDay();
+    isRest=(WD2DAY[wd]===null);
+  }
   const day=dayObj(actId);
-  const isRest=(WD2DAY[wd]===null)&&!S.ovDay;
   if(S.dayOrder&&S.dayOrder[actId]){
     const ord=S.dayOrder[actId];
     day.exercises.sort((a,b)=>{
@@ -1185,7 +1237,8 @@ function renderToday(){
   bpill.className='pill '+(b==='A'?'pa':b==='B'?'pb':b==='C'?'pc':'pd2');
 
   document.getElementById('heroPhase').textContent=S.curWeek<=8?'PHASE 1 — FORCE & MASSE':'PHASE 2 — COUPE 300';
-  document.getElementById('heroDay').textContent=isRest?'Repos actif':`Jour ${actId} — ${day.name}`;
+  const isCustomAct=typeof actId==='string'&&actId.charAt(0)==='c';
+  document.getElementById('heroDay').textContent=isRest?'Repos actif':(isCustomAct?day.name:`Jour ${actId} — ${day.name}`);
   document.getElementById('heroSub').textContent=isRest?'LISS 35–45 min · Mobilité 15 min':day.sub;
   document.getElementById('heroBadges').innerHTML=`
     <span class="pill ${b==='A'?'pa':b==='B'?'pb':b==='C'?'pc':'pd2'}">${blocLbl()}</span>
@@ -1846,6 +1899,106 @@ function handlePhoto(e){
 // ════════════════════════════════════════════════════════════
 // PROGRAMME
 // ════════════════════════════════════════════════════════════
+// ── CALENDAR ──
+let calViewYear=null,calViewMonth=null; // month is 0-11
+const MONTH_FR=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+
+function openCalSh(){
+  const now=new Date();
+  calViewYear=now.getFullYear();calViewMonth=now.getMonth();
+  renderCalMonth();
+  raiseSheet('calSh');
+  document.getElementById('calSh').classList.add('on');
+}
+
+function calNavMonth(delta){
+  calViewMonth+=delta;
+  if(calViewMonth<0){calViewMonth=11;calViewYear--;}
+  if(calViewMonth>11){calViewMonth=0;calViewYear++;}
+  renderCalMonth();
+}
+
+function renderCalMonth(){
+  document.getElementById('calMonthLbl').textContent=`${MONTH_FR[calViewMonth]} ${calViewYear}`;
+  const first=new Date(calViewYear,calViewMonth,1);
+  const startOffset=first.getDay(); // 0=Sun
+  const daysInMonth=new Date(calViewYear,calViewMonth+1,0).getDate();
+  const todayKey=new Date().toLocaleDateString('fr-CA');
+  let html='';
+  for(let i=0;i<startOffset;i++) html+='<div class="calm-cell empty"></div>';
+  for(let d=1;d<=daysInMonth;d++){
+    const dateObj=new Date(calViewYear,calViewMonth,d);
+    const dateKey=dateObj.toLocaleDateString('fr-CA');
+    const entry=S.calendar&&S.calendar[dateKey];
+    let dotColor=null;
+    if(entry){
+      dotColor=entry.type==='rest'?'var(--t4)':entry.type==='custom'?'#60A5FA':'var(--red)';
+    } else {
+      const auto=WD2DAY[dateObj.getDay()];
+      dotColor=(auto===null)?'var(--t4)':'var(--red)';
+    }
+    const isToday=dateKey===todayKey;
+    html+=`<div class="calm-cell ${isToday?'today':''}" onclick="openCalDayOptions('${dateKey}')">
+      <div class="calm-cell-n">${d}</div>
+      <div class="calm-cell-dot" style="background:${dotColor}"></div>
+    </div>`;
+  }
+  document.getElementById('calGridMonth').innerHTML=html;
+}
+
+function openCalDayOptions(dateKey){
+  const dateObj=new Date(dateKey+'T12:00:00');
+  const lbl=dateObj.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('calDayShT').textContent=lbl.charAt(0).toUpperCase()+lbl.slice(1);
+  const entry=S.calendar&&S.calendar[dateKey];
+  const progs=S.customPrograms||[];
+
+  let h='';
+  if(entry){
+    h+=`<button class="btn btn-ghost btn-md" style="width:100%;border-radius:var(--r);margin-bottom:10px" onclick="clearCalEntry('${dateKey}')">↺ Retour à l'automatique</button>`;
+  }
+  h+='<div style="font-size:10px;color:var(--t3);font-weight:800;letter-spacing:.08em;margin:6px 0 6px 2px">PLAN 300</div>';
+  h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">';
+  PROG.days.forEach(d=>{
+    const isSel=entry&&entry.type==='day'&&entry.dayId===d.id;
+    h+=`<button class="btn ${isSel?'btn-red':'btn-ghost'} btn-sm" style="border-radius:20px" onclick="setCalEntry('${dateKey}',{type:'day',dayId:${d.id}})">J${d.id}</button>`;
+  });
+  h+='</div>';
+  if(progs.length){
+    h+='<div style="font-size:10px;color:var(--t3);font-weight:800;letter-spacing:.08em;margin:6px 0 6px 2px">PROGRAMMES PERSONNALISÉS</div>';
+    progs.forEach((p,idx)=>{
+      const isSel=entry&&entry.type==='custom'&&entry.progIdx===idx;
+      h+=`<div onclick="setCalEntry('${dateKey}',{type:'custom',progIdx:${idx}})" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r);cursor:pointer;background:${isSel?'rgba(96,165,250,.14)':'var(--bg2)'};border:1px solid ${isSel?'#60A5FA':'var(--b)'};margin-bottom:7px">
+        <div style="flex:1;font-size:13px;font-weight:700">${p.name}</div>
+        <div style="font-size:10px;color:var(--t3)">${p.exercises.length} ex.</div>
+      </div>`;
+    });
+  }
+  h+=`<button class="btn btn-ghost btn-md" style="width:100%;border-radius:var(--r);margin-top:6px" onclick="setCalEntry('${dateKey}',{type:'rest'})">😴 Marquer comme repos</button>`;
+
+  document.getElementById('calDayShBody').innerHTML=h;
+  raiseSheet('calDaySh');
+  document.getElementById('calDaySh').classList.add('on');
+}
+
+function setCalEntry(dateKey,entry){
+  S.calendar=S.calendar||{};
+  S.calendar[dateKey]=entry;
+  save();
+  if(navigator.vibrate) navigator.vibrate(8);
+  document.getElementById('calDaySh').classList.remove('on');
+  renderCalMonth();
+  if(dateKey===new Date().toLocaleDateString('fr-CA')) renderToday();
+}
+
+function clearCalEntry(dateKey){
+  if(S.calendar) delete S.calendar[dateKey];
+  save();
+  document.getElementById('calDaySh').classList.remove('on');
+  renderCalMonth();
+  if(dateKey===new Date().toLocaleDateString('fr-CA')) renderToday();
+}
+
 function renderProg(){
   const tc2={pull:'#3B82F6',legs:'#C8102E',push:'#8B5CF6',full:'#F97316'};
   document.getElementById('progDays').innerHTML=PROG.days.map(d=>`
