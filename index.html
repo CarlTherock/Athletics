@@ -3512,15 +3512,13 @@ function openFullProgDayEditor(dayIdx){
 
 function saveFullProgram(){
   if(!fullProgDraft) return;
-  const name=(document.getElementById('fpNameIn')?.value||'').trim();
+  const name=(fullProgDraft.name||'').trim();
   if(!name){ alert('Donne un nom au programme.'); return; }
   if(!fullProgDraft.days.length || fullProgDraft.days.some(d=>!d.exercises.length)){
     alert('Chaque journée doit avoir au moins un exercice.');
     return;
   }
   fullProgDraft.name=name;
-  fullProgDraft.startDate=document.getElementById('fpStartIn')?.value||'';
-  fullProgDraft.endDate=document.getElementById('fpEndIn')?.value||'';
   S.fullPrograms=S.fullPrograms||[];
   if(fullProgEditIdx!==null){
     S.fullPrograms[fullProgEditIdx]=fullProgDraft;
