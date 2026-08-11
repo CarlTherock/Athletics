@@ -580,10 +580,16 @@ body::before {
 <div class="sh-bg" id="calSh" onclick="if(event.target===this)this.classList.remove('on')">
   <div class="sh sh-plate">
     <div class="sh-handle"></div>
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 16px 10px">
-      <button class="btn btn-ghost btn-sm" style="border-radius:50%;width:34px;height:34px;padding:0" onclick="calNavMonth(-1)">‹</button>
-      <div class="sh-title" id="calMonthLbl" style="padding:0"></div>
-      <button class="btn btn-ghost btn-sm" style="border-radius:50%;width:34px;height:34px;padding:0" onclick="calNavMonth(1)">›</button>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 16px 8px">
+      <div class="sh-title" style="padding:0">Calendrier</div>
+      <div onclick="toggleCalExpand()" style="display:flex;align-items:center;gap:4px;color:var(--rs);font-weight:700;font-size:14px;cursor:pointer">
+        <span id="calMonthLbl"></span>
+        <svg id="calChev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+    <div id="calNavBtns" style="display:none;align-items:center;justify-content:space-between;padding:0 16px 8px">
+      <button class="btn btn-ghost btn-sm" style="border-radius:50%;width:30px;height:30px;padding:0" onclick="calNavMonth(-1)">‹</button>
+      <button class="btn btn-ghost btn-sm" style="border-radius:50%;width:30px;height:30px;padding:0" onclick="calNavMonth(1)">›</button>
     </div>
     <div style="flex:1;overflow-y:auto;padding:0 10px 16px">
       <div class="calm-dow"><div>D</div><div>L</div><div>M</div><div>M</div><div>J</div><div>V</div><div>S</div></div>
@@ -1607,21 +1613,23 @@ function renderDayExList(id,day,b,preview){
     const dispS=getDisplayS(ex);
     const img=getExerciseImage(ex.name);
     const rInfo=getRestLabel(ex,b);
-    return `<div style="padding:0 14px;margin-bottom:12px">
-      <div style="display:flex;align-items:center;gap:11px">
-        <img src="${img}" style="width:60px;height:60px;object-fit:cover;border-radius:9px;flex-shrink:0;background:var(--bg3)" loading="lazy" onerror="this.style.opacity='.3'">
-        <div style="flex:1">
-          <div style="font-size:14px;font-weight:800">${(ex.new||isReplaced)?'★ ':''}${ex.name}</div>
-          <div style="font-size:11px;color:var(--t2);margin-top:2px">${dispS} × ${dispR} · <span style="color:var(--rs);font-weight:700">${w}</span></div>
-          <div style="font-size:10px;color:var(--t3);margin-top:2px">${rInfo.type} · ${rInfo.fmt}</div>
-          <div style="font-size:10px;color:var(--t3);margin-top:3px;font-style:italic">${ex.note}</div>
+    return `<div style="padding:0 14px;margin-bottom:16px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:9px">
+        <div style="font-size:15px;font-weight:800;flex:1;padding-top:2px">${(ex.new||isReplaced)?'★ ':''}${ex.name}</div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          ${!ex.bw&&!ex.rpe?`<button onclick="openPlate('${parseFloat(w)||0}','${ex.name}','${dispR}','${dispS}',${JSON.stringify(id)})" style="background:var(--bg3);border:1px solid var(--b);border-radius:20px;padding:0 11px;height:30px;display:flex;align-items:center;gap:5px;cursor:pointer;color:#fff;font-size:11px;font-weight:700"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="12" r="3.2"/><circle cx="18" cy="12" r="3.2"/><line x1="9.2" y1="12" x2="14.8" y2="12" stroke-width="2.4"/></svg>Plates</button>`:''}
+          <button onclick="openExLibrary(${JSON.stringify(id)},${exIdx})" style="background:var(--bg3);border:1px solid var(--b);border-radius:20px;padding:0 11px;height:30px;display:flex;align-items:center;gap:5px;cursor:pointer;color:#fff;font-size:11px;font-weight:700"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>Replace</button>
         </div>
       </div>
-      <div style="display:flex;gap:7px;margin-top:8px;flex-wrap:wrap">
-        ${!ex.bw&&!ex.rpe?`<button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:11px" onclick="openPlate('${parseFloat(w)||0}','${ex.name}','${dispR}','${dispS}',${JSON.stringify(id)})">🏋️ Plates</button>`:''}
-        <button class="btn btn-ghost btn-sm" style="border-radius:20px;font-size:11px;display:inline-flex;align-items:center;gap:5px" onclick="openExLibrary(${JSON.stringify(id)},${exIdx})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>Remplacer</button>
+      <div style="display:flex;justify-content:center;margin-bottom:9px">
+        <img src="${img}" style="width:100%;max-width:340px;height:150px;object-fit:cover;border-radius:11px;background:var(--bg3)" loading="lazy" onerror="this.style.opacity='.3'">
       </div>
-      <div style="height:1px;background:var(--b);margin-top:11px"></div>
+      <div style="text-align:center">
+        <div style="font-size:12px;color:var(--t2)">${dispS} × ${dispR} · <span style="color:var(--rs);font-weight:700">${w}</span></div>
+        <div style="font-size:10px;color:var(--t3);margin-top:3px">${rInfo.type} · ${rInfo.fmt}</div>
+        <div style="font-size:10px;color:var(--t3);margin-top:3px;font-style:italic">${ex.note}</div>
+      </div>
+      <div style="height:1px;background:var(--b);margin-top:14px"></div>
     </div>`;
   }).join('');
 }
@@ -1900,48 +1908,77 @@ function handlePhoto(e){
 // PROGRAMME
 // ════════════════════════════════════════════════════════════
 // ── CALENDAR ──
-let calViewYear=null,calViewMonth=null; // month is 0-11
+let calViewYear=null,calViewMonth=null,calExpanded=false; // month is 0-11
 const MONTH_FR=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+const MONTH_FR_S=['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'];
 
 function openCalSh(){
   const now=new Date();
   calViewYear=now.getFullYear();calViewMonth=now.getMonth();
-  renderCalMonth();
+  calExpanded=false;
+  renderCalView();
   raiseSheet('calSh');
   document.getElementById('calSh').classList.add('on');
+}
+
+function toggleCalExpand(){
+  calExpanded=!calExpanded;
+  renderCalView();
 }
 
 function calNavMonth(delta){
   calViewMonth+=delta;
   if(calViewMonth<0){calViewMonth=11;calViewYear--;}
   if(calViewMonth>11){calViewMonth=0;calViewYear++;}
-  renderCalMonth();
+  renderCalView();
 }
 
-function renderCalMonth(){
-  document.getElementById('calMonthLbl').textContent=`${MONTH_FR[calViewMonth]} ${calViewYear}`;
-  const first=new Date(calViewYear,calViewMonth,1);
-  const startOffset=first.getDay(); // 0=Sun
-  const daysInMonth=new Date(calViewYear,calViewMonth+1,0).getDate();
+function minutesTrainedOn(dateKey){
+  let mins=0;
+  S.sessions.forEach(s=>{if(s.date===dateKey) mins+=(s.duration||0);});
+  return mins;
+}
+
+function calCellHtml(dateObj){
+  const dateKey=dateObj.toLocaleDateString('fr-CA');
+  const entry=S.calendar&&S.calendar[dateKey];
+  let dotColor;
+  if(entry){
+    dotColor=entry.type==='rest'?'var(--t4)':entry.type==='custom'?'#60A5FA':'var(--red)';
+  } else {
+    const auto=WD2DAY[dateObj.getDay()];
+    dotColor=(auto===null)?'var(--t4)':'var(--red)';
+  }
   const todayKey=new Date().toLocaleDateString('fr-CA');
+  const isToday=dateKey===todayKey;
+  const mins=minutesTrainedOn(dateKey);
+  return `<div class="calm-cell ${isToday?'today':''}" onclick="openCalDayOptions('${dateKey}')">
+    <div class="calm-cell-n">${dateObj.getDate()}</div>
+    ${mins>0?`<div style="font-size:9px;color:var(--green);font-weight:800;margin-top:1px">${mins}m</div>`:`<div class="calm-cell-dot" style="background:${dotColor}"></div>`}
+  </div>`;
+}
+
+function renderCalView(){
+  const chev=document.getElementById('calChev');
+  const nav=document.getElementById('calNavBtns');
+  document.getElementById('calMonthLbl').textContent=MONTH_FR_S[calViewMonth];
+  if(chev) chev.style.transform=calExpanded?'rotate(180deg)':'';
+  if(nav) nav.style.display=calExpanded?'flex':'none';
+
   let html='';
-  for(let i=0;i<startOffset;i++) html+='<div class="calm-cell empty"></div>';
-  for(let d=1;d<=daysInMonth;d++){
-    const dateObj=new Date(calViewYear,calViewMonth,d);
-    const dateKey=dateObj.toLocaleDateString('fr-CA');
-    const entry=S.calendar&&S.calendar[dateKey];
-    let dotColor=null;
-    if(entry){
-      dotColor=entry.type==='rest'?'var(--t4)':entry.type==='custom'?'#60A5FA':'var(--red)';
-    } else {
-      const auto=WD2DAY[dateObj.getDay()];
-      dotColor=(auto===null)?'var(--t4)':'var(--red)';
+  if(!calExpanded){
+    const now=new Date();
+    const sun=new Date(now);sun.setDate(now.getDate()-now.getDay());
+    for(let i=0;i<7;i++){
+      const d=new Date(sun);d.setDate(sun.getDate()+i);
+      html+=calCellHtml(d);
     }
-    const isToday=dateKey===todayKey;
-    html+=`<div class="calm-cell ${isToday?'today':''}" onclick="openCalDayOptions('${dateKey}')">
-      <div class="calm-cell-n">${d}</div>
-      <div class="calm-cell-dot" style="background:${dotColor}"></div>
-    </div>`;
+  } else {
+    const first=new Date(calViewYear,calViewMonth,1);
+    const startOffset=first.getDay();
+    const daysInMonth=new Date(calViewYear,calViewMonth+1,0).getDate();
+    for(let i=0;i<startOffset;i++) html+='<div class="calm-cell empty"></div>';
+    for(let d=1;d<=daysInMonth;d++) html+=calCellHtml(new Date(calViewYear,calViewMonth,d));
   }
   document.getElementById('calGridMonth').innerHTML=html;
 }
@@ -1987,7 +2024,7 @@ function setCalEntry(dateKey,entry){
   save();
   if(navigator.vibrate) navigator.vibrate(8);
   document.getElementById('calDaySh').classList.remove('on');
-  renderCalMonth();
+  renderCalView();
   if(dateKey===new Date().toLocaleDateString('fr-CA')) renderToday();
 }
 
@@ -1995,7 +2032,7 @@ function clearCalEntry(dateKey){
   if(S.calendar) delete S.calendar[dateKey];
   save();
   document.getElementById('calDaySh').classList.remove('on');
-  renderCalMonth();
+  renderCalView();
   if(dateKey===new Date().toLocaleDateString('fr-CA')) renderToday();
 }
 
