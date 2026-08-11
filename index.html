@@ -258,6 +258,12 @@ body{
 .ex-note{padding:0 16px 8px;font-size:11px;color:var(--t3);font-style:italic;line-height:1.5}
 
 /* Prev banner */
+.focus-view{position:fixed;left:0;right:0;bottom:calc(54px + env(safe-area-inset-bottom,0px));background:#000;z-index:10;overflow:hidden}
+.focus-img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0}
+.focus-scrim{position:absolute;left:0;right:0;bottom:0;height:46%;background:linear-gradient(180deg,transparent,#0A0A0A 85%);z-index:1;pointer-events:none}
+.focus-panel{position:absolute;left:0;right:0;bottom:0;max-height:72%;overflow-y:auto;background:#141414;border-radius:20px 20px 0 0;padding:16px 14px calc(16px + var(--safe));z-index:2;box-shadow:0 -8px 24px rgba(0,0,0,.4)}
+.focus-nav-arrow{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.4);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.15);color:#fff;display:flex;align-items:center;justify-content:center;z-index:3;cursor:pointer;font-size:18px}
+.focus-count{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.45);backdrop-filter:blur(6px);border-radius:20px;padding:5px 14px;font-size:11px;font-weight:800;color:#fff;z-index:3}
 .prev-ban{margin:0 14px 6px;background:var(--bg3);border:1px solid var(--b);border-radius:var(--rsm);padding:8px 12px;display:flex;align-items:center;justify-content:space-between}
 .prev-ban-l{font-size:9px;color:var(--t3);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px}
 .prev-ban-v{font-size:13px;font-weight:800}
@@ -716,14 +722,10 @@ body::before {
     <button class="btn btn-ol btn-sm" onclick="finishWo()">Terminer ✓</button>
   </div>
   <div class="prog-bar"><div class="prog-fill" id="woProg" style="width:0%"></div></div>
-  <div id="focusNav" style="display:none;align-items:center;justify-content:space-between;gap:10px;padding:9px 14px;background:var(--bg2);border-bottom:1px solid var(--b)">
-    <button class="btn btn-ghost btn-sm" style="border-radius:50%;width:32px;height:32px;padding:0" onclick="focusNav(-1)">‹</button>
-    <div id="focusNavLbl" style="font-size:12px;font-weight:800;color:var(--t2)">1 / 6</div>
-    <button class="btn btn-ghost btn-sm" style="border-radius:50%;width:32px;height:32px;padding:0" onclick="focusNav(1)">›</button>
-  </div>
   <span class="lbl" id="woBlocLbl">BLOC A · 72%</span>
   <div id="woExs"></div>
-  <div style="padding:6px 12px 12px"><button class="btn btn-red btn-lg" onclick="finishWo()">✓ Terminer la séance</button></div>
+  <div id="woFocusView" class="focus-view" style="display:none"></div>
+  <div id="woListFooter" style="padding:6px 12px 12px"><button class="btn btn-red btn-lg" onclick="finishWo()">✓ Terminer la séance</button></div>
 </div>
 
 <!-- ══ STATS ══ -->
@@ -1397,6 +1399,26 @@ function showActiveBanner(on){
   }
 }
 
+function buildSetRowsHtml(ex,ei,sets,wStr,wNum,prevSess){
+  return sets.map((set,si)=>{
+    const hx=set.done?'hdone':set.type==='warmup'?'hw':set.type==='drop'?'hdrop':'hwork';
+    const pSet=prevSess?.exercises?.find(e=>e.name===ex.name)?.sets?.[si];
+    return `<div class="set-row${set.done?' dr':''}" id="sr-${ei}-${si}">
+      <div class="hex ${hx}" onclick="cycleT('${ex.name}',${si})">${set.type==='warmup'?'W':set.type==='drop'?'D':si+1}</div>
+      <div class="set-prev">${pSet?pSet.w+'lb':wStr}</div>
+      <input class="sinp${set.done?' sd':''}" type="number" inputmode="decimal" value="${set.w||''}" placeholder="${wNum||''}"
+        onclick="this.select()" onfocus="this.select()" oninput="updS('${ex.name}',${si},'w',this.value)">
+      <div class="set-unit">lb</div>
+      <input class="sinp${set.done?' sd':''}" type="number" inputmode="numeric" value="${set.r||''}" placeholder="0"
+        onclick="this.select()" onfocus="this.select()" oninput="updS('${ex.name}',${si},'r',this.value)">
+      <button class="chk${set.done?' on':''}" onclick="chkSet('${ex.name}',${ei},${si})">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+      </button>
+      <button onclick="delSet('${ex.name}',${si})" style="width:20px;height:20px;border-radius:50%;border:none;background:rgba(200,16,46,.15);color:var(--rs);font-size:11px;font-weight:900;cursor:pointer;flex-shrink:0">✕</button>
+    </div>`;
+  }).join('');
+}
+
 function renderWo(){
   const actId=activeDay();
   const day=dayObj(actId);
@@ -1405,6 +1427,7 @@ function renderWo(){
   document.getElementById('woBlocLbl').textContent=blocLbl();
   const prevSess=S.sessions.filter(s=>s.dayId===actId).slice(-1)[0];
   let html='';
+  const exDataList=[];
 
   day.exercises.forEach((origEx,ei)=>{
     var replName = S.exReplacements && S.exReplacements[actId+'::'+origEx.name];
@@ -1424,6 +1447,7 @@ function renderWo(){
     const sets=S.sets[ex.name];
     const prevLast=S.hist[ex.name]?.slice(-1)[0];
     const doneC=sets.filter(s=>s.done).length;
+    exDataList.push({ex,ei,wStr,wNum,restInfo,isBar,img,sets,prevLast,doneC});
 
     html+=`<div class="ex-blk">
       <div class="ex-hero">
@@ -1440,10 +1464,10 @@ function renderWo(){
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Historique
         </div>
         <div class="ex-act" onclick="openExLibrary(${JSON.stringify(actId)},${ei})">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>Remplacer
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>Replace
         </div>
         ${isBar?`<div class="ex-act" onclick="openPlate('${sets[0].w||wNum}','${ex.name}','${sets[0].r||ex.r}','${getDisplayS(ex)}',${JSON.stringify(actId)})">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 5v14M18 5v14M4 9h4M16 9h4M4 15h4M16 15h4"/></svg>Plates
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="12" r="3.2"/><circle cx="18" cy="12" r="3.2"/><line x1="9.2" y1="12" x2="14.8" y2="12" stroke-width="2.4"/></svg>Plates
         </div>`:''}
         <div class="ex-act" onclick="openRestPresetPicker('${ex.name}',${restInfo.sec})">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${restInfo.type} · ${restInfo.fmt}
@@ -1463,23 +1487,7 @@ function renderWo(){
           <div class="sh-col" style="flex:1">Reps</div>
           <div style="width:34px"></div>
         </div>
-        ${sets.map((set,si)=>{
-          const hx=set.done?'hdone':set.type==='warmup'?'hw':set.type==='drop'?'hdrop':'hwork';
-          const pSet=prevSess?.exercises?.find(e=>e.name===ex.name)?.sets?.[si];
-          return `<div class="set-row${set.done?' dr':''}" id="sr-${ei}-${si}">
-            <div class="hex ${hx}" onclick="cycleT('${ex.name}',${si})">${set.type==='warmup'?'W':set.type==='drop'?'D':si+1}</div>
-            <div class="set-prev">${pSet?pSet.w+'lb':wStr}</div>
-            <input class="sinp${set.done?' sd':''}" type="number" inputmode="decimal" value="${set.w||''}" placeholder="${wNum||''}"
-              onclick="this.select()" onfocus="this.select()" oninput="updS('${ex.name}',${si},'w',this.value)">
-            <div class="set-unit">lb</div>
-            <input class="sinp${set.done?' sd':''}" type="number" inputmode="numeric" value="${set.r||''}" placeholder="0"
-              onclick="this.select()" onfocus="this.select()" oninput="updS('${ex.name}',${si},'r',this.value)">
-            <button class="chk${set.done?' on':''}" onclick="chkSet('${ex.name}',${ei},${si})">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-            </button>
-            <button onclick="delSet('${ex.name}',${si})" style="width:20px;height:20px;border-radius:50%;border:none;background:rgba(200,16,46,.15);color:var(--rs);font-size:11px;font-weight:900;cursor:pointer;flex-shrink:0">✕</button>
-          </div>`;
-        }).join('')}
+        ${buildSetRowsHtml(ex,ei,sets,wStr,wNum,prevSess)}
       </div>
       <div class="add-set" onclick="addSet('${ex.name}')">
         <div class="add-hex"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
@@ -1488,7 +1496,16 @@ function renderWo(){
       <div style="height:6px;background:var(--bg)"></div>
     </div>`;
   });
-  document.getElementById('woExs').innerHTML=html;
+
+  if(woFocusMode){
+    document.getElementById('woExs').innerHTML='';
+    document.getElementById('woListFooter').style.display='none';
+    renderFocusExercise(exDataList,day.exercises.length);
+  } else {
+    document.getElementById('woExs').innerHTML=html;
+    document.getElementById('woListFooter').style.display='block';
+    document.getElementById('woFocusView').innerHTML='';
+  }
   applyFocusMode();
   updProg();
 }
@@ -1500,50 +1517,90 @@ function toggleFocusMode(){
   woFocusIdx=0;
   S.woFocusPref=woFocusMode;
   save();
-  applyFocusMode();
+  renderWo();
 }
 
 function focusNav(delta){
-  const blocks=document.querySelectorAll('#woExs .ex-blk');
-  const n=blocks.length;
+  const day=dayObj(activeDay());
+  const n=day.exercises.length;
   if(!n) return;
   woFocusIdx=Math.max(0,Math.min(n-1,woFocusIdx+delta));
-  applyFocusMode();
   if(navigator.vibrate) navigator.vibrate(6);
+  renderWo();
 }
 
 function bindFocusSwipe(){
-  const el=document.getElementById('woExs');
+  const el=document.getElementById('woFocusView');
   if(!el||el.dataset.swipeBound) return;
   el.dataset.swipeBound='1';
   let sx=0,sy=0,tracking=false;
   el.addEventListener('pointerdown',(e)=>{
-    if(!woFocusMode) return;
+    if(e.target.closest('input,button,.focus-panel')) { /* still allow swipe from panel edges below */ }
     sx=e.clientX;sy=e.clientY;tracking=true;
   });
   el.addEventListener('pointerup',(e)=>{
-    if(!woFocusMode||!tracking) return;
+    if(!tracking) return;
     tracking=false;
     const dx=e.clientX-sx,dy=e.clientY-sy;
     if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5) focusNav(dx<0?1:-1);
   });
 }
 
+function renderFocusExercise(exDataList,total){
+  const d=exDataList[woFocusIdx];
+  if(!d) return;
+  const {ex,ei,wStr,wNum,restInfo,isBar,img,sets,prevLast}=d;
+  const actId=activeDay();
+  const prevSess=S.sessions.filter(s=>s.dayId===actId).slice(-1)[0];
+  const html=`
+    <img class="focus-img" src="${img}" alt="${ex.name}" onerror="this.style.opacity='.15'">
+    <div class="focus-scrim"></div>
+    <div class="focus-count">${woFocusIdx+1} / ${total}</div>
+    ${woFocusIdx>0?`<div class="focus-nav-arrow" style="left:10px" onclick="focusNav(-1)">‹</div>`:''}
+    ${woFocusIdx<total-1?`<div class="focus-nav-arrow" style="right:10px" onclick="focusNav(1)">›</div>`:''}
+    <div class="focus-panel">
+      <div style="font-size:18px;font-weight:900">${ex.new?'★ ':''}${ex.name}</div>
+      <div style="font-size:12px;color:var(--t2);margin-top:2px;margin-bottom:10px">${ex.s} séries · ${ex.r} · <span style="color:var(--rs);font-weight:700">${wStr}</span></div>
+      <div style="display:flex;gap:7px;margin-bottom:10px;flex-wrap:wrap">
+        <div class="ex-act" onclick="openHist('${ex.name}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Historique</div>
+        <div class="ex-act" onclick="openExLibrary(${JSON.stringify(actId)},${ei})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>Replace</div>
+        ${isBar?`<div class="ex-act" onclick="openPlate('${sets[0].w||wNum}','${ex.name}','${sets[0].r||ex.r}','${getDisplayS(ex)}',${JSON.stringify(actId)})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="12" r="3.2"/><circle cx="18" cy="12" r="3.2"/><line x1="9.2" y1="12" x2="14.8" y2="12" stroke-width="2.4"/></svg>Plates</div>`:''}
+        <div class="ex-act" onclick="openRestPresetPicker('${ex.name}',${restInfo.sec})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${restInfo.type} · ${restInfo.fmt}</div>
+      </div>
+      ${prevLast?`<div class="prev-ban"><div><div class="prev-ban-l">Dernière fois</div><div class="prev-ban-v">${prevLast.w} lb × ${prevLast.r} reps</div></div>${prevLast.isPR?'<span class="pr-badge">🏆 PR</span>':''}</div>`:''}
+      <div class="sets-wrap">
+        <div class="set-hdr">
+          <div style="width:32px;flex-shrink:0"></div>
+          <div class="sh-col" style="width:52px">Précédent</div>
+          <div class="sh-col" style="flex:1">Charge (lb)</div>
+          <div style="width:16px"></div>
+          <div class="sh-col" style="flex:1">Reps</div>
+          <div style="width:34px"></div>
+        </div>
+        ${buildSetRowsHtml(ex,ei,sets,wStr,wNum,prevSess)}
+      </div>
+      <div class="add-set" onclick="addSet('${ex.name}')">
+        <div class="add-hex"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+        <div class="add-txt">Ajouter une série</div>
+      </div>
+    </div>`;
+  document.getElementById('woFocusView').innerHTML=html;
+}
+
 function applyFocusMode(){
-  bindFocusSwipe();
-  const blocks=document.querySelectorAll('#woExs .ex-blk');
-  const nav=document.getElementById('focusNav');
+  const fv=document.getElementById('woFocusView');
   const btn=document.getElementById('focusToggleBtn');
-  if(!blocks.length) return;
-  if(woFocusIdx>=blocks.length) woFocusIdx=blocks.length-1;
+  const blocLbl=document.getElementById('woBlocLbl');
   if(woFocusMode){
-    blocks.forEach((el,i)=>{el.style.display=(i===woFocusIdx)?'block':'none';});
-    nav.style.display='flex';
-    document.getElementById('focusNavLbl').textContent=`${woFocusIdx+1} / ${blocks.length}`;
+    fv.style.display='block';
+    if(blocLbl) blocLbl.style.display='none';
+    const progBar=document.querySelector('#sc-wo .prog-bar');
+    if(progBar) fv.style.top=progBar.getBoundingClientRect().bottom+'px';
+    bindFocusSwipe();
     if(btn){btn.style.background='rgba(200,16,46,.15)';btn.style.color='var(--rs)';btn.style.borderColor='var(--red)';}
   } else {
-    blocks.forEach(el=>{el.style.display='block';});
-    nav.style.display='none';
+    fv.style.display='none';
+    if(blocLbl) blocLbl.style.display='';
     if(btn){btn.style.background='';btn.style.color='';btn.style.borderColor='';}
   }
 }
