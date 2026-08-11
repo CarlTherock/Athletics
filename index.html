@@ -576,33 +576,6 @@ body::before {
   </div>
 </div>
 
-<!-- CALENDAR -->
-<div class="sh-bg" id="calSh" onclick="if(event.target===this)this.classList.remove('on')">
-  <div class="sh sh-plate">
-    <div class="sh-handle"></div>
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 16px 8px">
-      <div class="sh-title" style="padding:0">Calendrier</div>
-      <div onclick="toggleCalExpand()" style="display:flex;align-items:center;gap:4px;color:var(--rs);font-weight:700;font-size:14px;cursor:pointer">
-        <span id="calMonthLbl"></span>
-        <svg id="calChev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
-      </div>
-    </div>
-    <div id="calNavBtns" style="display:none;align-items:center;justify-content:space-between;padding:0 16px 8px">
-      <button class="btn btn-ghost btn-sm" style="border-radius:50%;width:30px;height:30px;padding:0" onclick="calNavMonth(-1)">‹</button>
-      <button class="btn btn-ghost btn-sm" style="border-radius:50%;width:30px;height:30px;padding:0" onclick="calNavMonth(1)">›</button>
-    </div>
-    <div style="flex:1;overflow-y:auto;padding:0 10px 16px">
-      <div class="calm-dow"><div>D</div><div>L</div><div>M</div><div>M</div><div>J</div><div>V</div><div>S</div></div>
-      <div class="calm-grid" id="calGridMonth"></div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;padding:0 4px">
-        <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t3)"><div style="width:8px;height:8px;border-radius:50%;background:var(--red)"></div>Plan 300</div>
-        <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t3)"><div style="width:8px;height:8px;border-radius:50%;background:#60A5FA"></div>Personnalisé</div>
-        <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t3)"><div style="width:8px;height:8px;border-radius:50%;background:var(--t4)"></div>Repos</div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- CALENDAR: DAY OPTIONS -->
 <div class="sh-bg" id="calDaySh" onclick="if(event.target===this)this.classList.remove('on')">
   <div class="sh">
@@ -803,8 +776,25 @@ body::before {
     <div style="background:rgba(200,16,46,.08);border:1px solid rgba(200,16,46,.2);border-radius:var(--r);padding:9px;text-align:center"><div style="font-size:9px;color:var(--rs);font-weight:800;letter-spacing:.1em;margin-bottom:3px">PHASE 2</div><div style="font-size:14px;font-weight:900">8 sem.</div><div style="font-size:9px;color:var(--t3);margin-top:2px">Coupe 300</div></div>
     <div style="background:rgba(212,165,32,.08);border:1px solid rgba(212,165,32,.2);border-radius:var(--r);padding:9px;text-align:center"><div style="font-size:9px;color:var(--gold);font-weight:800;letter-spacing:.1em;margin-bottom:3px">PEAK</div><div style="font-size:14px;font-weight:900">1 sem.</div><div style="font-size:9px;color:var(--t3);margin-top:2px">🏆 7 Déc.</div></div>
   </div>
-  <div style="margin:8px 12px 4px">
-    <button class="btn btn-ghost btn-lg" onclick="openCalSh()" style="width:100%;border-radius:var(--r);display:flex;align-items:center;justify-content:center;gap:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>📅 Calendrier</button>
+  <div style="margin:14px 12px 4px;background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:16px 14px;overflow:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div style="font-size:19px;font-weight:900;font-style:italic">Calendrier</div>
+      <div onclick="toggleCalExpand()" style="display:flex;align-items:center;gap:4px;color:var(--rs);font-weight:700;font-size:14px;cursor:pointer">
+        <span id="calMonthLbl"></span>
+        <svg id="calChev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+    <div id="calNavBtns" style="display:none;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <button class="btn btn-ghost btn-sm" style="border-radius:50%;width:28px;height:28px;padding:0" onclick="calNavMonth(-1)">‹</button>
+      <button class="btn btn-ghost btn-sm" style="border-radius:50%;width:28px;height:28px;padding:0" onclick="calNavMonth(1)">›</button>
+    </div>
+    <div class="calm-dow"><div>D</div><div>L</div><div>M</div><div>M</div><div>J</div><div>V</div><div>S</div></div>
+    <div class="calm-grid" id="calGridMonth"></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:14px">
+      <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t3)"><div style="width:8px;height:8px;border-radius:50%;background:var(--red)"></div>Plan 300</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t3)"><div style="width:8px;height:8px;border-radius:50%;background:#60A5FA"></div>Personnalisé</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t3)"><div style="width:8px;height:8px;border-radius:50%;background:var(--t4)"></div>Repos</div>
+    </div>
   </div>
   <span class="lbl">JOURNÉES V4</span>
   <div id="progDays"></div>
@@ -1912,15 +1902,6 @@ let calViewYear=null,calViewMonth=null,calExpanded=false; // month is 0-11
 const MONTH_FR=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 const MONTH_FR_S=['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'];
 
-function openCalSh(){
-  const now=new Date();
-  calViewYear=now.getFullYear();calViewMonth=now.getMonth();
-  calExpanded=false;
-  renderCalView();
-  raiseSheet('calSh');
-  document.getElementById('calSh').classList.add('on');
-}
-
 function toggleCalExpand(){
   calExpanded=!calExpanded;
   renderCalView();
@@ -2037,6 +2018,11 @@ function clearCalEntry(dateKey){
 }
 
 function renderProg(){
+  if(calViewYear===null){
+    const now=new Date();
+    calViewYear=now.getFullYear();calViewMonth=now.getMonth();calExpanded=false;
+  }
+  renderCalView();
   const tc2={pull:'#3B82F6',legs:'#C8102E',push:'#8B5CF6',full:'#F97316'};
   document.getElementById('progDays').innerHTML=PROG.days.map(d=>`
     <div class="pd-card" onclick="openDaySh(${d.id})">
