@@ -3531,8 +3531,12 @@ function filterExLibSearch(query){
   query = (query||'').trim().toLowerCase();
   var tabsEl = document.getElementById('exLibTabs');
   if(!query){
-    tabsEl.style.display = 'flex';
-    renderExLibGrid(exLibActiveTab);
+    if(exLibActiveTab){
+      renderExLibBackRow(exLibActiveTab);
+      renderExLibGrid(exLibActiveTab);
+    } else {
+      showExLibGroups();
+    }
     return;
   }
   tabsEl.style.display = 'none';
@@ -3588,15 +3592,15 @@ function openExLibrary(dayId, exIdx){
   exLibTargetIdx = exIdx;
   var repl = S.exReplacements && S.exReplacements[dayId+'::'+origEx.name];
   exLibTargetName = repl || origEx.name;
-  var muscles = Object.keys(EX_LIBRARY);
-  exLibActiveTab = muscles[0];
   var searchEl = document.getElementById('exLibSearch');
   if(searchEl) searchEl.value = '';
-  document.getElementById('exLibTabs').style.display = 'flex';
   document.getElementById('exLibShT').textContent = "Remplacer l'exercice";
   document.getElementById('exLibDoneFooter').style.display = 'none';
-  renderExLibTabs(muscles);
-  renderExLibGrid(exLibActiveTab);
+  var curMuscle = null;
+  Object.keys(EX_LIBRARY).forEach(function(m){
+    if(EX_LIBRARY[m].exercises.some(function(e){return e.name===exLibTargetName;})) curMuscle=m;
+  });
+  if(curMuscle){ openExLibGroup(curMuscle); } else { showExLibGroups(); }
   raiseSheet('exLibSh');
   document.getElementById('exLibSh').classList.add('on');
 }
@@ -4021,7 +4025,7 @@ function removeBuilderEx(i){
   if(!builderDraft) return;
   builderDraft.exercises.splice(i,1);
   renderBuilderList();
-  if(document.getElementById('exLibSh').classList.contains('on')) renderExLibGrid(exLibActiveTab);
+  if(document.getElementById('exLibSh').classList.contains('on') && exLibActiveTab) renderExLibGrid(exLibActiveTab);
 }
 
 function bindBuilderReorder(){
@@ -4139,33 +4143,51 @@ function openExLibraryForBuilder(){
   exLibTargetDay = null;
   exLibTargetIdx = null;
   exLibTargetName = null;
-  var muscles = Object.keys(EX_LIBRARY);
-  exLibActiveTab = muscles[0];
   var searchEl = document.getElementById('exLibSearch');
   if(searchEl) searchEl.value = '';
-  document.getElementById('exLibTabs').style.display = 'flex';
   document.getElementById('exLibShT').textContent = 'Ajouter un exercice';
   document.getElementById('exLibDoneFooter').style.display = 'block';
-  renderExLibTabs(muscles);
-  renderExLibGrid(exLibActiveTab);
+  showExLibGroups();
   raiseSheet('exLibSh');
   document.getElementById('exLibSh').classList.add('on');
 }
 
-function renderExLibTabs(muscles){
-  var html = '';
+function renderExLibGroupSquares(){
+  var muscles = Object.keys(EX_LIBRARY);
+  var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-top:4px">';
   muscles.forEach(function(m){
-    var active = (m === exLibActiveTab);
-    html += '<div onclick="switchExLibTab(\''+m.replace(/'/g,"\\'")+'\')" style="flex-shrink:0;display:flex;align-items:center;justify-content:center;height:32px;padding:0 14px;border-radius:20px;font-size:12px;font-weight:700;line-height:1;white-space:nowrap;cursor:pointer;box-sizing:border-box;'
-      + (active ? 'background:var(--red);color:#fff;border:1px solid var(--red);' : 'background:var(--bg3);color:var(--t2);border:1px solid var(--b);')
-      + '">' + m + '</div>';
+    var data = EX_LIBRARY[m];
+    var hero = data.exercises[0] ? data.exercises[0].img : '';
+    html += '<div onclick="openExLibGroup(\''+m.replace(/'/g,"\\'")+'\')" style="position:relative;border-radius:var(--r);overflow:hidden;cursor:pointer;aspect-ratio:1;border:1px solid var(--b);background:'+data.color+'15">'
+      + '<img src="'+hero+'" loading="lazy" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0" onerror="this.style.display=\'none\'">'
+      + '<div style="position:absolute;inset:0;background:linear-gradient(to top, rgba(10,10,10,.92), rgba(10,10,10,.15) 60%, transparent)"></div>'
+      + '<div style="position:absolute;left:11px;bottom:10px;right:11px">'
+      + '<div style="font-size:15px;font-weight:900;color:#fff;line-height:1.15">'+m+'</div>'
+      + '<div style="font-size:10px;color:rgba(255,255,255,.7);font-weight:700;margin-top:1px">'+data.exercises.length+' exercices</div>'
+      + '</div>'
+      + '</div>';
   });
-  document.getElementById('exLibTabs').innerHTML = html;
+  html += '</div>';
+  document.getElementById('exLibGrid').innerHTML = html;
 }
 
-function switchExLibTab(muscle){
+function showExLibGroups(){
+  exLibActiveTab = null;
+  document.getElementById('exLibTabs').style.display = 'none';
+  renderExLibGroupSquares();
+}
+
+function renderExLibBackRow(muscle){
+  var el = document.getElementById('exLibTabs');
+  el.style.display = 'flex';
+  el.innerHTML = '<div onclick="showExLibGroups()" style="display:flex;align-items:center;gap:5px;cursor:pointer;color:var(--rs);font-weight:700;font-size:13px;padding:5px 2px;flex-shrink:0">'
+    + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>Groupes</div>'
+    + '<div style="flex:1;text-align:right;font-weight:800;font-size:13px;color:'+EX_LIBRARY[muscle].color+'">'+muscle+'</div>';
+}
+
+function openExLibGroup(muscle){
   exLibActiveTab = muscle;
-  renderExLibTabs(Object.keys(EX_LIBRARY));
+  renderExLibBackRow(muscle);
   renderExLibGrid(muscle);
 }
 
