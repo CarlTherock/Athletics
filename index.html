@@ -188,11 +188,11 @@ body{
 .wstrip{display:flex;gap:6px;overflow-x:auto;padding:12px 14px;scrollbar-width:none}
 .wstrip::-webkit-scrollbar{display:none}
 .wchip{flex-shrink:0;min-width:46px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 6px;border-radius:var(--rsm);background:var(--bg2);border:1px solid var(--b);cursor:pointer;transition:all .15s}
-.wchip.sel{background:var(--red);border-color:var(--red)}
+.wchip.sel{border-color:var(--red);border-width:2px}
 .wchip.done{border-color:var(--green)}
 .wchip.rest-chip{opacity:.45}
 .wchip-n{font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--t3)}
-.wchip.sel .wchip-n{color:rgba(255,255,255,.7)}
+.wchip.sel .wchip-n{color:var(--rs)}
 .wchip.done .wchip-n{color:var(--green)}
 .wchip-d{font-size:17px;font-weight:900}
 .wchip.rest-chip .wchip-d{color:var(--t3)}
@@ -323,7 +323,7 @@ body{
 .prog-sq{background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:14px 10px;text-align:center;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;aspect-ratio:1.15;transition:border-color .15s,background .15s}
 .prog-sq:active{background:var(--bg3)}
 .prog-sq.core{border-color:rgba(200,16,46,.35);background:rgba(200,16,46,.06)}
-.prog-sq-name{font-size:16px;font-weight:900;line-height:1.2}
+.prog-sq-name{font-size:19px;font-weight:900;line-height:1.15}
 .prog-sq-meta{font-size:10px;color:var(--t3);font-weight:600}
 .prog-sq-row{aspect-ratio:auto!important;flex-direction:row!important;justify-content:flex-start!important;gap:11px;padding:13px 14px;margin:0 12px 10px}
 .prog-sq-row .prog-sq-name{font-size:14px}
@@ -1428,9 +1428,9 @@ function renderToday(){
   let progKey=null;
   if(typeof actId==='number') progKey='ctr';
   else if(typeof actId==='string' && actId.charAt(0)==='f') progKey='full-'+actId.slice(1).split('-')[0];
-  const activeProgEntry=progKey?getProgramEntries().find(p=>p.key===progKey):null;
+  const activeProgEntry=(progKey && !isRest && !isUnassigned)?getProgramEntries().find(p=>p.key===progKey):null;
   const tbLogoEl=document.getElementById('todayTbLogo');
-  if(tbLogoEl) tbLogoEl.innerHTML=activeProgEntry?activeProgEntry.name:'CTR <em>300</em>';
+  if(tbLogoEl) tbLogoEl.innerHTML=activeProgEntry?activeProgEntry.name:'';
 
   // Today cards — ligne horizontale de programmes, plus de détails d'exercices affichés directement
   const tc=document.getElementById('todayCards');
