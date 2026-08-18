@@ -923,11 +923,9 @@ body::before {
 
 // ════════════════════════════════════════════════════════════
 // PROGRAMME DATA
-// SEMAINE : Dim=J1, Lun=J2, Mar=J3, Mer=J4, Jeu=J5, Ven=REPOS, Sam=REPOS
+// Le Plan 300 (J1–J5) n'est plus imprimé automatiquement sur un horaire fixe.
+// Chaque journée d'entraînement doit être assignée manuellement via le calendrier.
 // ════════════════════════════════════════════════════════════
-
-// JS weekday → training day (0=Sun=J1, 1=Mon=J2 ... 4=Thu=J5, 5=Fri=REST, 6=Sat=REST)
-const WD2DAY = {0:1, 1:2, 2:3, 3:4, 4:5, 5:null, 6:null};
 const DAY_FR = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
 
 // TEMPS DE REPOS CORRECTS selon bloc et type d'exercice
@@ -1333,13 +1331,7 @@ function renderToday(){
   const todayKey=now.toLocaleDateString('fr-CA');
   const calEntry=(!S.ovDay && S.calendar) ? S.calendar[todayKey] : null;
 
-  // Auto-set curDay from weekday if no override and no calendar assignment
-  if(!S.ovDay && !calEntry){
-    const auto=WD2DAY[wd];
-    if(auto!==null&&auto!==undefined) S.curDay=auto;
-  }
-
-  let actId,isRest;
+  let actId,isRest,isUnassigned=false;
   if(S.ovDay){
     actId=activeDay();isRest=false;
   } else if(calEntry){
@@ -1348,8 +1340,9 @@ function renderToday(){
     else if(calEntry.type==='fullprog'){actId='f'+calEntry.progIdx+'-'+calEntry.dayIdx;isRest=false;}
     else {actId=calEntry.dayId;isRest=false;}
   } else {
-    actId=activeDay();
-    isRest=(WD2DAY[wd]===null);
+    // Rien d'assigné pour aujourd'hui — le Plan 300 ne s'imprime plus automatiquement
+    // sur le calendrier. Tant que rien n'est choisi via le calendrier, on ne présume rien.
+    actId=activeDay();isRest=false;isUnassigned=true;
   }
   const day=dayObj(actId);
   if(S.dayOrder&&S.dayOrder[actId]){
@@ -1367,27 +1360,32 @@ function renderToday(){
 
   document.getElementById('heroPhase').textContent=S.curWeek<=8?'PHASE 1 — FORCE & MASSE':'PHASE 2 — COUPE 300';
   const isCustomAct=typeof actId==='string'&&(actId.charAt(0)==='c'||actId.charAt(0)==='f');
-  document.getElementById('heroDay').textContent=isRest?'Repos actif':(isCustomAct?day.name:`Jour ${actId} — ${day.name}`);
-  document.getElementById('heroSub').textContent=isRest?'LISS 35–45 min · Mobilité 15 min':day.sub;
+  document.getElementById('heroDay').textContent=isUnassigned?'Aucune séance assignée':(isRest?'Repos actif':(isCustomAct?day.name:`Jour ${actId} — ${day.name}`));
+  document.getElementById('heroSub').textContent=isUnassigned?'Choisis une séance dans le calendrier ci-dessous':(isRest?'LISS 35–45 min · Mobilité 15 min':day.sub);
   document.getElementById('heroBadges').innerHTML=`
     <span class="pill ${b==='A'?'pa':b==='B'?'pb':b==='C'?'pc':'pd2'}">${blocLbl()}</span>
     <span class="pill pg">Sem. ${S.curWeek}/17</span>
     ${S.ovDay?'<span class="pill pr">Journée modifiée</span>':''}
     ${isRest?'<span class="pill pb">REPOS + LISS</span>':''}
+    ${isUnassigned?'<span class="pill" style="background:var(--bg3);color:var(--t3);border:1px solid var(--b)">NON ASSIGNÉ</span>':''}
   `;
 
-  // Week strip — Sun to Sat (Sun=J1 highlighted)
+  // Week strip — Sun to Sat, reflète uniquement les assignations réelles du calendrier
   const mon=new Date(now);mon.setDate(now.getDate()-wd);// go back to Sunday
   let strip='';
   for(let i=0;i<7;i++){
     const d2=new Date(mon);d2.setDate(mon.getDate()+i);
     const dwd=d2.getDay();
-    const dayId=WD2DAY[dwd];
+    const dateKey2=d2.toLocaleDateString('fr-CA');
+    const entry=S.calendar&&S.calendar[dateKey2];
     const isSel=dwd===wd;
-    const isDone=dayId&&S.sessions.some(s=>s.dayId===dayId&&s.date===d2.toLocaleDateString('fr-CA'));
-    const isR=dayId===null;
-    const lbl=dayId?`J${dayId}`:'—';
-    strip+=`<div class="wchip ${isSel?'sel':''} ${isDone&&!isSel?'done':''} ${isR?'rest-chip':''}" onclick="selectWd(${dwd})">
+    let isR=false,dayIdForDone=null;
+    if(entry){
+      if(entry.type==='rest') isR=true;
+      else if(entry.type==='day') dayIdForDone=entry.dayId;
+    }
+    const isDone=(dayIdForDone&&S.sessions.some(s=>s.dayId===dayIdForDone&&s.date===dateKey2))||(entry&&S.sessions.some(s=>s.date===dateKey2));
+    strip+=`<div class="wchip ${isSel?'sel':''} ${isDone&&!isSel?'done':''} ${isR?'rest-chip':''}" onclick="openCalDayOptions('${dateKey2}')">
       <div class="wchip-n">${DAY_FR[dwd]}</div>
       <div class="wchip-d">${d2.getDate()}</div>
       <div class="wchip-dot"></div>
@@ -1397,7 +1395,16 @@ function renderToday(){
 
   // Today cards
   const tc=document.getElementById('todayCards');
-  if(isRest){
+  if(isUnassigned){
+    tc.innerHTML=`<div class="card" style="text-align:center;padding:18px 14px">
+      <div style="font-size:28px;margin-bottom:8px">🗓️</div>
+      <div style="font-size:15px;font-weight:800;margin-bottom:5px">Aucune séance planifiée</div>
+      <div style="font-size:12px;color:var(--t2);margin-bottom:14px">Choisis une journée du Plan 300, un programme, ou marque un repos.</div>
+      <button class="btn btn-red btn-md" style="border-radius:var(--r)" onclick="openCalDayOptions('${todayKey}')">Choisir la séance d'aujourd'hui</button>
+    </div>`;
+    const sb=document.getElementById('startBtn');
+    sb.textContent='Aucune séance assignée';sb.onclick=()=>openCalDayOptions(todayKey);sb.style.opacity='.6';
+  } else if(isRest){
     tc.innerHTML=`<div class="card" style="text-align:center;padding:18px 14px">
       <div style="font-size:28px;margin-bottom:8px">🚶</div>
       <div style="font-size:15px;font-weight:800;margin-bottom:5px">Journée LISS</div>
@@ -1447,22 +1454,6 @@ function renderToday(){
         ${done?'<div style="font-size:10px;color:var(--green);font-weight:700">✓</div>':'<div style="font-size:10px;color:var(--t4)">—</div>'}
       </div>`;
     }).join('');
-}
-
-function selectWd(wd){
-  S.ovDay=null;
-  const d=WD2DAY[wd];
-  if(d!==null&&d!==undefined){
-    S.curDay=d;
-    save();
-    renderToday();
-    // Show day detail sheet so user can see the exercises for that date
-    openDaySh(d);
-  } else {
-    // Rest day tapped — just update view
-    save();
-    renderToday();
-  }
 }
 
 // Change day
@@ -2186,8 +2177,7 @@ function calCellHtml(dateObj){
   if(entry){
     dotColor=entry.type==='rest'?'var(--t4)':entry.type==='custom'?'#60A5FA':entry.type==='fullprog'?'var(--gold)':'var(--red)';
   } else {
-    const auto=WD2DAY[dateObj.getDay()];
-    dotColor=(auto===null)?'var(--t4)':'var(--red)';
+    dotColor='var(--b2)'; // non assigné — plus d'auto-remplissage Plan 300
   }
   const todayKey=new Date().toLocaleDateString('fr-CA');
   const isToday=dateKey===todayKey;
@@ -2232,7 +2222,7 @@ function openCalDayOptions(dateKey){
 
   let h='';
   if(entry){
-    h+=`<button class="btn btn-ghost btn-md" style="width:100%;border-radius:var(--r);margin-bottom:10px" onclick="clearCalEntry('${dateKey}')">↺ Retour à l'automatique</button>`;
+    h+=`<button class="btn btn-ghost btn-md" style="width:100%;border-radius:var(--r);margin-bottom:10px" onclick="clearCalEntry('${dateKey}')">🗑 Retirer l'assignation</button>`;
   }
   h+='<div style="font-size:10px;color:var(--t3);font-weight:800;letter-spacing:.08em;margin:6px 0 6px 2px">PLAN 300</div>';
   h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">';
