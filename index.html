@@ -4559,17 +4559,13 @@ function selectReplacementExercise(newName){
   var origName = day.exercises[exLibTargetIdx].name;
   if(!S.exReplacements) S.exReplacements = {};
   var key = exLibTargetDay+'::'+origName;
-  var prevDisplay = S.exReplacements[key] || origName;
   if(newName === origName){
     delete S.exReplacements[key];
   } else {
     S.exReplacements[key] = newName;
   }
-  // migrate any logged sets under the previous displayed name to the new name for this session
-  if(S.sets && S.sets[prevDisplay]){
-    S.sets[newName] = S.sets[prevDisplay];
-    if(prevDisplay!==newName) delete S.sets[prevDisplay];
-  }
+  // Le nouvel exercice démarre à zéro — pas de séries héritées de l'ancien mouvement,
+  // même en pleine séance (les charges/reps ne sont pas comparables d'un exercice à l'autre).
   save();
   document.getElementById('exLibSh').classList.remove('on');
   renderToday();
