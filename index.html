@@ -448,6 +448,8 @@ body::before {
 #bigPickerMin::-webkit-scrollbar, #bigPickerSec::-webkit-scrollbar,
 #pickerMin::-webkit-scrollbar, #pickerSec::-webkit-scrollbar { display:none; }
 </style>
+<script src="https://alcdn.msauth.net/browser/3.7.1/js/msal-browser.min.js" defer></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 <div id="spl">
@@ -923,10 +925,14 @@ body::before {
     <button class="btn btn-ghost btn-lg" onclick="openBuilder()" style="border-radius:var(--r);border-style:dashed">+ Créer un programme</button>
   </div>
   <div id="custProgList"></div>
+  <span class="lbl">COMPTE & SAUVEGARDE CLOUD</span>
+  <div class="card" style="margin:0 12px 12px">
+    <div id="cloudCardBody"></div>
+  </div>
   <span class="lbl">DONNÉES</span>
   <div class="card" style="margin:0 12px 12px">
-    <div style="font-size:14px;font-weight:800;margin-bottom:5px">Export / Import</div>
-    <div style="font-size:12px;color:var(--t2);margin-bottom:10px">Sauvegarde JSON pour OneDrive</div>
+    <div style="font-size:14px;font-weight:800;margin-bottom:5px">Export / Import manuel</div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:10px">Fichier JSON — utile en secours ou pour transférer sans compte cloud</div>
     <div style="display:flex;gap:7px">
       <button class="btn btn-red btn-md" style="flex:1;border-radius:var(--r)" onclick="exportData()">Exporter</button>
       <button class="btn btn-ghost btn-md" style="flex:1;border-radius:var(--r)" onclick="importData()">Importer</button>
@@ -2411,6 +2417,211 @@ function renderCustProgList(){
 // ════════════════════════════════════════════════════════════
 // EXPORT / IMPORT
 // ════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
+// SAUVEGARDE CLOUD — OneDrive (MSAL.js) et Google Drive (Google Identity Services)
+// 100% côté client, aucun backend. Chaque personne se connecte avec SON compte,
+// ses données vivent dans SON drive (dossier caché dédié à l'app), jamais partagées.
+// ⚠️ Nécessite un Client ID par fournisseur — voir instructions de configuration.
+// ══════════════════════════════════════════════════════════════
+const CLOUD_CONFIG = {
+  msal: {
+    clientId: '', // ← à remplir après inscription dans le portail Azure (App registrations)
+    authority: 'https://login.microsoftonline.com/consumers', // comptes Microsoft personnels seulement
+    redirectUri: window.location.origin + window.location.pathname,
+  },
+  google: {
+    clientId: '', // ← à remplir après création d'un OAuth Client ID dans Google Cloud Console
+  }
+};
+let msalInstance = null;
+let googleTokenClient = null;
+let googleAccessToken = null;
+const CLOUD_FILE_NAME = 'ctr-athletics-data.json';
+
+function renderCloudCard(){
+  const el = document.getElementById('cloudCardBody');
+  if(!el) return;
+  const msalReady = !!CLOUD_CONFIG.msal.clientId;
+  const gReady = !!CLOUD_CONFIG.google.clientId;
+  const acct = S.cloudAccount;
+  if(acct && acct.provider==='onedrive'){
+    el.innerHTML = `<div style="font-size:13px;font-weight:800;margin-bottom:3px">☁️ Connecté à OneDrive</div>
+      <div style="font-size:11px;color:var(--t3);margin-bottom:10px">${acct.email||acct.name||''}</div>
+      <div style="display:flex;gap:7px">
+        <button class="btn btn-red btn-md" style="flex:1;border-radius:var(--r)" onclick="saveToOneDrive()">☁️ Sauvegarder</button>
+        <button class="btn btn-ghost btn-md" style="flex:1;border-radius:var(--r)" onclick="loadFromOneDrive()">⬇️ Charger</button>
+      </div>
+      <div style="font-size:11px;color:var(--t3);margin-top:9px;cursor:pointer;text-align:center" onclick="disconnectCloud()">Se déconnecter</div>`;
+  } else if(acct && acct.provider==='gdrive'){
+    el.innerHTML = `<div style="font-size:13px;font-weight:800;margin-bottom:3px">☁️ Connecté à Google Drive</div>
+      <div style="font-size:11px;color:var(--t3);margin-bottom:10px">${acct.email||acct.name||''}</div>
+      <div style="display:flex;gap:7px">
+        <button class="btn btn-red btn-md" style="flex:1;border-radius:var(--r)" onclick="saveToGoogleDrive()">☁️ Sauvegarder</button>
+        <button class="btn btn-ghost btn-md" style="flex:1;border-radius:var(--r)" onclick="loadFromGoogleDrive()">⬇️ Charger</button>
+      </div>
+      <div style="font-size:11px;color:var(--t3);margin-top:9px;cursor:pointer;text-align:center" onclick="disconnectCloud()">Se déconnecter</div>`;
+  } else {
+    el.innerHTML = `<div style="font-size:13px;font-weight:800;margin-bottom:3px">Aucun compte connecté</div>
+      <div style="font-size:11px;color:var(--t3);margin-bottom:10px">Connecte un compte pour que tes entraînements se sauvegardent dans ton propre cloud — chaque personne garde ses données séparées, sans jamais les mélanger.</div>
+      <div style="display:flex;gap:7px">
+        <button class="btn ${msalReady?'btn-red':'btn-ghost'} btn-md" style="flex:1;border-radius:var(--r)" onclick="connectOneDrive()">OneDrive${msalReady?'':' 🔒'}</button>
+        <button class="btn ${gReady?'btn-red':'btn-ghost'} btn-md" style="flex:1;border-radius:var(--r)" onclick="connectGoogleDrive()">Google Drive${gReady?'':' 🔒'}</button>
+      </div>
+      ${(!msalReady||!gReady)?'<div style="font-size:10px;color:var(--t3);margin-top:9px">🔒 = configuration en attente côté développeur</div>':''}`;
+  }
+}
+function disconnectCloud(){
+  S.cloudAccount = null;
+  googleAccessToken = null;
+  save();
+  renderCloudCard();
+}
+
+// ── OneDrive (Microsoft Graph, dossier caché dédié à l'app — Files.ReadWrite.AppFolder) ──
+function initMsal(){
+  if(!CLOUD_CONFIG.msal.clientId) return null;
+  if(typeof msal==='undefined') return null;
+  if(!msalInstance){
+    msalInstance = new msal.PublicClientApplication({
+      auth:{clientId:CLOUD_CONFIG.msal.clientId, authority:CLOUD_CONFIG.msal.authority, redirectUri:CLOUD_CONFIG.msal.redirectUri}
+    });
+  }
+  return msalInstance;
+}
+async function connectOneDrive(){
+  if(!CLOUD_CONFIG.msal.clientId){ alert("OneDrive n'est pas encore configuré pour cette app — configuration en attente."); return; }
+  const app = initMsal();
+  if(!app){ alert("La librairie Microsoft n'a pas pu se charger. Vérifie ta connexion et réessaie."); return; }
+  try{
+    const res = await app.loginPopup({scopes:['Files.ReadWrite.AppFolder','User.Read']});
+    S.cloudAccount = {provider:'onedrive', name:res.account.name, email:res.account.username};
+    save();
+    renderCloudCard();
+    if(navigator.vibrate) navigator.vibrate(8);
+  }catch(e){ alert('Connexion à OneDrive annulée ou échouée.'); }
+}
+async function getMsalToken(){
+  const app = initMsal();
+  if(!app) return null;
+  const accounts = app.getAllAccounts();
+  if(!accounts.length) return null;
+  try{
+    const res = await app.acquireTokenSilent({scopes:['Files.ReadWrite.AppFolder'], account:accounts[0]});
+    return res.accessToken;
+  }catch(e){
+    try{
+      const res = await app.acquireTokenPopup({scopes:['Files.ReadWrite.AppFolder']});
+      return res.accessToken;
+    }catch(e2){ return null; }
+  }
+}
+async function saveToOneDrive(){
+  const token = await getMsalToken();
+  if(!token){ alert('Reconnecte-toi à OneDrive.'); return; }
+  try{
+    const body = JSON.stringify({S,v:4,exported:new Date().toISOString()});
+    const res = await fetch('https://graph.microsoft.com/v1.0/me/drive/special/approot:/'+CLOUD_FILE_NAME+':/content',{
+      method:'PUT', headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'}, body
+    });
+    if(!res.ok) throw new Error();
+    alert('✓ Sauvegardé sur OneDrive');
+  }catch(e){ alert('La sauvegarde sur OneDrive a échoué. Réessaie.'); }
+}
+async function loadFromOneDrive(){
+  const token = await getMsalToken();
+  if(!token){ alert('Reconnecte-toi à OneDrive.'); return; }
+  try{
+    const res = await fetch('https://graph.microsoft.com/v1.0/me/drive/special/approot:/'+CLOUD_FILE_NAME+':/content',{
+      headers:{Authorization:'Bearer '+token}
+    });
+    if(!res.ok){ alert('Aucune sauvegarde trouvée sur OneDrive pour ce compte.'); return; }
+    const d = await res.json();
+    if(!confirm('Remplacer les données locales de cet appareil par la sauvegarde OneDrive ?')) return;
+    if(d.S) Object.assign(S,d.S);
+    save(); renderToday(); renderProg();
+    alert('✓ Chargé depuis OneDrive');
+  }catch(e){ alert('Le chargement depuis OneDrive a échoué.'); }
+}
+
+// ── Google Drive (dossier caché dédié à l'app — scope drive.appdata) ──
+function initGoogleClient(){
+  if(!CLOUD_CONFIG.google.clientId) return null;
+  if(typeof google==='undefined' || !google.accounts) return null;
+  if(!googleTokenClient){
+    googleTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: CLOUD_CONFIG.google.clientId,
+      scope: 'https://www.googleapis.com/auth/drive.appdata',
+      callback: (resp)=>{
+        if(resp && resp.access_token){
+          googleAccessToken = resp.access_token;
+          S.cloudAccount = {provider:'gdrive', name:'', email:''};
+          save();
+          renderCloudCard();
+          if(navigator.vibrate) navigator.vibrate(8);
+        }
+      }
+    });
+  }
+  return googleTokenClient;
+}
+function connectGoogleDrive(){
+  if(!CLOUD_CONFIG.google.clientId){ alert("Google Drive n'est pas encore configuré pour cette app — configuration en attente."); return; }
+  const client = initGoogleClient();
+  if(!client){ alert("La librairie Google n'a pas pu se charger. Vérifie ta connexion et réessaie."); return; }
+  client.requestAccessToken();
+}
+async function ensureGoogleToken(){
+  if(googleAccessToken) return googleAccessToken;
+  const client = initGoogleClient();
+  if(!client) return null;
+  return new Promise(resolve=>{
+    googleTokenClient.callback = (resp)=>{
+      if(resp && resp.access_token){ googleAccessToken=resp.access_token; resolve(resp.access_token); }
+      else resolve(null);
+    };
+    client.requestAccessToken({prompt:''});
+  });
+}
+async function findGDriveFileId(){
+  const res = await fetch("https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name%3D%27"+CLOUD_FILE_NAME+"%27",{
+    headers:{Authorization:'Bearer '+googleAccessToken}
+  });
+  const d = await res.json();
+  return (d.files && d.files[0]) ? d.files[0].id : null;
+}
+async function saveToGoogleDrive(){
+  const token = await ensureGoogleToken();
+  if(!token){ alert('Reconnecte-toi à Google Drive.'); return; }
+  try{
+    const fileId = await findGDriveFileId();
+    const body = JSON.stringify({S,v:4,exported:new Date().toISOString()});
+    const metadata = fileId ? {} : {name:CLOUD_FILE_NAME, parents:['appDataFolder']};
+    const boundary='ctrbnd_'+Date.now();
+    const multipart = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${body}\r\n--${boundary}--`;
+    const url = fileId
+      ? `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`
+      : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`;
+    const res = await fetch(url,{method:fileId?'PATCH':'POST',headers:{Authorization:'Bearer '+token,'Content-Type':`multipart/related; boundary=${boundary}`},body:multipart});
+    if(!res.ok) throw new Error();
+    alert('✓ Sauvegardé sur Google Drive');
+  }catch(e){ alert('La sauvegarde sur Google Drive a échoué. Réessaie.'); }
+}
+async function loadFromGoogleDrive(){
+  const token = await ensureGoogleToken();
+  if(!token){ alert('Reconnecte-toi à Google Drive.'); return; }
+  try{
+    const fileId = await findGDriveFileId();
+    if(!fileId){ alert('Aucune sauvegarde trouvée sur Google Drive pour ce compte.'); return; }
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,{headers:{Authorization:'Bearer '+token}});
+    if(!res.ok) throw new Error();
+    const d = await res.json();
+    if(!confirm('Remplacer les données locales de cet appareil par la sauvegarde Google Drive ?')) return;
+    if(d.S) Object.assign(S,d.S);
+    save(); renderToday(); renderProg();
+    alert('✓ Chargé depuis Google Drive');
+  }catch(e){ alert('Le chargement depuis Google Drive a échoué.'); }
+}
+
 function exportData(){const blob=new Blob([JSON.stringify({S,v:4,exported:new Date().toISOString()},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='ctr300_'+tod()+'.json';a.click();URL.revokeObjectURL(url);}
 function importData(){const j=prompt('Colle le JSON exporté :');if(!j)return;try{const d=JSON.parse(j);if(d.S)Object.assign(S,d.S);save();renderToday();alert('✓ Importé');}catch{alert('JSON invalide');}}
 
@@ -4765,6 +4976,7 @@ S.curWeek=calcWeek();
 seedFilmPrograms();
 save();
 initRecoveryBody();
+renderCloudCard();
 renderToday();
 renderProg();
 if(S.woStart){
