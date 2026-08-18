@@ -320,6 +320,14 @@ body{
    STATS
 ══════════════════════════════════════════ */
 .sg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 12px 10px}
+.prog-sq{background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:16px 12px;text-align:center;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;aspect-ratio:1.4;transition:border-color .15s,background .15s}
+.prog-sq:active{background:var(--bg3)}
+.prog-sq.core{border-color:rgba(200,16,46,.35);background:rgba(200,16,46,.06)}
+.prog-sq-name{font-size:13px;font-weight:800;line-height:1.25}
+.prog-sq-meta{font-size:10px;color:var(--t3);font-weight:600}
+.prog-sq-row{aspect-ratio:auto!important;flex-direction:row!important;justify-content:flex-start!important;gap:11px;padding:13px 14px;margin:0 12px 10px}
+.prog-sq-row .prog-sq-name{font-size:14px}
+.prog-sq-row-info{flex:1;text-align:left}
 .sc{background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:13px}
 .sc-l{font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--t3);text-transform:uppercase;margin-bottom:5px}
 .sc-v{font-size:26px;font-weight:900}
@@ -663,13 +671,12 @@ body::before {
   </div>
 </div>
 
-<!-- CHANGE DAY SHEET -->
-<div class="sh-bg" id="chgSh" onclick="if(event.target===this)this.classList.remove('on')">
+<!-- PROGRAM DRILL SHEET -->
+<div class="sh-bg" id="progDrillSh" onclick="if(event.target===this)this.classList.remove('on')">
   <div class="sh">
     <div class="sh-handle"></div>
-    <div class="sh-title">Changer de journée</div>
-    <div style="padding:0 16px 10px;font-size:12px;color:var(--t2)">Blessure ou préférence — choisis la journée.</div>
-    <div id="chgBody"></div>
+    <div class="sh-title" id="progDrillT">Programme</div>
+    <div id="progDrillBody" style="padding:0 12px 12px"></div>
   </div>
 </div>
 
@@ -743,10 +750,6 @@ body::before {
     <div class="hero-badges" id="heroBadges"></div>
   </div>
   <div class="wstrip" id="wstrip"></div>
-  <div class="chg-btn" onclick="openChg()">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-    <div style="font-size:12px;color:var(--t2);font-weight:600">Blessé ou autre préférence ? <span style="color:var(--rs);font-weight:700">Changer de journée →</span></div>
-  </div>
   <span class="lbl">SÉANCE DU JOUR</span>
   <div id="todayCards"></div>
   <div style="height:150px"></div>
@@ -862,13 +865,11 @@ body::before {
       <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t3)"><div style="width:8px;height:8px;border-radius:50%;background:var(--t4)"></div>Repos</div>
     </div>
   </div>
-  <span class="lbl">JOURNÉES DU PROGRAMME</span>
-  <div id="progDays"></div>
-  <span class="lbl">PROGRAMMES COMPLETS (MULTI-JOURS)</span>
+  <span class="lbl">PROGRAMMES</span>
+  <div class="sg" id="progSquares" style="margin:0 12px 10px"></div>
   <div style="margin:0 12px 10px">
     <button class="btn btn-ghost btn-lg" onclick="openFullProgBuilder()" style="border-radius:var(--r);border-style:dashed">+ Nouveau programme complet</button>
   </div>
-  <div id="fullProgListBody"></div>
   <span class="lbl">SÉANCES RAPIDES</span>
   <div style="margin:0 12px 10px">
     <button class="btn btn-ghost btn-lg" onclick="openBuilder()" style="border-radius:var(--r);border-style:dashed">+ Créer un programme</button>
@@ -1414,7 +1415,18 @@ function renderToday(){
     const sb=document.getElementById('startBtn');
     sb.textContent='Jour de repos 🚶';sb.onclick=null;sb.style.opacity='.5';
   } else {
-    tc.innerHTML=day.exercises.map((origEx,i)=>{
+    let progKey=null;
+    if(typeof actId==='number') progKey='ctr';
+    else if(typeof actId==='string' && actId.charAt(0)==='f') progKey='full-'+actId.slice(1).split('-')[0];
+    const progEntry=progKey?getProgramEntries().find(p=>p.key===progKey):null;
+    const sqHtml=progEntry?`<div class="prog-sq prog-sq-row ${progEntry.isCore?'core':''}" onclick="openProgDrill('${progKey}')">
+      <div class="prog-sq-row-info">
+        <div class="prog-sq-name">${progEntry.name}</div>
+        <div class="prog-sq-meta">${progEntry.days.length} jours · voir le programme</div>
+      </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>`:'';
+    tc.innerHTML=sqHtml+day.exercises.map((origEx,i)=>{
       const replName=S.exReplacements&&S.exReplacements[actId+'::'+origEx.name];
       const ex=replName?Object.assign({},origEx,{name:replName}):origEx;
       const isReplaced=!!replName;
@@ -1455,27 +1467,6 @@ function renderToday(){
       </div>`;
     }).join('');
 }
-
-// Change day
-function openChg(){
-  document.getElementById('chgBody').innerHTML=
-    PROG.days.map(d=>`
-      <div onclick="setOv(${d.id})" style="display:flex;align-items:center;gap:11px;padding:13px 14px;border-top:1px solid var(--b);cursor:pointer;transition:background .15s" ontouchstart="this.style.background='var(--bg3)'" ontouchend="this.style.background=''">
-        <div style="width:38px;height:38px;border-radius:9px;background:var(--red);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0">
-          <div style="font-size:7px;font-weight:800;color:rgba(255,255,255,.6)">JOUR</div>
-          <div style="font-size:18px;font-weight:900;color:#fff;line-height:1">${d.id}</div>
-        </div>
-        <div style="flex:1">
-          <div style="font-size:14px;font-weight:800">${d.name}</div>
-          <div style="font-size:10px;color:var(--t3);margin-top:2px">${d.sub}</div>
-        </div>
-      </div>`).join('')+
-    `<div onclick="setOv(null)" style="padding:13px 14px;border-top:1px solid var(--b);cursor:pointer">
-      <div style="font-size:13px;color:var(--t2)">↩ Revenir à la journée normale</div>
-    </div>`;
-  document.getElementById('chgSh').classList.add('on');
-}
-function setOv(id){S.ovDay=id;save();document.getElementById('chgSh').classList.remove('on');renderToday();}
 
 // ════════════════════════════════════════════════════════════
 // WORKOUT
@@ -1829,7 +1820,8 @@ function chooseStartOption(id,mode){
 function openDaySh(id){
   const day=dayObj(id);const b=bloc();
   regenDayId=id;
-  document.getElementById('dayShT').textContent=`Jour ${id} — ${day.name}`;
+  const isCustomAct=typeof id==='string'&&(id.charAt(0)==='c'||id.charAt(0)==='f');
+  document.getElementById('dayShT').textContent=isCustomAct?day.name:`Jour ${id} — ${day.name}`;
   document.getElementById('dayShB').innerHTML=`
     <div style="padding:0 14px 9px;display:flex;gap:5px;flex-wrap:wrap">
       <span class="pill ${b==='A'?'pa':b==='B'?'pb':b==='C'?'pc':'pd2'}">${blocLbl()}</span>
@@ -2285,18 +2277,8 @@ function renderProg(){
     calViewYear=now.getFullYear();calViewMonth=now.getMonth();calExpanded=false;
   }
   renderCalView();
-  const tc2={pull:'#3B82F6',legs:'#C8102E',push:'#8B5CF6',full:'#F97316'};
-  document.getElementById('progDays').innerHTML=PROG.days.map(d=>`
-    <div class="pd-card" onclick="openDaySh(${d.id})">
-      <div class="pd-h">
-        <div class="pd-num"><div class="pd-j">JOUR</div><div class="pd-n">${d.id}</div></div>
-        <div class="pd-info"><div class="pd-name">${d.name}</div><div class="pd-sub">${d.sub}</div></div>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-      </div>
-      <div class="pd-exs">${d.exercises.map(ex=>`<div class="echip ${ex.new?'nw':''}">${ex.new?'★ ':''}${ex.name}</div>`).join('')}</div>
-    </div>`).join('');
   renderCustProgList();
-  renderFullProgList();
+  renderProgSquares();
 }
 
 function openSwapMenu(){
@@ -3732,52 +3714,64 @@ function saveFullProgram(){
   save();
   document.getElementById('fullProgSh').classList.remove('on');
   fullProgDraft=null;fullProgEditIdx=null;
-  renderFullProgList();
+  renderProgSquares();
 }
 
 function deleteFullProg(idx){
   if(!confirm('Supprimer ce programme complet ?')) return;
   S.fullPrograms.splice(idx,1);
   save();
-  renderFullProgList();
+  renderProgSquares();
 }
 
-function renderFullProgList(){
-  const el=document.getElementById('fullProgListBody');
-  if(!el) return;
-  const progs=S.fullPrograms||[];
+function getProgramEntries(){
   const ctrEnd=(()=>{const d=new Date(PROG.startDate);d.setDate(d.getDate()+17*7-1);return d.toISOString().slice(0,10);})();
-  let html=`<div class="pd-card" style="cursor:default">
-      <div class="pd-h" style="cursor:default">
-        <div class="pd-num" style="background:var(--red)"><div class="pd-j">PROG.</div><div class="pd-n" style="font-size:13px">5j</div></div>
-        <div class="pd-info"><div class="pd-name">CTR300</div><div class="pd-sub">${PROG.startDate} → ${ctrEnd} · 17 semaines</div></div>
-      </div>
-      <div class="pd-exs">${PROG.days.map(d=>`<div class="echip">${d.name}</div>`).join('')}</div>
-      <div style="display:flex;gap:7px;padding:0 14px 13px">
-        <button class="btn btn-ghost btn-md" style="flex:1;border-radius:var(--r)" onclick="scrollToProgDays()">👁 Voir les journées</button>
-      </div>
-    </div>`;
-  if(!progs.length){
-    html+=`<div style="text-align:center;color:var(--t3);font-size:12px;padding:10px 0">Aucun autre programme complet encore — crée-en un ci-dessus.</div>`;
-  } else {
-    html+=progs.map((p,idx)=>`
-    <div class="pd-card" style="cursor:default">
-      <div class="pd-h" style="cursor:default">
-        <div class="pd-num" style="background:var(--bg4)"><div class="pd-j">PROG.</div><div class="pd-n" style="font-size:13px">${p.days.length}j</div></div>
-        <div class="pd-info"><div class="pd-name">${p.name}</div><div class="pd-sub">${p.startDate||'?'} → ${p.endDate||'?'}</div></div>
-      </div>
-      <div class="pd-exs">${p.days.map(d=>`<div class="echip">${d.name}</div>`).join('')}</div>
-      <div style="display:flex;gap:7px;padding:0 14px 13px">
-        <button class="btn btn-ghost btn-md" style="flex:1;border-radius:var(--r)" onclick="openFullProgBuilder(${idx})">✏️ Modifier</button>
-        <button class="btn btn-ghost btn-md" style="border-radius:var(--r);padding:0 14px" onclick="deleteFullProg(${idx})">🗑️</button>
-      </div>
-    </div>`).join('');
-  }
-  el.innerHTML=html;
+  const list=[{
+    key:'ctr',name:'CTR300',isCore:true,
+    meta:`${PROG.startDate} → ${ctrEnd} · 17 sem.`,
+    days:PROG.days.map(d=>({name:d.name,sub:d.sub,exercises:d.exercises,dayId:d.id}))
+  }];
+  (S.fullPrograms||[]).forEach((p,idx)=>{
+    list.push({
+      key:'full-'+idx,name:p.name,isCore:false,progIdx:idx,
+      meta:`${p.startDate||'?'} → ${p.endDate||'?'}`,
+      days:p.days.map((d,i)=>({name:d.name,sub:'',exercises:d.exercises,dayId:'f'+idx+'-'+i}))
+    });
+  });
+  return list;
 }
-function scrollToProgDays(){
-  const el=document.getElementById('progDays');
-  if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+function renderProgSquares(){
+  const el=document.getElementById('progSquares');
+  if(!el) return;
+  el.innerHTML=getProgramEntries().map(p=>`
+    <div class="prog-sq ${p.isCore?'core':''}" onclick="openProgDrill('${p.key}')">
+      <div class="prog-sq-name">${p.name}</div>
+      <div class="prog-sq-meta">${p.days.length} jours</div>
+    </div>`).join('');
+}
+function openProgDrill(key){
+  const entry=getProgramEntries().find(p=>p.key===key);
+  if(!entry) return;
+  document.getElementById('progDrillT').textContent=entry.name;
+  let h=`<div style="font-size:11px;color:var(--t3);margin:0 2px 12px">${entry.meta}</div>`;
+  if(!entry.isCore){
+    h+=`<div style="display:flex;gap:7px;margin-bottom:12px">
+      <button class="btn btn-ghost btn-md" style="flex:1;border-radius:var(--r)" onclick="document.getElementById('progDrillSh').classList.remove('on');openFullProgBuilder(${entry.progIdx})">✏️ Modifier</button>
+      <button class="btn btn-ghost btn-md" style="border-radius:var(--r);padding:0 14px" onclick="document.getElementById('progDrillSh').classList.remove('on');deleteFullProg(${entry.progIdx})">🗑️</button>
+    </div>`;
+  }
+  h+=entry.days.map((d,i)=>`
+    <div class="pd-card" onclick="document.getElementById('progDrillSh').classList.remove('on');openDaySh(${JSON.stringify(d.dayId)})">
+      <div class="pd-h">
+        <div class="pd-num"><div class="pd-j">JOUR</div><div class="pd-n">${i+1}</div></div>
+        <div class="pd-info"><div class="pd-name">${d.name}</div><div class="pd-sub">${d.sub||''}</div></div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="pd-exs">${d.exercises.map(ex=>`<div class="echip ${ex.new?'nw':''}">${ex.new?'★ ':''}${ex.name}</div>`).join('')}</div>
+    </div>`).join('');
+  document.getElementById('progDrillBody').innerHTML=h;
+  raiseSheet('progDrillSh');
+  document.getElementById('progDrillSh').classList.add('on');
 }
 
 function openBuilder(idx){
