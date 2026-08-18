@@ -320,10 +320,10 @@ body{
    STATS
 ══════════════════════════════════════════ */
 .sg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 12px 10px}
-.prog-sq{background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:16px 12px;text-align:center;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;aspect-ratio:1.4;transition:border-color .15s,background .15s}
+.prog-sq{background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:14px 10px;text-align:center;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;aspect-ratio:1.15;transition:border-color .15s,background .15s}
 .prog-sq:active{background:var(--bg3)}
 .prog-sq.core{border-color:rgba(200,16,46,.35);background:rgba(200,16,46,.06)}
-.prog-sq-name{font-size:13px;font-weight:800;line-height:1.25}
+.prog-sq-name{font-size:16px;font-weight:900;line-height:1.2}
 .prog-sq-meta{font-size:10px;color:var(--t3);font-weight:600}
 .prog-sq-row{aspect-ratio:auto!important;flex-direction:row!important;justify-content:flex-start!important;gap:11px;padding:13px 14px;margin:0 12px 10px}
 .prog-sq-row .prog-sq-name{font-size:14px}
@@ -521,7 +521,7 @@ body::before {
 <div class="sh-bg" id="exLibSh" onclick="if(event.target===this)this.classList.remove('on')">
   <div class="sh" style="max-height:88vh;display:flex;flex-direction:column">
     <div class="sh-handle"></div>
-    <div class="sh-title">Remplacer l'exercice</div>
+    <div class="sh-title" id="exLibShT">Remplacer l'exercice</div>
     <div style="padding:0 20px 10px">
       <div style="position:relative">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);pointer-events:none"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -534,6 +534,9 @@ body::before {
       <div style="position:absolute;top:0;right:0;width:28px;height:32px;background:linear-gradient(to right, transparent, #191919);pointer-events:none"></div>
     </div>
     <div style="overflow-y:auto;flex:1;padding:0 14px 20px" id="exLibGrid"></div>
+    <div id="exLibDoneFooter" style="display:none;padding:10px 18px calc(10px + var(--safe))">
+      <button class="btn btn-red btn-lg" style="width:100%" onclick="document.getElementById('exLibSh').classList.remove('on')">✓ Terminé</button>
+    </div>
   </div>
 </div>
 
@@ -662,6 +665,7 @@ body::before {
     <div style="padding:10px 18px calc(10px + var(--safe))">
       <button class="btn btn-red btn-lg" id="saveBuilderBtn" onclick="saveBuilder()" style="width:100%">✓ Enregistrer le programme</button>
       <button class="btn btn-ghost btn-md" id="quickStartBtnRow" onclick="quickStartBuilder()" style="width:100%;margin-top:8px;border-radius:var(--r)">▶ Démarrer sans sauvegarder</button>
+      <button class="btn btn-ghost btn-md" style="width:100%;margin-top:8px;border-radius:var(--r)" onclick="closeBuildSh()">Annuler</button>
     </div>
   </div>
 </div>
@@ -764,7 +768,7 @@ body::before {
 <!-- ══ TODAY ══ -->
 <div class="scr on" id="sc-today">
   <div class="tb">
-    <div><div class="tb-logo">CTR <em>300</em></div><div style="font-size:10px;color:var(--t3)" id="todayLbl">—</div></div>
+    <div><div class="tb-logo" id="todayTbLogo">CTR <em>300</em></div><div style="font-size:10px;color:var(--t3)" id="todayLbl">—</div></div>
     <span class="pill pa" id="todayBloc">—</span>
   </div>
   <div class="hero">
@@ -1411,21 +1415,30 @@ function renderToday(){
       else if(entry.type==='day') dayIdForDone=entry.dayId;
     }
     const isDone=(dayIdForDone&&S.sessions.some(s=>s.dayId===dayIdForDone&&s.date===dateKey2))||(entry&&S.sessions.some(s=>s.date===dateKey2));
+    const dotColor=calDotColor(dateKey2);
     strip+=`<div class="wchip ${isSel?'sel':''} ${isDone&&!isSel?'done':''} ${isR?'rest-chip':''}" onclick="openCalDayOptions('${dateKey2}')">
       <div class="wchip-n">${DAY_FR[dwd]}</div>
       <div class="wchip-d">${d2.getDate()}</div>
-      <div class="wchip-dot"></div>
+      <div class="wchip-dot" style="background:${dotColor}"></div>
     </div>`;
   }
   document.getElementById('wstrip').innerHTML=strip;
+
+  // Résout le programme actif (pour l'en-tête dynamique + la ligne horizontale)
+  let progKey=null;
+  if(typeof actId==='number') progKey='ctr';
+  else if(typeof actId==='string' && actId.charAt(0)==='f') progKey='full-'+actId.slice(1).split('-')[0];
+  const activeProgEntry=progKey?getProgramEntries().find(p=>p.key===progKey):null;
+  const tbLogoEl=document.getElementById('todayTbLogo');
+  if(tbLogoEl) tbLogoEl.innerHTML=activeProgEntry?activeProgEntry.name:'CTR <em>300</em>';
 
   // Today cards — ligne horizontale de programmes, plus de détails d'exercices affichés directement
   const tc=document.getElementById('todayCards');
   let statusHtml='';
   if(isUnassigned){
-    statusHtml=`<div class="card" style="text-align:center;padding:14px;margin:0 12px 12px">
-      <div style="font-size:13px;font-weight:800;margin-bottom:3px">Aucune séance planifiée aujourd'hui</div>
-      <div style="font-size:11px;color:var(--t3)">Choisis un programme ci-dessous, ou <span style="color:var(--rs);font-weight:700;cursor:pointer" onclick="openCalDayOptions('${todayKey}')">assigne via le calendrier</span></div>
+    statusHtml=`<div class="card" style="text-align:center;padding:18px 14px;margin:0 12px 12px">
+      <div style="font-size:14px;font-weight:800;margin-bottom:12px">Aucune séance planifiée</div>
+      <button class="btn btn-red btn-md" style="border-radius:var(--r);margin:0 auto" onclick="openCalDayOptions('${todayKey}')">Choisir la séance d'aujourd'hui</button>
     </div>`;
     const sb=document.getElementById('startBtn');
     sb.textContent='Aucune séance assignée';sb.onclick=()=>openCalDayOptions(todayKey);sb.style.opacity='.6';
@@ -1441,9 +1454,7 @@ function renderToday(){
     sb.textContent='▶ Start';sb.onclick=()=>openStartOptionsSh(activeDay());sb.style.opacity='1';
   }
   if(todayProgOpen===undefined){
-    todayProgOpen=null;
-    if(typeof actId==='number') todayProgOpen='ctr';
-    else if(typeof actId==='string' && actId.charAt(0)==='f') todayProgOpen='full-'+actId.slice(1).split('-')[0];
+    todayProgOpen=progKey;
   }
   tc.innerHTML=statusHtml+`<div id="todayProgBrowser"></div>`;
   renderTodayProgBrowser();
@@ -2163,15 +2174,14 @@ function minutesTrainedOn(dateKey){
   return mins;
 }
 
+function calDotColor(dateKey){
+  const entry=S.calendar&&S.calendar[dateKey];
+  if(entry) return entry.type==='rest'?'var(--t4)':entry.type==='custom'?'#60A5FA':entry.type==='fullprog'?'var(--gold)':'var(--red)';
+  return 'var(--b2)'; // non assigné — plus d'auto-remplissage Plan 300
+}
 function calCellHtml(dateObj){
   const dateKey=dateObj.toLocaleDateString('fr-CA');
-  const entry=S.calendar&&S.calendar[dateKey];
-  let dotColor;
-  if(entry){
-    dotColor=entry.type==='rest'?'var(--t4)':entry.type==='custom'?'#60A5FA':entry.type==='fullprog'?'var(--gold)':'var(--red)';
-  } else {
-    dotColor='var(--b2)'; // non assigné — plus d'auto-remplissage Plan 300
-  }
+  const dotColor=calDotColor(dateKey);
   const todayKey=new Date().toLocaleDateString('fr-CA');
   const isToday=dateKey===todayKey;
   const mins=minutesTrainedOn(dateKey);
@@ -3565,6 +3575,8 @@ function openExLibrary(dayId, exIdx){
   var searchEl = document.getElementById('exLibSearch');
   if(searchEl) searchEl.value = '';
   document.getElementById('exLibTabs').style.display = 'flex';
+  document.getElementById('exLibShT').textContent = "Remplacer l'exercice";
+  document.getElementById('exLibDoneFooter').style.display = 'none';
   renderExLibTabs(muscles);
   renderExLibGrid(exLibActiveTab);
   raiseSheet('exLibSh');
@@ -3587,8 +3599,9 @@ function openFullProgBuilder(idx){
   fullProgStep = 1;
   if(fullProgEditIdx!==null && S.fullPrograms && S.fullPrograms[fullProgEditIdx]){
     fullProgDraft = JSON.parse(JSON.stringify(S.fullPrograms[fullProgEditIdx]));
+    if(!fullProgDraft.color) fullProgDraft.color = CTR_COLOR;
   } else {
-    fullProgDraft = {name:'', startDate:'', endDate:'', days:[{name:'Jour 1', exercises:[]}]};
+    fullProgDraft = {name:'', startDate:'', endDate:'', color:CTR_COLOR, days:[{name:'Jour 1', exercises:[]}]};
   }
   renderFullProgWizard();
   raiseSheet('fullProgSh');
@@ -3630,6 +3643,14 @@ function renderFullProgWizard(){
           <div style="font-size:10px;color:var(--t3);font-weight:700;margin-bottom:4px">FIN</div>
           <input type="date" id="fpEndIn" value="${fullProgDraft.endDate||''}" oninput="fullProgDraft.endDate=this.value" style="width:100%;background:var(--bg3);border:1px solid var(--b);border-radius:10px;padding:10px;color:#fff;font-size:13px;outline:none;box-sizing:border-box">
         </div>
+      </div>
+      <div style="font-size:10px;color:var(--t3);font-weight:700;margin:14px 0 8px">COULEUR</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        ${['#C8102E','#3B82F6','#F97316','#22C55E','#D4A520','#8B5CF6'].map(c=>`
+          <div onclick="fullProgDraft.color='${c}';renderFullProgWizard()" style="width:34px;height:34px;border-radius:50%;background:${c};cursor:pointer;border:2.5px solid ${fullProgDraft.color===c?'#fff':'transparent'};box-shadow:0 0 0 1px var(--b)"></div>`).join('')}
+        <label style="width:34px;height:34px;border-radius:50%;cursor:pointer;position:relative;border:2px dashed var(--b);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--t3);overflow:hidden">
+          🎨<input type="color" value="${fullProgDraft.color||CTR_COLOR}" oninput="fullProgDraft.color=this.value;renderFullProgWizard()" style="position:absolute;inset:0;opacity:0;cursor:pointer">
+        </label>
       </div>`;
     nav.innerHTML=`<button class="wiz-btn-next" style="flex:1" onclick="fullProgGoStep(2)">Suivant</button>`;
 
@@ -3740,16 +3761,23 @@ function calEntryFromDayId(dayId){
   }
   return null;
 }
+const CTR_COLOR='#C8102E'; // couleur par défaut (= CTR300) pour tout nouveau programme sans couleur choisie
+function hexA(hex,a){
+  hex=(hex||CTR_COLOR).replace('#','');
+  if(hex.length===3) hex=hex.split('').map(c=>c+c).join('');
+  const r=parseInt(hex.substr(0,2),16)||0,g=parseInt(hex.substr(2,2),16)||0,b=parseInt(hex.substr(4,2),16)||0;
+  return `rgba(${r},${g},${b},${a})`;
+}
 function getProgramEntries(){
   const ctrEnd=(()=>{const d=new Date(PROG.startDate);d.setDate(d.getDate()+17*7-1);return d.toISOString().slice(0,10);})();
   const list=[{
-    key:'ctr',name:'CTR300',isCore:true,
+    key:'ctr',name:'CTR300',isCore:true,color:CTR_COLOR,
     meta:`${PROG.startDate} → ${ctrEnd} · 17 sem.`,
     days:PROG.days.map(d=>({name:d.name,sub:d.sub,exercises:d.exercises,dayId:d.id}))
   }];
   (S.fullPrograms||[]).forEach((p,idx)=>{
     list.push({
-      key:'full-'+idx,name:p.name,isCore:false,progIdx:idx,
+      key:'full-'+idx,name:p.name,isCore:false,progIdx:idx,color:p.color||CTR_COLOR,
       meta:`${p.startDate||'?'} → ${p.endDate||'?'}`,
       days:p.days.map((d,i)=>({name:d.name,sub:'',exercises:d.exercises,dayId:'f'+idx+'-'+i}))
     });
@@ -3760,8 +3788,11 @@ function renderTodayProgBrowser(){
   const wrap=document.getElementById('todayProgBrowser');
   if(!wrap) return;
   const entries=getProgramEntries();
-  let h=`<div class="prog-strip">`+entries.map(p=>`
-    <div class="prog-pill ${p.isCore?'core':''} ${todayProgOpen===p.key?'active':''}" onclick="toggleTodayProg('${p.key}')">${p.name}</div>`).join('')+`</div>`;
+  let h=`<div class="prog-strip">`+entries.map(p=>{
+    const active=todayProgOpen===p.key;
+    const style=active?`background:${p.color};border-color:${p.color};color:#fff`:`border-color:${hexA(p.color,.35)};color:${p.color}`;
+    return `<div class="prog-pill" style="${style}" onclick="toggleTodayProg('${p.key}')">${p.name}</div>`;
+  }).join('')+`</div>`;
   const active=entries.find(p=>p.key===todayProgOpen);
   if(active){
     h+=`<div style="margin:0 12px 4px">`+active.days.map((d,i)=>`
@@ -3784,8 +3815,8 @@ function renderProgSquares(){
   const el=document.getElementById('progSquares');
   if(!el) return;
   el.innerHTML=getProgramEntries().map(p=>`
-    <div class="prog-sq ${p.isCore?'core':''}" onclick="openProgDrill('${p.key}')">
-      <div class="prog-sq-name">${p.name}</div>
+    <div class="prog-sq" style="border-color:${hexA(p.color,.4)};background:${hexA(p.color,.08)}" onclick="openProgDrill('${p.key}')">
+      <div class="prog-sq-name" style="color:${p.color}">${p.name}</div>
       <div class="prog-sq-meta">${p.days.length} jours</div>
     </div>`).join('');
 }
@@ -4095,6 +4126,8 @@ function openExLibraryForBuilder(){
   var searchEl = document.getElementById('exLibSearch');
   if(searchEl) searchEl.value = '';
   document.getElementById('exLibTabs').style.display = 'flex';
+  document.getElementById('exLibShT').textContent = 'Ajouter un exercice';
+  document.getElementById('exLibDoneFooter').style.display = 'block';
   renderExLibTabs(muscles);
   renderExLibGrid(exLibActiveTab);
   raiseSheet('exLibSh');
