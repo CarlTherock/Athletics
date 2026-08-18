@@ -3894,83 +3894,112 @@ function hexA(hex,a){
   const r=parseInt(hex.substr(0,2),16)||0,g=parseInt(hex.substr(2,2),16)||0,b=parseInt(hex.substr(4,2),16)||0;
   return `rgba(${r},${g},${b},${a})`;
 }
-// ── Programmes "cinéma" — ajoutés une seule fois, jamais réajoutés si supprimés ──
+// ── Programmes "cinéma" — chacun ajouté une seule fois, jamais réajouté si supprimé ──
 function seedFilmPrograms(){
-  if(S.seededFilms) return;
   S.fullPrograms = S.fullPrograms || [];
-  S.fullPrograms.push({
-    name:'Wolverine (Hugh Jackman)', color:'#3B82F6',
-    startDate:'', endDate:'',
-    desc:"Split 5 jours documenté par plusieurs sources concordantes (Sportskeeda, Steel Supplements, Man of Many) — schéma pyramidal classique.",
-    days:[
-      {name:'Poitrine', exercises:[
-        rw('Incline Dumbbell Press',4,'12,10,8,6 (pyramide)'),
-        rw('Barbell Bench Press - Medium Grip',4,'15,12,10,8 (pyramide)'),
-        rw('Cable Crossover',4,'15,12,10,8 (pyramide)'),
-      ]},
-      {name:'Dos', exercises:[
-        rw('Pullups',4,'15,12,10,8 (pyramide)'),
-        rw('Barbell Deadlift',4,'12,10,8,6 (pyramide)'),
-        rw('Seated Cable Rows',4,'12,10,8,8 (pyramide)'),
-      ]},
-      {name:'Jambes', exercises:[
-        rw('Leg Extensions',4,'15,12,10,8 (pyramide)'),
-        rw('Lying Leg Curls',4,'15,12,10,8 (pyramide)'),
-        rw('Leg Press',4,'12,10,8,6 (pyramide)'),
-      ]},
-      {name:'Épaules', exercises:[
-        rw('Seated Side Lateral Raise',4,'12'),
-        rw('Seated Bent-Over Rear Delt Raise',4,'12'),
-        rw('Standing Military Press',4,'12,10,8,6 (pyramide)'),
-      ]},
-      {name:'Bras', exercises:[
-        rw('Dumbbell Bicep Curl',4,'12'),
-        rw('Barbell Curl',4,'12,10,8,8 (pyramide)'),
-        rw('One Arm Dumbbell Preacher Curl',4,'12,12,10,10 (pyramide)'),
-        rw('Dumbbell One-Arm Triceps Extension',4,'12'),
-        rw('EZ-Bar Skullcrusher',4,'12,10,8,8 (pyramide)'),
-        rw('Triceps Pushdown - Rope Attachment',4,'12'),
-      ]},
-    ]
-  });
-  S.fullPrograms.push({
-    name:'Thor (Chris Hemsworth)', color:'#D4A520',
-    startDate:'', endDate:'',
-    desc:"⚠️ Sources contradictoires (le programme a changé sur 4 films avec plusieurs entraîneurs). Ceci est une reconstruction composite des éléments qui reviennent le plus souvent — pas une source unique vérifiée comme Wolverine ou le 300 Workout.",
-    days:[
-      {name:'Push', exercises:[
-        rw('Barbell Bench Press - Medium Grip',4,'6-8'),
-        rw('Incline Dumbbell Press',4,'8-10'),
-        rw('Cable Crossover',3,'10-12'),
-        rw('Pushups',3,'max'),
-      ]},
-      {name:'Pull', exercises:[
-        rw('Barbell Deadlift',4,'5-8'),
-        rw('Pullups',4,'max (AMRAP)'),
-        rw('Seated Cable Rows',4,'8-12'),
-        rw('One-Arm Dumbbell Row',4,'8-12/bras'),
-        rw('Barbell Curl',3,'6-8'),
-      ]},
-      {name:'Jambes', exercises:[
-        rw('Barbell Squat',5,'10,8,6,5,4 (pyramide descendante)'),
-        rw('Leg Press',3,'10-12'),
-        rw('Dumbbell Lunges',3,'10/jambe'),
-      ]},
-      {name:'Épaules & Core', exercises:[
-        rw('Standing Military Press',4,'8-12'),
-        rw('Side Lateral Raise',4,'10-15'),
-        rw('Plank',3,'60s'),
-        rw('Hanging Leg Raise',3,'12-15'),
-      ]},
-      {name:'Conditioning', exercises:[
-        rw('Rope Jumping',3,'60s'),
-        rw('Mountain Climbers',3,'30s'),
-        rw('Bodyweight Squat',3,'20'),
-        rw('Russian Twist',3,'20'),
-      ]},
-    ]
-  });
-  S.seededFilms = true;
+  // Migration: l'ancien drapeau global couvrait Wolverine + Thor — on le convertit
+  // en suivi individuel pour pouvoir ajouter de nouveaux programmes "cinéma" plus tard
+  // sans jamais retoucher à ceux déjà présents (ou supprimés) chez la personne.
+  S.seededProgramIds = S.seededProgramIds || (S.seededFilms ? ['wolverine','thor'] : []);
+  const has=id=>S.seededProgramIds.includes(id);
+  const markSeeded=id=>{ if(!has(id)) S.seededProgramIds.push(id); };
+
+  if(!has('wolverine')){
+    S.fullPrograms.push({
+      name:'Wolverine (Hugh Jackman)', color:'#3B82F6',
+      startDate:'', endDate:'',
+      desc:"Split 5 jours documenté par plusieurs sources concordantes (Sportskeeda, Steel Supplements, Man of Many) — schéma pyramidal classique.",
+      days:[
+        {name:'Poitrine', exercises:[
+          rw('Incline Dumbbell Press',4,'12,10,8,6 (pyramide)'),
+          rw('Barbell Bench Press - Medium Grip',4,'15,12,10,8 (pyramide)'),
+          rw('Cable Crossover',4,'15,12,10,8 (pyramide)'),
+        ]},
+        {name:'Dos', exercises:[
+          rw('Pullups',4,'15,12,10,8 (pyramide)'),
+          rw('Barbell Deadlift',4,'12,10,8,6 (pyramide)'),
+          rw('Seated Cable Rows',4,'12,10,8,8 (pyramide)'),
+        ]},
+        {name:'Jambes', exercises:[
+          rw('Leg Extensions',4,'15,12,10,8 (pyramide)'),
+          rw('Lying Leg Curls',4,'15,12,10,8 (pyramide)'),
+          rw('Leg Press',4,'12,10,8,6 (pyramide)'),
+        ]},
+        {name:'Épaules', exercises:[
+          rw('Seated Side Lateral Raise',4,'12'),
+          rw('Seated Bent-Over Rear Delt Raise',4,'12'),
+          rw('Standing Military Press',4,'12,10,8,6 (pyramide)'),
+        ]},
+        {name:'Bras', exercises:[
+          rw('Dumbbell Bicep Curl',4,'12'),
+          rw('Barbell Curl',4,'12,10,8,8 (pyramide)'),
+          rw('One Arm Dumbbell Preacher Curl',4,'12,12,10,10 (pyramide)'),
+          rw('Dumbbell One-Arm Triceps Extension',4,'12'),
+          rw('EZ-Bar Skullcrusher',4,'12,10,8,8 (pyramide)'),
+          rw('Triceps Pushdown - Rope Attachment',4,'12'),
+        ]},
+      ]
+    });
+    markSeeded('wolverine');
+  }
+
+  if(!has('thor')){
+    S.fullPrograms.push({
+      name:'Thor (Chris Hemsworth)', color:'#D4A520',
+      startDate:'', endDate:'',
+      desc:"⚠️ Sources contradictoires (le programme a changé sur 4 films avec plusieurs entraîneurs). Ceci est une reconstruction composite des éléments qui reviennent le plus souvent — pas une source unique vérifiée comme Wolverine ou le 300 Workout.",
+      days:[
+        {name:'Push', exercises:[
+          rw('Barbell Bench Press - Medium Grip',4,'6-8'),
+          rw('Incline Dumbbell Press',4,'8-10'),
+          rw('Cable Crossover',3,'10-12'),
+          rw('Pushups',3,'max'),
+        ]},
+        {name:'Pull', exercises:[
+          rw('Barbell Deadlift',4,'5-8'),
+          rw('Pullups',4,'max (AMRAP)'),
+          rw('Seated Cable Rows',4,'8-12'),
+          rw('One-Arm Dumbbell Row',4,'8-12/bras'),
+          rw('Barbell Curl',3,'6-8'),
+        ]},
+        {name:'Jambes', exercises:[
+          rw('Barbell Squat',5,'10,8,6,5,4 (pyramide descendante)'),
+          rw('Leg Press',3,'10-12'),
+          rw('Dumbbell Lunges',3,'10/jambe'),
+        ]},
+        {name:'Épaules & Core', exercises:[
+          rw('Standing Military Press',4,'8-12'),
+          rw('Side Lateral Raise',4,'10-15'),
+          rw('Plank',3,'60s'),
+          rw('Hanging Leg Raise',3,'12-15'),
+        ]},
+        {name:'Conditioning', exercises:[
+          rw('Rope Jumping',3,'60s'),
+          rw('Mountain Climbers',3,'30s'),
+          rw('Bodyweight Squat',3,'20'),
+          rw('Russian Twist',3,'20'),
+        ]},
+      ]
+    });
+    markSeeded('thor');
+  }
+
+  if(!has('spartan300prog')){
+    const spartanTemplate = (typeof READY_WORKOUTS!=='undefined') ? READY_WORKOUTS.find(w=>w.id==='spartan300') : null;
+    if(spartanTemplate){
+      S.fullPrograms.push({
+        name:'300 (Film)', color:CTR_COLOR,
+        startDate:'', endDate:'',
+        desc:"Circuit original du film 300 (Mark Twight) — 300 répétitions enchaînées en un seul passage, à refaire 3×/semaine. Ce n'est pas un split multi-jours comme Wolverine ou Thor, juste ce même circuit regroupé ici pour cohérence visuelle.",
+        days:[
+          {name:'Circuit complet', exercises:JSON.parse(JSON.stringify(spartanTemplate.exercises))}
+        ]
+      });
+    }
+    markSeeded('spartan300prog');
+  }
+
+  S.seededFilms = true; // conservé pour compatibilité arrière, inoffensif
 }
 function getProgramEntries(){
   const ctrEnd=(()=>{const d=new Date(PROG.startDate);d.setDate(d.getDate()+17*7-1);return d.toISOString().slice(0,10);})();
