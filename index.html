@@ -4176,15 +4176,9 @@ function openReadyWorkouts(){
     </div>`;
   };
   let h='';
-  if(filmProgs.length){
-    h+=`<div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--rs);margin:4px 2px 8px">🎬 FILM (HÉROS)</div>`;
-    h+=filmProgs.map(filmCard).join('');
-    h+=`<div style="height:14px"></div>`;
-  }
-  if(general.length){
-    h+=`<div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--t3);margin:4px 2px 8px">GÉNÉRAL</div>`;
-    h+=general.map(genCard).join('');
-  }
+  h+=`<div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--t3);margin:4px 2px 8px">GÉNÉRAL</div>`;
+  h+=general.map(genCard).join('');
+  h+=filmProgs.map(filmCard).join('');
   document.getElementById('readyWorkoutsBody').innerHTML=h;
   raiseSheet('readyWorkoutsSh');
   document.getElementById('readyWorkoutsSh').classList.add('on');
