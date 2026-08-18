@@ -3573,6 +3573,19 @@ const READY_WORKOUTS = [
       rw('Standing Gastrocnemius Calf Stretch',2,'30s/jambe'),
     ]
   },
+  {
+    id:'spartan300', name:'300 Workout (Spartan)', icon:'⚔️', color:'#C8102E',
+    desc:"Le circuit original du film 300 par l'entraîneur Mark Twight — 300 répétitions enchaînées, repos minimal. Intense, pas pour débutants.", duration:'20-30 min',
+    exercises:[
+      Object.assign(rw('Pullups',1,'25'),{note:'Enchaîner, repos minimal'}),
+      Object.assign(rw('Barbell Deadlift',1,'50'),{note:'~61 kg (135 lb) à l\'origine — ajuste selon ton niveau'}),
+      Object.assign(rw('Pushups',1,'50'),{note:''}),
+      Object.assign(rw('Box Jump (Multiple Response)',1,'50'),{note:'Boîte ~60 cm (24 po)'}),
+      Object.assign(rw('Hanging Leg Raise',1,'50'),{note:'Remplace les "Floor Wipers" originaux — absents de la bibliothèque'}),
+      Object.assign(rw('Clean and Press',1,'50'),{note:'~16 kg (36 lb) par bras à l\'origine, ici barre'}),
+      rw('Pullups',1,'25'),
+    ]
+  },
 ];
 
 
@@ -4050,6 +4063,7 @@ function openReadyDetail(id){
           <div class="dcard-info">
             <div class="dcard-name">${ex.name}</div>
             <div class="dcard-sub">${ex.s} × ${ex.r}</div>
+            ${ex.note?`<div style="font-size:10px;color:var(--t3);margin-top:2px">${ex.note}</div>`:''}
           </div>
         </div>
       </div>`;
