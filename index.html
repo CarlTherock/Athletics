@@ -3746,11 +3746,21 @@ function renderFullProgList(){
   const el=document.getElementById('fullProgListBody');
   if(!el) return;
   const progs=S.fullPrograms||[];
+  const ctrEnd=(()=>{const d=new Date(PROG.startDate);d.setDate(d.getDate()+17*7-1);return d.toISOString().slice(0,10);})();
+  let html=`<div class="pd-card" style="cursor:default">
+      <div class="pd-h" style="cursor:default">
+        <div class="pd-num" style="background:var(--red)"><div class="pd-j">PROG.</div><div class="pd-n" style="font-size:13px">5j</div></div>
+        <div class="pd-info"><div class="pd-name">CTR300</div><div class="pd-sub">${PROG.startDate} → ${ctrEnd} · 17 semaines</div></div>
+      </div>
+      <div class="pd-exs">${PROG.days.map(d=>`<div class="echip">${d.name}</div>`).join('')}</div>
+      <div style="display:flex;gap:7px;padding:0 14px 13px">
+        <button class="btn btn-ghost btn-md" style="flex:1;border-radius:var(--r)" onclick="scrollToProgDays()">👁 Voir les journées</button>
+      </div>
+    </div>`;
   if(!progs.length){
-    el.innerHTML=`<div style="text-align:center;color:var(--t3);font-size:12px;padding:10px 0">Aucun programme complet encore — crée-en un ci-dessus.</div>`;
-    return;
-  }
-  el.innerHTML=progs.map((p,idx)=>`
+    html+=`<div style="text-align:center;color:var(--t3);font-size:12px;padding:10px 0">Aucun autre programme complet encore — crée-en un ci-dessus.</div>`;
+  } else {
+    html+=progs.map((p,idx)=>`
     <div class="pd-card" style="cursor:default">
       <div class="pd-h" style="cursor:default">
         <div class="pd-num" style="background:var(--bg4)"><div class="pd-j">PROG.</div><div class="pd-n" style="font-size:13px">${p.days.length}j</div></div>
@@ -3762,6 +3772,12 @@ function renderFullProgList(){
         <button class="btn btn-ghost btn-md" style="border-radius:var(--r);padding:0 14px" onclick="deleteFullProg(${idx})">🗑️</button>
       </div>
     </div>`).join('');
+  }
+  el.innerHTML=html;
+}
+function scrollToProgDays(){
+  const el=document.getElementById('progDays');
+  if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 function openBuilder(idx){
