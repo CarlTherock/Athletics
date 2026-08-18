@@ -4152,12 +4152,26 @@ function openExLibraryForBuilder(){
   document.getElementById('exLibSh').classList.add('on');
 }
 
+const MUSCLE_HERO_IMG={
+  "Cardio":"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Running_Treadmill/0.jpg",
+  "Abdominaux":"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Hanging_Leg_Raise/0.jpg",
+  "Biceps":"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Curl/0.jpg",
+  "Épaules":"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Shoulder_Press/0.jpg",
+  "Poitrine":"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Bench_Press_-_Medium_Grip/0.jpg",
+  "Ischio-jambiers":"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Romanian_Deadlift/0.jpg",
+  "Dos":"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Pullups/0.jpg",
+  "Quadriceps":"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Squat/0.jpg",
+  "Mollets":"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Standing_Calf_Raises/0.jpg",
+  "Fessiers":"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Hip_Thrust/0.jpg",
+  "Triceps":"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Triceps_Pushdown/0.jpg",
+  "Avant-bras":"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Farmers_Walk/0.jpg",
+};
 function renderExLibGroupSquares(){
   var muscles = Object.keys(EX_LIBRARY);
   var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-top:4px">';
   muscles.forEach(function(m){
     var data = EX_LIBRARY[m];
-    var hero = data.exercises[0] ? data.exercises[0].img : '';
+    var hero = MUSCLE_HERO_IMG[m] || (data.exercises[0] ? data.exercises[0].img : '');
     html += '<div onclick="openExLibGroup(\''+m.replace(/'/g,"\\'")+'\')" style="position:relative;border-radius:var(--r);overflow:hidden;cursor:pointer;aspect-ratio:1;border:1px solid var(--b);background:'+data.color+'15">'
       + '<img src="'+hero+'" loading="lazy" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0" onerror="this.style.display=\'none\'">'
       + '<div style="position:absolute;inset:0;background:linear-gradient(to top, rgba(10,10,10,.92), rgba(10,10,10,.15) 60%, transparent)"></div>'
