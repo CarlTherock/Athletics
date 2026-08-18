@@ -1114,6 +1114,14 @@ function fmt(s){return Math.floor(s/60)+':'+(s%60<10?'0':'')+s%60}
 function tod(){return new Date().toLocaleDateString('fr-CA')}
 function calcWeek(){const start=new Date(PROG.startDate),now=new Date();const diff=Math.floor((now-start)/86400000);return diff<0?1:Math.min(17,Math.floor(diff/7)+1);}
 function activeDay(){return S.ovDay||S.curDay}
+function viewTodayDate(dateKey){
+  todayViewDate=dateKey;
+  renderToday();
+}
+function viewToday(){
+  todayViewDate=null;
+  renderToday();
+}
 let quickProgram=null; // temporary, non-persisted program used by 'Démarrer sans sauvegarder'
 function dayObj(id){
   id = id!==undefined && id!==null ? id : activeDay();
@@ -1358,11 +1366,14 @@ function renderToday(){
   const b=bloc();
   const now=new Date();
   const wd=now.getDay(); // 0=Sun ... 6=Sat
-  const todayKey=now.toLocaleDateString('fr-CA');
-  const calEntry=(!S.ovDay && S.calendar) ? S.calendar[todayKey] : null;
+  const realTodayKey=now.toLocaleDateString('fr-CA');
+  if(!todayViewDate) todayViewDate=realTodayKey;
+  const isViewingToday=todayViewDate===realTodayKey;
+  const viewDateObj=new Date(todayViewDate+'T12:00:00');
+  const calEntry=(!(S.ovDay&&isViewingToday) && S.calendar) ? S.calendar[todayViewDate] : null;
 
   let actId,isRest,isUnassigned=false;
-  if(S.ovDay){
+  if(S.ovDay&&isViewingToday){
     actId=activeDay();isRest=false;
   } else if(calEntry){
     if(calEntry.type==='rest'){actId=activeDay();isRest=true;}
@@ -1370,7 +1381,7 @@ function renderToday(){
     else if(calEntry.type==='fullprog'){actId='f'+calEntry.progIdx+'-'+calEntry.dayIdx;isRest=false;}
     else {actId=calEntry.dayId;isRest=false;}
   } else {
-    // Rien d'assigné pour aujourd'hui — le Plan 300 ne s'imprime plus automatiquement
+    // Rien d'assigné pour cette date — le Plan 300 ne s'imprime plus automatiquement
     // sur le calendrier. Tant que rien n'est choisi via le calendrier, on ne présume rien.
     actId=activeDay();isRest=false;isUnassigned=true;
   }
@@ -1383,7 +1394,7 @@ function renderToday(){
     });
   }
 
-  document.getElementById('todayLbl').textContent=now.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('todayLbl').textContent=viewDateObj.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});
   const bpill=document.getElementById('todayBloc');
   bpill.textContent=blocLbl();
   bpill.className='pill '+(b==='A'?'pa':b==='B'?'pb':b==='C'?'pc':'pd2');
@@ -1395,20 +1406,22 @@ function renderToday(){
   document.getElementById('heroBadges').innerHTML=`
     <span class="pill ${b==='A'?'pa':b==='B'?'pb':b==='C'?'pc':'pd2'}">${blocLbl()}</span>
     <span class="pill pg">Sem. ${S.curWeek}/17</span>
-    ${S.ovDay?'<span class="pill pr">Journée modifiée</span>':''}
+    ${S.ovDay&&isViewingToday?'<span class="pill pr">Journée modifiée</span>':''}
     ${isRest?'<span class="pill pb">REPOS + LISS</span>':''}
     ${isUnassigned?'<span class="pill" style="background:var(--bg3);color:var(--t3);border:1px solid var(--b)">NON ASSIGNÉ</span>':''}
+    ${!isViewingToday?`<span class="pill" style="background:var(--bg3);color:var(--rs);border:1px solid var(--b);cursor:pointer" onclick="viewToday()">📅 Retour à aujourd'hui</span>`:''}
   `;
 
-  // Week strip — Sun to Sat, reflète uniquement les assignations réelles du calendrier
-  const mon=new Date(now);mon.setDate(now.getDate()-wd);// go back to Sunday
+  // Week strip — Sun to Sat. Le tap navigue l'affichage vers ce jour (comme si c'était "aujourd'hui").
+  const mon=new Date(now);mon.setDate(now.getDate()-wd);// go back to Sunday of the REAL current week
   let strip='';
   for(let i=0;i<7;i++){
     const d2=new Date(mon);d2.setDate(mon.getDate()+i);
     const dwd=d2.getDay();
     const dateKey2=d2.toLocaleDateString('fr-CA');
     const entry=S.calendar&&S.calendar[dateKey2];
-    const isSel=dwd===wd;
+    const isSel=dateKey2===todayViewDate;
+    const isRealToday=dateKey2===realTodayKey;
     let isR=false,dayIdForDone=null;
     if(entry){
       if(entry.type==='rest') isR=true;
@@ -1416,8 +1429,8 @@ function renderToday(){
     }
     const isDone=(dayIdForDone&&S.sessions.some(s=>s.dayId===dayIdForDone&&s.date===dateKey2))||(entry&&S.sessions.some(s=>s.date===dateKey2));
     const dotColor=calDotColor(dateKey2);
-    strip+=`<div class="wchip ${isSel?'sel':''} ${isDone&&!isSel?'done':''} ${isR?'rest-chip':''}" onclick="openCalDayOptions('${dateKey2}')">
-      <div class="wchip-n">${DAY_FR[dwd]}</div>
+    strip+=`<div class="wchip ${isSel?'sel':''} ${isDone&&!isSel?'done':''} ${isR?'rest-chip':''}" onclick="viewTodayDate('${dateKey2}')">
+      <div class="wchip-n" style="${isRealToday&&!isSel?'color:var(--rs)':''}">${DAY_FR[dwd]}</div>
       <div class="wchip-d">${d2.getDate()}</div>
       <div class="wchip-dot" style="background:${dotColor}"></div>
     </div>`;
@@ -1437,21 +1450,25 @@ function renderToday(){
   let statusHtml='';
   if(isUnassigned){
     statusHtml=`<div class="card" style="text-align:center;padding:18px 14px;margin:0 12px 12px">
-      <div style="font-size:14px;font-weight:800;margin-bottom:12px">Aucune séance planifiée</div>
-      <button class="btn btn-red btn-md" style="border-radius:var(--r);margin:0 auto" onclick="openCalDayOptions('${todayKey}')">Choisir la séance d'aujourd'hui</button>
+      <div style="font-size:14px;font-weight:800;margin-bottom:12px">Aucune séance planifiée${isViewingToday?'':' — '+viewDateObj.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric'})}</div>
+      <button class="btn btn-red btn-md" style="border-radius:var(--r);margin:0 auto" onclick="openCalDayOptions('${todayViewDate}')">Choisir la séance de cette journée</button>
     </div>`;
     const sb=document.getElementById('startBtn');
-    sb.textContent='Aucune séance assignée';sb.onclick=()=>openCalDayOptions(todayKey);sb.style.opacity='.6';
+    sb.textContent='Aucune séance assignée';sb.onclick=()=>openCalDayOptions(todayViewDate);sb.style.opacity='.6';
   } else if(isRest){
     statusHtml=`<div class="card" style="text-align:center;padding:14px;margin:0 12px 12px">
       <div style="font-size:13px;font-weight:800;margin-bottom:3px">🚶 Journée LISS — repos assigné</div>
       <div style="font-size:11px;color:var(--t3)">Marche/vélo 35–45 min · Mobilité 15 min</div>
+      <div style="font-size:11px;color:var(--rs);font-weight:700;margin-top:8px;cursor:pointer" onclick="openCalDayOptions('${todayViewDate}')">✏️ Modifier</div>
     </div>`;
     const sb=document.getElementById('startBtn');
     sb.textContent='Jour de repos 🚶';sb.onclick=null;sb.style.opacity='.5';
   } else {
+    statusHtml=`<div style="text-align:right;padding:0 12px 4px">
+      <span style="font-size:11px;color:var(--t3);font-weight:700;cursor:pointer" onclick="openCalDayOptions('${todayViewDate}')">✏️ Modifier l'assignation</span>
+    </div>`;
     const sb=document.getElementById('startBtn');
-    sb.textContent='▶ Start';sb.onclick=()=>openStartOptionsSh(activeDay());sb.style.opacity='1';
+    sb.textContent='▶ Start';sb.onclick=()=>openStartOptionsSh(actId);sb.style.opacity='1';
   }
   if(todayProgOpen===undefined){
     todayProgOpen=progKey;
@@ -2153,6 +2170,7 @@ function handlePhoto(e){
 // ── CALENDAR ──
 let calViewYear=null,calViewMonth=null,calExpanded=false; // month is 0-11
 let todayProgOpen; // clé du programme actuellement déplié dans la ligne horizontale d'Aujourd'hui
+let todayViewDate; // date (fr-CA) actuellement affichée dans "Aujourd'hui" — null/undefined = aujourd'hui réel
 const MONTH_FR=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 const MONTH_FR_S=['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'];
 
@@ -2271,7 +2289,7 @@ function setCalEntry(dateKey,entry){
   if(navigator.vibrate) navigator.vibrate(8);
   document.getElementById('calDaySh').classList.remove('on');
   renderCalView();
-  if(dateKey===new Date().toLocaleDateString('fr-CA')) renderToday();
+  if(dateKey===todayViewDate||dateKey===new Date().toLocaleDateString('fr-CA')) renderToday();
 }
 
 function clearCalEntry(dateKey){
@@ -2279,7 +2297,7 @@ function clearCalEntry(dateKey){
   save();
   document.getElementById('calDaySh').classList.remove('on');
   renderCalView();
-  if(dateKey===new Date().toLocaleDateString('fr-CA')) renderToday();
+  if(dateKey===todayViewDate||dateKey===new Date().toLocaleDateString('fr-CA')) renderToday();
 }
 
 function renderProg(){
