@@ -4162,14 +4162,19 @@ function applyScheduleThisWeek(key){
 function openReadyWorkouts(){
   const film=READY_WORKOUTS.filter(w=>w.category==='film');
   const general=READY_WORKOUTS.filter(w=>w.category!=='film');
-  const card=w=>`
+  const card=w=>{
+    const hero=getExerciseImage(w.exercises[0].name);
+    return `
     <div class="pd-card" onclick="openReadyDetail('${w.id}')">
       <div class="pd-h">
-        <div class="pd-num" style="background:${w.color}"><div style="font-size:20px">${w.icon}</div></div>
+        <div class="pd-num" style="background-image:url('${hero}');background-size:cover;background-position:center;position:relative;overflow:hidden">
+          <div style="position:absolute;inset:0;background:${w.color};opacity:.4"></div>
+        </div>
         <div class="pd-info"><div class="pd-name">${w.name}</div><div class="pd-sub">${w.desc} · ${w.duration}</div></div>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
       </div>
     </div>`;
+  };
   let h='';
   if(film.length){
     h+=`<div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--rs);margin:4px 2px 8px">🎬 FILM (HÉROS)</div>`;
