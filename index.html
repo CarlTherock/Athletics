@@ -4147,21 +4147,12 @@ function applyScheduleThisWeek(key){
   alert("Semaine assignée selon l'horaire de "+entry.name+".");
 }
 function openReadyWorkouts(){
-  const filmProgs=getProgramEntries().filter(e=>e.isFilm);
+  renderReadyWorkoutsGeneral();
+  raiseSheet('readyWorkoutsSh');
+  document.getElementById('readyWorkoutsSh').classList.add('on');
+}
+function renderReadyWorkoutsGeneral(){
   const general=READY_WORKOUTS;
-  const filmCard=e=>{
-    const hero=getExerciseImage(e.days[0].exercises[0].name);
-    return `
-    <div class="pd-card" onclick="document.getElementById('readyWorkoutsSh').classList.remove('on');openProgDrill('${e.key}')">
-      <div class="pd-h">
-        <div class="pd-num" style="background-image:url('${hero}');background-size:cover;background-position:center;position:relative;overflow:hidden">
-          <div style="position:absolute;inset:0;background:${e.color};opacity:.4"></div>
-        </div>
-        <div class="pd-info"><div class="pd-name">${e.name}</div><div class="pd-sub">${e.days.length} jours · choisis une journée ou planifie la semaine</div></div>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-      </div>
-    </div>`;
-  };
   const genCard=w=>{
     const hero=getExerciseImage(w.exercises[0].name);
     return `
@@ -4175,13 +4166,45 @@ function openReadyWorkouts(){
       </div>
     </div>`;
   };
-  let h='';
-  h+=`<div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--t3);margin:4px 2px 8px">GÉNÉRAL</div>`;
-  h+=general.map(genCard).join('');
+  const filmIdx=general.findIndex(w=>w.id==='fullbody_express')+1;
+  const before=general.slice(0,filmIdx);
+  const after=general.slice(filmIdx);
+  const filmCardEntry=`
+    <div class="pd-card" onclick="showFilmPicker()">
+      <div class="pd-h">
+        <div class="pd-num" style="background:#D4A520;display:flex;align-items:center;justify-content:center">
+          <div style="font-size:20px">🎬</div>
+        </div>
+        <div class="pd-info"><div class="pd-name">Film</div><div class="pd-sub">Wolverine, Thor, 300 — inspirés des programmes d'acteurs</div></div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>`;
+  let h=`<div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--t3);margin:4px 2px 8px">GÉNÉRAL</div>`;
+  h+=before.map(genCard).join('');
+  h+=filmCardEntry;
+  h+=after.map(genCard).join('');
+  document.getElementById('readyWorkoutsBody').innerHTML=h;
+}
+function showFilmPicker(){
+  const filmProgs=getProgramEntries().filter(e=>e.isFilm);
+  const filmCard=e=>{
+    const hero=getExerciseImage(e.days[0].exercises[0].name);
+    return `
+    <div class="pd-card" onclick="document.getElementById('readyWorkoutsSh').classList.remove('on');openProgDrill('${e.key}')">
+      <div class="pd-h">
+        <div class="pd-num" style="background-image:url('${hero}');background-size:cover;background-position:center;position:relative;overflow:hidden">
+          <div style="position:absolute;inset:0;background:${e.color};opacity:.4"></div>
+        </div>
+        <div class="pd-info"><div class="pd-name">${e.name}</div><div class="pd-sub">${e.days.length} jours · choisis une journée ou planifie la semaine</div></div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>`;
+  };
+  let h=`<div onclick="renderReadyWorkoutsGeneral()" style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--rs);font-weight:700;font-size:13px;padding:4px 2px 12px">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>Séances prêtes
+  </div>`;
   h+=filmProgs.map(filmCard).join('');
   document.getElementById('readyWorkoutsBody').innerHTML=h;
-  raiseSheet('readyWorkoutsSh');
-  document.getElementById('readyWorkoutsSh').classList.add('on');
 }
 function openReadyDetail(id){
   const w=READY_WORKOUTS.find(x=>x.id===id);
