@@ -328,6 +328,11 @@ body{
 .prog-sq-row{aspect-ratio:auto!important;flex-direction:row!important;justify-content:flex-start!important;gap:11px;padding:13px 14px;margin:0 12px 10px}
 .prog-sq-row .prog-sq-name{font-size:14px}
 .prog-sq-row-info{flex:1;text-align:left}
+.prog-strip{display:flex;gap:8px;overflow-x:auto;padding:2px 12px 10px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.prog-strip::-webkit-scrollbar{display:none}
+.prog-pill{flex-shrink:0;background:var(--bg2);border:1px solid var(--b);border-radius:20px;padding:9px 16px;font-size:13px;font-weight:800;color:var(--t2);cursor:pointer;white-space:nowrap;transition:all .15s}
+.prog-pill.active{background:var(--red);border-color:var(--red);color:#fff}
+.prog-pill.core{border-color:rgba(200,16,46,.35)}
 .sc{background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:13px}
 .sc-l{font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--t3);text-transform:uppercase;margin-bottom:5px}
 .sc-v{font-size:26px;font-weight:900}
@@ -680,6 +685,25 @@ body::before {
   </div>
 </div>
 
+<!-- PROGRAM SCHEDULE SHEET -->
+<div class="sh-bg" id="progSchedSh" onclick="if(event.target===this)this.classList.remove('on')">
+  <div class="sh">
+    <div class="sh-handle"></div>
+    <div class="sh-title" id="progSchedT">Horaire</div>
+    <div id="progSchedBody" style="padding:0 14px 16px"></div>
+  </div>
+</div>
+
+<!-- WEEK PROGRAM PICK SHEET -->
+<div class="sh-bg" id="weekProgPickSh" onclick="if(event.target===this)this.classList.remove('on')">
+  <div class="sh">
+    <div class="sh-handle"></div>
+    <div class="sh-title">Programme pour la semaine</div>
+    <div style="padding:0 16px 10px;font-size:12px;color:var(--t2)">Applique l'horaire d'un programme aux 7 prochains jours de la semaine en cours.</div>
+    <div id="weekProgPickBody" style="padding:0 12px 12px"></div>
+  </div>
+</div>
+
 <!-- PHOTO SHEET -->
 <div class="sh-bg" id="phSh" onclick="if(event.target===this)this.classList.remove('on')">
   <div class="sh">
@@ -864,6 +888,7 @@ body::before {
       <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t3)"><div style="width:8px;height:8px;border-radius:50%;background:var(--gold)"></div>Programme complet</div>
       <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t3)"><div style="width:8px;height:8px;border-radius:50%;background:var(--t4)"></div>Repos</div>
     </div>
+    <button class="btn btn-ghost btn-md" style="width:100%;margin-top:12px;border-radius:var(--r)" onclick="openWeekProgPick()">📅 Programme pour la semaine</button>
   </div>
   <span class="lbl">PROGRAMMES</span>
   <div class="sg" id="progSquares" style="margin:0 12px 10px"></div>
@@ -1394,59 +1419,34 @@ function renderToday(){
   }
   document.getElementById('wstrip').innerHTML=strip;
 
-  // Today cards
+  // Today cards — ligne horizontale de programmes, plus de détails d'exercices affichés directement
   const tc=document.getElementById('todayCards');
+  let statusHtml='';
   if(isUnassigned){
-    tc.innerHTML=`<div class="card" style="text-align:center;padding:18px 14px">
-      <div style="font-size:28px;margin-bottom:8px">🗓️</div>
-      <div style="font-size:15px;font-weight:800;margin-bottom:5px">Aucune séance planifiée</div>
-      <div style="font-size:12px;color:var(--t2);margin-bottom:14px">Choisis une journée du Plan 300, un programme, ou marque un repos.</div>
-      <button class="btn btn-red btn-md" style="border-radius:var(--r)" onclick="openCalDayOptions('${todayKey}')">Choisir la séance d'aujourd'hui</button>
+    statusHtml=`<div class="card" style="text-align:center;padding:14px;margin:0 12px 12px">
+      <div style="font-size:13px;font-weight:800;margin-bottom:3px">Aucune séance planifiée aujourd'hui</div>
+      <div style="font-size:11px;color:var(--t3)">Choisis un programme ci-dessous, ou <span style="color:var(--rs);font-weight:700;cursor:pointer" onclick="openCalDayOptions('${todayKey}')">assigne via le calendrier</span></div>
     </div>`;
     const sb=document.getElementById('startBtn');
     sb.textContent='Aucune séance assignée';sb.onclick=()=>openCalDayOptions(todayKey);sb.style.opacity='.6';
   } else if(isRest){
-    tc.innerHTML=`<div class="card" style="text-align:center;padding:18px 14px">
-      <div style="font-size:28px;margin-bottom:8px">🚶</div>
-      <div style="font-size:15px;font-weight:800;margin-bottom:5px">Journée LISS</div>
-      <div style="font-size:12px;color:var(--t2)">Marche rapide ou vélo · 35–45 min · FC 60–65%</div>
-      <div style="font-size:11px;color:var(--t3);margin-top:5px">Mobilité 15 min — hanches et épaules priorité</div>
+    statusHtml=`<div class="card" style="text-align:center;padding:14px;margin:0 12px 12px">
+      <div style="font-size:13px;font-weight:800;margin-bottom:3px">🚶 Journée LISS — repos assigné</div>
+      <div style="font-size:11px;color:var(--t3)">Marche/vélo 35–45 min · Mobilité 15 min</div>
     </div>`;
     const sb=document.getElementById('startBtn');
     sb.textContent='Jour de repos 🚶';sb.onclick=null;sb.style.opacity='.5';
   } else {
-    let progKey=null;
-    if(typeof actId==='number') progKey='ctr';
-    else if(typeof actId==='string' && actId.charAt(0)==='f') progKey='full-'+actId.slice(1).split('-')[0];
-    const progEntry=progKey?getProgramEntries().find(p=>p.key===progKey):null;
-    const sqHtml=progEntry?`<div class="prog-sq prog-sq-row ${progEntry.isCore?'core':''}" onclick="openProgDrill('${progKey}')">
-      <div class="prog-sq-row-info">
-        <div class="prog-sq-name">${progEntry.name}</div>
-        <div class="prog-sq-meta">${progEntry.days.length} jours · voir le programme</div>
-      </div>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-    </div>`:'';
-    tc.innerHTML=sqHtml+day.exercises.map((origEx,i)=>{
-      const replName=S.exReplacements&&S.exReplacements[actId+'::'+origEx.name];
-      const ex=replName?Object.assign({},origEx,{name:replName}):origEx;
-      const isReplaced=!!replName;
-      const w=getW(ex,b);
-      const img=getExerciseImage(ex.name);
-      return `<div class="dcard" data-name="${origEx.name.replace(/"/g,'&quot;')}">
-        <div class="dcard-h" onclick="if(!window.__dcardDragged__)openDaySh(${JSON.stringify(actId)})">
-          <div class="dnum-img"><img src="${img}" loading="lazy" onerror="this.style.display='none'"></div>
-          <div class="dcard-info">
-            <div class="dcard-name">${(ex.new||isReplaced)?'★ ':''}${ex.name}</div>
-            <div class="dcard-sub">${getDisplayS(ex)} × ${getDisplayR(ex)} · <span style="color:var(--rs);font-weight:700">${w}</span></div>
-          </div>
-          <div class="dcard-grip"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="8" cy="6" r="1.8"/><circle cx="16" cy="6" r="1.8"/><circle cx="8" cy="12" r="1.8"/><circle cx="16" cy="12" r="1.8"/><circle cx="8" cy="18" r="1.8"/><circle cx="16" cy="18" r="1.8"/></svg></div>
-        </div>
-      </div>`;
-    }).join('');
-    bindDayReorder(actId);
     const sb=document.getElementById('startBtn');
     sb.textContent='▶ Start';sb.onclick=()=>openStartOptionsSh(activeDay());sb.style.opacity='1';
   }
+  if(todayProgOpen===undefined){
+    todayProgOpen=null;
+    if(typeof actId==='number') todayProgOpen='ctr';
+    else if(typeof actId==='string' && actId.charAt(0)==='f') todayProgOpen='full-'+actId.slice(1).split('-')[0];
+  }
+  tc.innerHTML=statusHtml+`<div id="todayProgBrowser"></div>`;
+  renderTodayProgBrowser();
 
   // Week summary
   const tc2={pull:'#3B82F6',legs:'#C8102E',push:'#8B5CF6',full:'#F97316'};
@@ -2141,6 +2141,7 @@ function handlePhoto(e){
 // ════════════════════════════════════════════════════════════
 // ── CALENDAR ──
 let calViewYear=null,calViewMonth=null,calExpanded=false; // month is 0-11
+let todayProgOpen; // clé du programme actuellement déplié dans la ligne horizontale d'Aujourd'hui
 const MONTH_FR=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 const MONTH_FR_S=['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'];
 
@@ -3724,6 +3725,21 @@ function deleteFullProg(idx){
   renderProgSquares();
 }
 
+function getProgSchedule(key){
+  if(key==='ctr') return S.ctrSchedule||[null,null,null,null,null,null,null];
+  const idx=parseInt(key.split('-')[1]);
+  return (S.fullPrograms&&S.fullPrograms[idx]&&S.fullPrograms[idx].schedule)||[null,null,null,null,null,null,null];
+}
+function calEntryFromDayId(dayId){
+  if(dayId===null||dayId===undefined) return null;
+  if(dayId==='rest') return {type:'rest'};
+  if(typeof dayId==='number') return {type:'day',dayId};
+  if(typeof dayId==='string' && dayId.charAt(0)==='f'){
+    const parts=dayId.slice(1).split('-');
+    return {type:'fullprog',progIdx:parseInt(parts[0]),dayIdx:parseInt(parts[1])};
+  }
+  return null;
+}
 function getProgramEntries(){
   const ctrEnd=(()=>{const d=new Date(PROG.startDate);d.setDate(d.getDate()+17*7-1);return d.toISOString().slice(0,10);})();
   const list=[{
@@ -3740,6 +3756,30 @@ function getProgramEntries(){
   });
   return list;
 }
+function renderTodayProgBrowser(){
+  const wrap=document.getElementById('todayProgBrowser');
+  if(!wrap) return;
+  const entries=getProgramEntries();
+  let h=`<div class="prog-strip">`+entries.map(p=>`
+    <div class="prog-pill ${p.isCore?'core':''} ${todayProgOpen===p.key?'active':''}" onclick="toggleTodayProg('${p.key}')">${p.name}</div>`).join('')+`</div>`;
+  const active=entries.find(p=>p.key===todayProgOpen);
+  if(active){
+    h+=`<div style="margin:0 12px 4px">`+active.days.map((d,i)=>`
+      <div class="pd-card" onclick="openDaySh(${JSON.stringify(d.dayId)})">
+        <div class="pd-h">
+          <div class="pd-num"><div class="pd-j">JOUR</div><div class="pd-n">${i+1}</div></div>
+          <div class="pd-info"><div class="pd-name">${d.name}</div><div class="pd-sub">${d.sub||''}</div></div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+        <div class="pd-exs">${d.exercises.map(ex=>`<div class="echip ${ex.new?'nw':''}">${ex.new?'★ ':''}${ex.name}</div>`).join('')}</div>
+      </div>`).join('')+`</div>`;
+  }
+  wrap.innerHTML=h;
+}
+function toggleTodayProg(key){
+  todayProgOpen=(todayProgOpen===key)?null:key;
+  renderTodayProgBrowser();
+}
 function renderProgSquares(){
   const el=document.getElementById('progSquares');
   if(!el) return;
@@ -3754,12 +3794,13 @@ function openProgDrill(key){
   if(!entry) return;
   document.getElementById('progDrillT').textContent=entry.name;
   let h=`<div style="font-size:11px;color:var(--t3);margin:0 2px 12px">${entry.meta}</div>`;
+  h+=`<div style="display:flex;gap:7px;margin-bottom:12px">`;
   if(!entry.isCore){
-    h+=`<div style="display:flex;gap:7px;margin-bottom:12px">
-      <button class="btn btn-ghost btn-md" style="flex:1;border-radius:var(--r)" onclick="document.getElementById('progDrillSh').classList.remove('on');openFullProgBuilder(${entry.progIdx})">✏️ Modifier</button>
-      <button class="btn btn-ghost btn-md" style="border-radius:var(--r);padding:0 14px" onclick="document.getElementById('progDrillSh').classList.remove('on');deleteFullProg(${entry.progIdx})">🗑️</button>
-    </div>`;
+    h+=`<button class="btn btn-ghost btn-md" style="flex:1;border-radius:var(--r)" onclick="document.getElementById('progDrillSh').classList.remove('on');openFullProgBuilder(${entry.progIdx})">✏️ Modifier</button>
+      <button class="btn btn-ghost btn-md" style="border-radius:var(--r);padding:0 14px" onclick="document.getElementById('progDrillSh').classList.remove('on');deleteFullProg(${entry.progIdx})">🗑️</button>`;
   }
+  h+=`<button class="btn btn-ghost btn-md" style="${entry.isCore?'flex:1;':''}border-radius:var(--r)" onclick="openProgSchedule('${key}')">📅 Horaire</button>`;
+  h+=`</div>`;
   h+=entry.days.map((d,i)=>`
     <div class="pd-card" onclick="document.getElementById('progDrillSh').classList.remove('on');openDaySh(${JSON.stringify(d.dayId)})">
       <div class="pd-h">
@@ -3773,6 +3814,92 @@ function openProgDrill(key){
   raiseSheet('progDrillSh');
   document.getElementById('progDrillSh').classList.add('on');
 }
+
+// ── Horaire optionnel par programme (jamais automatique — configuré et appliqué à la main) ──
+const DOW_FULL=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+function openProgSchedule(key){
+  const entry=getProgramEntries().find(p=>p.key===key);
+  if(!entry) return;
+  const sched=getProgSchedule(key);
+  document.getElementById('progSchedT').textContent='Horaire — '+entry.name;
+  let h=`<div style="font-size:12px;color:var(--t2);padding:8px 2px 14px;line-height:1.4">Optionnel — associe une journée de ce programme à chaque jour de semaine. Laisse "Aucun" pour continuer d'assigner à la main via le calendrier.</div>`;
+  h+=DOW_FULL.map((dname,wd)=>{
+    const cur=sched[wd];
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 2px;border-top:1px solid var(--b)">
+      <div style="font-size:13px;font-weight:700">${dname}</div>
+      <select onchange="setProgScheduleSlot('${key}',${wd},this.value)" style="background:var(--bg3);border:1px solid var(--b);border-radius:10px;color:#fff;font-size:12px;padding:7px 10px;outline:none;max-width:150px">
+        <option value="" ${cur==null?'selected':''}>Aucun</option>
+        <option value="rest" ${cur==='rest'?'selected':''}>Repos</option>
+        ${entry.days.map(d=>`<option value="${d.dayId}" ${cur===d.dayId?'selected':''}>${d.name}</option>`).join('')}
+      </select>
+    </div>`;
+  }).join('');
+  h+=`<button class="btn btn-red btn-lg" style="width:100%;margin-top:18px;border-radius:var(--r)" onclick="applyScheduleThisWeek('${key}')">✓ Appliquer cette semaine</button>`;
+  document.getElementById('progSchedBody').innerHTML=h;
+  raiseSheet('progSchedSh');
+  document.getElementById('progSchedSh').classList.add('on');
+}
+function setProgScheduleSlot(key,wd,val){
+  const parsed = val===''?null:(val==='rest'?'rest':(isNaN(val)?val:parseInt(val)));
+  if(key==='ctr'){
+    S.ctrSchedule=S.ctrSchedule||[null,null,null,null,null,null,null];
+    S.ctrSchedule[wd]=parsed;
+  } else {
+    const idx=parseInt(key.split('-')[1]);
+    if(S.fullPrograms&&S.fullPrograms[idx]){
+      S.fullPrograms[idx].schedule=S.fullPrograms[idx].schedule||[null,null,null,null,null,null,null];
+      S.fullPrograms[idx].schedule[wd]=parsed;
+    }
+  }
+  save();
+}
+function applyScheduleThisWeek(key){
+  const entry=getProgramEntries().find(p=>p.key===key);
+  if(!entry) return;
+  const sched=getProgSchedule(key);
+  if(!sched.some(s=>s!=null)){
+    alert("Configure au moins une journée dans l'horaire avant de l'appliquer.");
+    return;
+  }
+  const now=new Date();
+  const sun=new Date(now);sun.setDate(now.getDate()-now.getDay());
+  S.calendar=S.calendar||{};
+  for(let i=0;i<7;i++){
+    const d=new Date(sun);d.setDate(sun.getDate()+i);
+    const dateKey=d.toLocaleDateString('fr-CA');
+    const slot=sched[i];
+    if(slot==null) continue;
+    const ce=calEntryFromDayId(slot);
+    if(ce) S.calendar[dateKey]=ce;
+  }
+  save();
+  document.getElementById('progSchedSh').classList.remove('on');
+  document.getElementById('weekProgPickSh').classList.remove('on');
+  renderCalView();
+  renderToday();
+  if(navigator.vibrate) navigator.vibrate(8);
+  alert("Semaine assignée selon l'horaire de "+entry.name+".");
+}
+function openWeekProgPick(){
+  const entries=getProgramEntries();
+  document.getElementById('weekProgPickBody').innerHTML=entries.map(p=>{
+    const sched=getProgSchedule(p.key);
+    const hasSched=sched.some(s=>s!=null);
+    return `<div class="pd-card" style="cursor:default;margin-bottom:8px">
+      <div class="pd-h" style="cursor:default">
+        <div class="pd-num" style="background:${p.isCore?'var(--red)':'var(--bg4)'}"><div class="pd-j">PROG.</div><div class="pd-n" style="font-size:13px">${p.days.length}j</div></div>
+        <div class="pd-info"><div class="pd-name">${p.name}</div><div class="pd-sub">${hasSched?'Horaire configuré':'Aucun horaire configuré'}</div></div>
+      </div>
+      <div style="display:flex;gap:7px;padding:0 14px 13px">
+        ${hasSched?`<button class="btn btn-red btn-md" style="flex:1;border-radius:var(--r)" onclick="applyScheduleThisWeek('${p.key}')">✓ Appliquer cette semaine</button>`:''}
+        <button class="btn btn-ghost btn-md" style="${hasSched?'':'flex:1;'}border-radius:var(--r)" onclick="document.getElementById('weekProgPickSh').classList.remove('on');openProgSchedule('${p.key}')">📅 ${hasSched?'Modifier':"Configurer l'horaire"}</button>
+      </div>
+    </div>`;
+  }).join('');
+  raiseSheet('weekProgPickSh');
+  document.getElementById('weekProgPickSh').classList.add('on');
+}
+
 
 function openBuilder(idx){
   builderContext = 'standalone';
