@@ -3506,9 +3506,121 @@ const EX_LIBRARY = {
 
 // ── Séances prêtes à l'emploi — circuits pré-construits, exercices vérifiés dans EX_LIBRARY ──
 function rw(name,s,r){return {name:name,s:s,r:r,w:{A:0,B:0,C:0,D:0},restType:'comp',note:''};}
-const READY_WORKOUTS = [
+
+// ── Programmes de film — source unique, utilisée à la fois pour Séances prêtes
+// (une entrée par journée) et pour Programmes complets (le split en entier) ──
+const FILM_PROGRAMS = {
+  spartan300: {
+    name:'300 (Film)', icon:'⚔️', color:'#C8102E',
+    desc:"Circuit original du film 300 par l'entraîneur Mark Twight — 300 répétitions enchaînées, repos minimal. À refaire 3×/semaine. Intense, pas pour débutants.",
+    days:[
+      {name:'Circuit complet', exercises:[
+        Object.assign(rw('Pullups',1,'25'),{note:'Enchaîner, repos minimal'}),
+        Object.assign(rw('Barbell Deadlift',1,'50'),{note:'~61 kg (135 lb) à l\'origine — ajuste selon ton niveau'}),
+        Object.assign(rw('Pushups',1,'50'),{note:''}),
+        Object.assign(rw('Box Jump (Multiple Response)',1,'50'),{note:'Boîte ~60 cm (24 po)'}),
+        Object.assign(rw('Hanging Leg Raise',1,'50'),{note:'Remplace les "Floor Wipers" originaux — absents de la bibliothèque'}),
+        Object.assign(rw('Clean and Press',1,'50'),{note:'~16 kg (36 lb) par bras à l\'origine, ici barre'}),
+        rw('Pullups',1,'25'),
+      ]}
+    ]
+  },
+  wolverine: {
+    name:'Wolverine (Hugh Jackman)', icon:'🦾', color:'#3B82F6',
+    desc:"Split 5 jours documenté par plusieurs sources concordantes (Sportskeeda, Steel Supplements, Man of Many) — schéma pyramidal classique.",
+    days:[
+      {name:'Poitrine', exercises:[
+        rw('Incline Dumbbell Press',4,'12,10,8,6 (pyramide)'),
+        rw('Barbell Bench Press - Medium Grip',4,'15,12,10,8 (pyramide)'),
+        rw('Cable Crossover',4,'15,12,10,8 (pyramide)'),
+      ]},
+      {name:'Dos', exercises:[
+        rw('Pullups',4,'15,12,10,8 (pyramide)'),
+        rw('Barbell Deadlift',4,'12,10,8,6 (pyramide)'),
+        rw('Seated Cable Rows',4,'12,10,8,8 (pyramide)'),
+      ]},
+      {name:'Jambes', exercises:[
+        rw('Leg Extensions',4,'15,12,10,8 (pyramide)'),
+        rw('Lying Leg Curls',4,'15,12,10,8 (pyramide)'),
+        rw('Leg Press',4,'12,10,8,6 (pyramide)'),
+      ]},
+      {name:'Épaules', exercises:[
+        rw('Seated Side Lateral Raise',4,'12'),
+        rw('Seated Bent-Over Rear Delt Raise',4,'12'),
+        rw('Standing Military Press',4,'12,10,8,6 (pyramide)'),
+      ]},
+      {name:'Bras', exercises:[
+        rw('Dumbbell Bicep Curl',4,'12'),
+        rw('Barbell Curl',4,'12,10,8,8 (pyramide)'),
+        rw('One Arm Dumbbell Preacher Curl',4,'12,12,10,10 (pyramide)'),
+        rw('Dumbbell One-Arm Triceps Extension',4,'12'),
+        rw('EZ-Bar Skullcrusher',4,'12,10,8,8 (pyramide)'),
+        rw('Triceps Pushdown - Rope Attachment',4,'12'),
+      ]},
+    ]
+  },
+  thor: {
+    name:'Thor (Chris Hemsworth)', icon:'🔨', color:'#D4A520',
+    desc:"⚠️ Sources contradictoires (le programme a changé sur 4 films avec plusieurs entraîneurs). Reconstruction composite des éléments qui reviennent le plus souvent — pas une source unique vérifiée comme Wolverine ou 300.",
+    days:[
+      {name:'Push', exercises:[
+        rw('Barbell Bench Press - Medium Grip',4,'6-8'),
+        rw('Incline Dumbbell Press',4,'8-10'),
+        rw('Cable Crossover',3,'10-12'),
+        rw('Pushups',3,'max'),
+      ]},
+      {name:'Pull', exercises:[
+        rw('Barbell Deadlift',4,'5-8'),
+        rw('Pullups',4,'max (AMRAP)'),
+        rw('Seated Cable Rows',4,'8-12'),
+        rw('One-Arm Dumbbell Row',4,'8-12/bras'),
+        rw('Barbell Curl',3,'6-8'),
+      ]},
+      {name:'Jambes', exercises:[
+        rw('Barbell Squat',5,'10,8,6,5,4 (pyramide descendante)'),
+        rw('Leg Press',3,'10-12'),
+        rw('Dumbbell Lunges',3,'10/jambe'),
+      ]},
+      {name:'Épaules & Core', exercises:[
+        rw('Standing Military Press',4,'8-12'),
+        rw('Side Lateral Raise',4,'10-15'),
+        rw('Plank',3,'60s'),
+        rw('Hanging Leg Raise',3,'12-15'),
+      ]},
+      {name:'Conditioning', exercises:[
+        rw('Rope Jumping',3,'60s'),
+        rw('Mountain Climbers',3,'30s'),
+        rw('Bodyweight Squat',3,'20'),
+        rw('Russian Twist',3,'20'),
+      ]},
+    ]
+  },
+};
+// Ids stables utilisés dans S.seededProgramIds — ne pas renommer (compatibilité arrière)
+const FILM_SEED_IDS = {spartan300:'spartan300prog', wolverine:'wolverine', thor:'thor'};
+
+function buildFilmReadyWorkouts(){
+  const out=[];
+  Object.keys(FILM_PROGRAMS).forEach(key=>{
+    const fp=FILM_PROGRAMS[key];
+    const multi=fp.days.length>1;
+    fp.days.forEach((d,i)=>{
+      out.push({
+        id:'film_'+key+'_'+i,
+        name: multi ? fp.name+' — '+d.name : fp.name,
+        icon: fp.icon, color: fp.color,
+        desc: multi ? `Jour ${i+1}/${fp.days.length} · ${fp.desc}` : fp.desc,
+        duration:'30-45 min', category:'film',
+        exercises: d.exercises,
+      });
+    });
+  });
+  return out;
+}
+
+const READY_WORKOUTS_GENERAL = [
   {
-    id:'hiit_cardio', name:'HIIT Cardio', icon:'🔥', color:'#F97316',
+    id:'hiit_cardio', name:'HIIT Cardio', icon:'🔥', color:'#F97316', category:'general',
     desc:'Circuit cardio haute intensité, aucun équipement requis', duration:'15-20 min',
     exercises:[
       rw('Rope Jumping',4,'45s'),
@@ -3519,7 +3631,7 @@ const READY_WORKOUTS = [
     ]
   },
   {
-    id:'bw_upper', name:'Poids du corps — Haut', icon:'💪', color:'#3B82F6',
+    id:'bw_upper', name:'Poids du corps — Haut', icon:'💪', color:'#3B82F6', category:'general',
     desc:'Pecs, dos, épaules et triceps sans équipement', duration:'20-25 min',
     exercises:[
       rw('Pushups',4,'12-15'),
@@ -3530,7 +3642,7 @@ const READY_WORKOUTS = [
     ]
   },
   {
-    id:'bw_lower', name:'Poids du corps — Bas', icon:'🦵', color:'#C8102E',
+    id:'bw_lower', name:'Poids du corps — Bas', icon:'🦵', color:'#C8102E', category:'general',
     desc:'Quadriceps, ischios et fessiers sans équipement', duration:'20-25 min',
     exercises:[
       rw('Bodyweight Squat',4,'15-20'),
@@ -3541,7 +3653,7 @@ const READY_WORKOUTS = [
     ]
   },
   {
-    id:'core_express', name:'Core Express', icon:'🧱', color:'#84CC16',
+    id:'core_express', name:'Core Express', icon:'🧱', color:'#84CC16', category:'general',
     desc:'Gainage et abdominaux, séance courte', duration:'10-12 min',
     exercises:[
       rw('Plank',3,'45s'),
@@ -3552,7 +3664,7 @@ const READY_WORKOUTS = [
     ]
   },
   {
-    id:'fullbody_express', name:'Full Body Express', icon:'⚡', color:'#D4A520',
+    id:'fullbody_express', name:'Full Body Express', icon:'⚡', color:'#D4A520', category:'general',
     desc:'Circuit complet, un peu de tout, séance rapide', duration:'20 min',
     exercises:[
       rw('Bodyweight Squat',3,'15'),
@@ -3563,7 +3675,7 @@ const READY_WORKOUTS = [
     ]
   },
   {
-    id:'mobility', name:'Mobilité & Récupération', icon:'🧘', color:'#22C55E',
+    id:'mobility', name:'Mobilité & Récupération', icon:'🧘', color:'#22C55E', category:'general',
     desc:'Étirements complets, journée de repos actif', duration:'12-15 min',
     exercises:[
       rw('Cat Stretch',2,'30s'),
@@ -3573,20 +3685,8 @@ const READY_WORKOUTS = [
       rw('Standing Gastrocnemius Calf Stretch',2,'30s/jambe'),
     ]
   },
-  {
-    id:'spartan300', name:'300 Workout (Spartan)', icon:'⚔️', color:'#C8102E',
-    desc:"Le circuit original du film 300 par l'entraîneur Mark Twight — 300 répétitions enchaînées, repos minimal. Intense, pas pour débutants.", duration:'20-30 min',
-    exercises:[
-      Object.assign(rw('Pullups',1,'25'),{note:'Enchaîner, repos minimal'}),
-      Object.assign(rw('Barbell Deadlift',1,'50'),{note:'~61 kg (135 lb) à l\'origine — ajuste selon ton niveau'}),
-      Object.assign(rw('Pushups',1,'50'),{note:''}),
-      Object.assign(rw('Box Jump (Multiple Response)',1,'50'),{note:'Boîte ~60 cm (24 po)'}),
-      Object.assign(rw('Hanging Leg Raise',1,'50'),{note:'Remplace les "Floor Wipers" originaux — absents de la bibliothèque'}),
-      Object.assign(rw('Clean and Press',1,'50'),{note:'~16 kg (36 lb) par bras à l\'origine, ici barre'}),
-      rw('Pullups',1,'25'),
-    ]
-  },
 ];
+const READY_WORKOUTS = READY_WORKOUTS_GENERAL.concat(buildFilmReadyWorkouts());
 
 
 let exLibTargetName = null;
@@ -3902,102 +4002,17 @@ function seedFilmPrograms(){
   // sans jamais retoucher à ceux déjà présents (ou supprimés) chez la personne.
   S.seededProgramIds = S.seededProgramIds || (S.seededFilms ? ['wolverine','thor'] : []);
   const has=id=>S.seededProgramIds.includes(id);
-  const markSeeded=id=>{ if(!has(id)) S.seededProgramIds.push(id); };
 
-  if(!has('wolverine')){
+  Object.keys(FILM_PROGRAMS).forEach(key=>{
+    const sid=FILM_SEED_IDS[key]||key;
+    if(has(sid)) return;
+    const fp=FILM_PROGRAMS[key];
     S.fullPrograms.push({
-      name:'Wolverine (Hugh Jackman)', color:'#3B82F6',
-      startDate:'', endDate:'',
-      desc:"Split 5 jours documenté par plusieurs sources concordantes (Sportskeeda, Steel Supplements, Man of Many) — schéma pyramidal classique.",
-      days:[
-        {name:'Poitrine', exercises:[
-          rw('Incline Dumbbell Press',4,'12,10,8,6 (pyramide)'),
-          rw('Barbell Bench Press - Medium Grip',4,'15,12,10,8 (pyramide)'),
-          rw('Cable Crossover',4,'15,12,10,8 (pyramide)'),
-        ]},
-        {name:'Dos', exercises:[
-          rw('Pullups',4,'15,12,10,8 (pyramide)'),
-          rw('Barbell Deadlift',4,'12,10,8,6 (pyramide)'),
-          rw('Seated Cable Rows',4,'12,10,8,8 (pyramide)'),
-        ]},
-        {name:'Jambes', exercises:[
-          rw('Leg Extensions',4,'15,12,10,8 (pyramide)'),
-          rw('Lying Leg Curls',4,'15,12,10,8 (pyramide)'),
-          rw('Leg Press',4,'12,10,8,6 (pyramide)'),
-        ]},
-        {name:'Épaules', exercises:[
-          rw('Seated Side Lateral Raise',4,'12'),
-          rw('Seated Bent-Over Rear Delt Raise',4,'12'),
-          rw('Standing Military Press',4,'12,10,8,6 (pyramide)'),
-        ]},
-        {name:'Bras', exercises:[
-          rw('Dumbbell Bicep Curl',4,'12'),
-          rw('Barbell Curl',4,'12,10,8,8 (pyramide)'),
-          rw('One Arm Dumbbell Preacher Curl',4,'12,12,10,10 (pyramide)'),
-          rw('Dumbbell One-Arm Triceps Extension',4,'12'),
-          rw('EZ-Bar Skullcrusher',4,'12,10,8,8 (pyramide)'),
-          rw('Triceps Pushdown - Rope Attachment',4,'12'),
-        ]},
-      ]
+      name:fp.name, color:fp.color, startDate:'', endDate:'', desc:fp.desc,
+      days:JSON.parse(JSON.stringify(fp.days))
     });
-    markSeeded('wolverine');
-  }
-
-  if(!has('thor')){
-    S.fullPrograms.push({
-      name:'Thor (Chris Hemsworth)', color:'#D4A520',
-      startDate:'', endDate:'',
-      desc:"⚠️ Sources contradictoires (le programme a changé sur 4 films avec plusieurs entraîneurs). Ceci est une reconstruction composite des éléments qui reviennent le plus souvent — pas une source unique vérifiée comme Wolverine ou le 300 Workout.",
-      days:[
-        {name:'Push', exercises:[
-          rw('Barbell Bench Press - Medium Grip',4,'6-8'),
-          rw('Incline Dumbbell Press',4,'8-10'),
-          rw('Cable Crossover',3,'10-12'),
-          rw('Pushups',3,'max'),
-        ]},
-        {name:'Pull', exercises:[
-          rw('Barbell Deadlift',4,'5-8'),
-          rw('Pullups',4,'max (AMRAP)'),
-          rw('Seated Cable Rows',4,'8-12'),
-          rw('One-Arm Dumbbell Row',4,'8-12/bras'),
-          rw('Barbell Curl',3,'6-8'),
-        ]},
-        {name:'Jambes', exercises:[
-          rw('Barbell Squat',5,'10,8,6,5,4 (pyramide descendante)'),
-          rw('Leg Press',3,'10-12'),
-          rw('Dumbbell Lunges',3,'10/jambe'),
-        ]},
-        {name:'Épaules & Core', exercises:[
-          rw('Standing Military Press',4,'8-12'),
-          rw('Side Lateral Raise',4,'10-15'),
-          rw('Plank',3,'60s'),
-          rw('Hanging Leg Raise',3,'12-15'),
-        ]},
-        {name:'Conditioning', exercises:[
-          rw('Rope Jumping',3,'60s'),
-          rw('Mountain Climbers',3,'30s'),
-          rw('Bodyweight Squat',3,'20'),
-          rw('Russian Twist',3,'20'),
-        ]},
-      ]
-    });
-    markSeeded('thor');
-  }
-
-  if(!has('spartan300prog')){
-    const spartanTemplate = (typeof READY_WORKOUTS!=='undefined') ? READY_WORKOUTS.find(w=>w.id==='spartan300') : null;
-    if(spartanTemplate){
-      S.fullPrograms.push({
-        name:'300 (Film)', color:CTR_COLOR,
-        startDate:'', endDate:'',
-        desc:"Circuit original du film 300 (Mark Twight) — 300 répétitions enchaînées en un seul passage, à refaire 3×/semaine. Ce n'est pas un split multi-jours comme Wolverine ou Thor, juste ce même circuit regroupé ici pour cohérence visuelle.",
-        days:[
-          {name:'Circuit complet', exercises:JSON.parse(JSON.stringify(spartanTemplate.exercises))}
-        ]
-      });
-    }
-    markSeeded('spartan300prog');
-  }
+    S.seededProgramIds.push(sid);
+  });
 
   S.seededFilms = true; // conservé pour compatibilité arrière, inoffensif
 }
@@ -4145,14 +4160,27 @@ function applyScheduleThisWeek(key){
   alert("Semaine assignée selon l'horaire de "+entry.name+".");
 }
 function openReadyWorkouts(){
-  document.getElementById('readyWorkoutsBody').innerHTML=READY_WORKOUTS.map(w=>`
+  const film=READY_WORKOUTS.filter(w=>w.category==='film');
+  const general=READY_WORKOUTS.filter(w=>w.category!=='film');
+  const card=w=>`
     <div class="pd-card" onclick="openReadyDetail('${w.id}')">
       <div class="pd-h">
         <div class="pd-num" style="background:${w.color}"><div style="font-size:20px">${w.icon}</div></div>
         <div class="pd-info"><div class="pd-name">${w.name}</div><div class="pd-sub">${w.desc} · ${w.duration}</div></div>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
       </div>
-    </div>`).join('');
+    </div>`;
+  let h='';
+  if(film.length){
+    h+=`<div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--rs);margin:4px 2px 8px">🎬 FILM (HÉROS)</div>`;
+    h+=film.map(card).join('');
+    h+=`<div style="height:14px"></div>`;
+  }
+  if(general.length){
+    h+=`<div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--t3);margin:4px 2px 8px">GÉNÉRAL</div>`;
+    h+=general.map(card).join('');
+  }
+  document.getElementById('readyWorkoutsBody').innerHTML=h;
   raiseSheet('readyWorkoutsSh');
   document.getElementById('readyWorkoutsSh').classList.add('on');
 }
