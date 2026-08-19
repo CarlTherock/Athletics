@@ -1946,24 +1946,25 @@ function renderDayExList(id,day,b,preview){
     const dispS=getDisplayS(ex);
     const img=getExerciseImage(ex.name);
     const rInfo=getRestLabel(ex,b);
-    return `<div style="padding:0 14px;margin-bottom:16px">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:9px">
-        <div style="font-size:15px;font-weight:800;flex:1;padding-top:2px">${(ex.new||isReplaced)?'★ ':''}${ex.name}</div>
-        <div style="display:flex;gap:6px;flex-shrink:0">
-          ${!ex.bw&&!ex.rpe?`<button onclick="openPlate('${parseFloat(w)||0}','${ex.name}','${dispR}','${dispS}',${JSON.stringify(id)})" style="background:var(--bg3);border:1px solid var(--b);border-radius:20px;padding:0 11px;height:30px;display:flex;align-items:center;gap:5px;cursor:pointer;color:#fff;font-size:11px;font-weight:700"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="12" r="3.2"/><circle cx="18" cy="12" r="3.2"/><line x1="9.2" y1="12" x2="14.8" y2="12" stroke-width="2.4"/></svg>Plates</button>`:''}
-          ${!ex.bw&&!ex.rpe?`<button onclick="openWarmup('${parseFloat(w)||0}','${ex.name}')" style="background:var(--bg3);border:1px solid var(--b);border-radius:20px;padding:0 11px;height:30px;display:flex;align-items:center;gap:5px;cursor:pointer;color:#fff;font-size:11px;font-weight:700"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17.66 17.66A8 8 0 1 1 6.34 6.34a8 8 0 0 1 11.32 11.32z"/><path d="M12 9v4l2 1"/></svg>Échauffement</button>`:''}
-          <button onclick="openExLibrary(${JSON.stringify(id)},${exIdx})" style="background:var(--bg3);border:1px solid var(--b);border-radius:20px;padding:0 11px;height:30px;display:flex;align-items:center;gap:5px;cursor:pointer;color:#fff;font-size:11px;font-weight:700"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>Replace</button>
+    const chipStyle='background:rgba(20,20,20,.65);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:0 11px;height:30px;display:flex;align-items:center;gap:5px;cursor:pointer;color:#fff;font-size:11px;font-weight:700';
+    return `<div style="position:relative;border-radius:18px;overflow:hidden;margin:0 14px 14px;min-height:270px;background:var(--bg3)" onclick="event.target.closest('button')||openImgView('${img}')">
+      <img src="${img}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" loading="lazy" onerror="this.style.display='none'">
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg, rgba(10,10,10,.1) 0%, rgba(10,10,10,.35) 40%, rgba(8,8,8,.97) 100%)"></div>
+      <div style="position:relative;padding:13px;display:flex;flex-direction:column;min-height:270px;box-sizing:border-box">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+          ${!ex.bw&&!ex.rpe?`<button onclick="event.stopPropagation();openPlate('${parseFloat(w)||0}','${ex.name}','${dispR}','${dispS}',${JSON.stringify(id)})" style="${chipStyle}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="12" r="3.2"/><circle cx="18" cy="12" r="3.2"/><line x1="9.2" y1="12" x2="14.8" y2="12" stroke-width="2.4"/></svg>Plates</button>`:''}
+          ${!ex.bw&&!ex.rpe?`<button onclick="event.stopPropagation();openWarmup('${parseFloat(w)||0}','${ex.name}')" style="${chipStyle}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17.66 17.66A8 8 0 1 1 6.34 6.34a8 8 0 0 1 11.32 11.32z"/><path d="M12 9v4l2 1"/></svg>Échauffement</button>`:''}
+          <button onclick="event.stopPropagation();openExLibrary(${JSON.stringify(id)},${exIdx})" style="${chipStyle}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>Replace</button>
+        </div>
+        <div style="flex:1"></div>
+        <div>
+          ${(ex.new||isReplaced)?'<div style="display:inline-flex;align-items:center;gap:4px;background:rgba(212,165,32,.18);border:1px solid rgba(212,165,32,.4);color:var(--gold);font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:20px;margin-bottom:7px">★ Nouveau</div>':''}
+          <div style="font-size:19px;font-weight:900;color:#fff;letter-spacing:-.01em;line-height:1.1">${ex.name}</div>
+          <div style="font-size:13px;color:#e5e5e5;margin-top:5px;font-weight:600">${dispS} × ${dispR} · <span style="color:var(--rs)">${w}</span></div>
+          <div style="font-size:10.5px;color:#aaa;margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.03em">${rInfo.type} · ${rInfo.fmt}</div>
+          ${ex.note?`<div style="font-size:11px;color:#ccc;margin-top:5px;font-style:italic;line-height:1.4">${ex.note}</div>`:''}
         </div>
       </div>
-      <div style="display:flex;justify-content:center;margin-bottom:9px">
-        <img src="${img}" style="width:100%;max-width:340px;height:150px;object-fit:contain;border-radius:11px;background:var(--bg3);cursor:pointer" loading="lazy" onerror="this.style.opacity='.3'" onclick="openImgView('${img}')">
-      </div>
-      <div style="text-align:center">
-        <div style="font-size:12px;color:var(--t2)">${dispS} × ${dispR} · <span style="color:var(--rs);font-weight:700">${w}</span></div>
-        <div style="font-size:10px;color:var(--t3);margin-top:3px">${rInfo.type} · ${rInfo.fmt}</div>
-        <div style="font-size:10px;color:var(--t3);margin-top:3px;font-style:italic">${ex.note}</div>
-      </div>
-      <div style="height:1px;background:var(--b);margin-top:14px"></div>
     </div>`;
   }).join('');
 }
