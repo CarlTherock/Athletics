@@ -784,6 +784,27 @@ body::before {
   </button>
 </nav>
 
+<!-- ONBOARDING / SPLASH — connexion cloud au premier lancement -->
+<div class="sh-bg on" id="onboardSh" style="z-index:9000">
+  <div class="sh" style="max-height:none;border-radius:var(--r);margin:16px;padding-bottom:14px">
+    <div style="text-align:center;padding:26px 20px 6px">
+      <div class="tb-logo" style="font-size:28px;margin-bottom:8px">CTR <em>300</em></div>
+      <div style="font-size:13px;color:var(--t2);line-height:1.5">Connecte un compte pour que tes entraînements se sauvegardent en lieu sûr, dans ton propre cloud — jamais partagés avec personne d'autre.</div>
+    </div>
+    <div style="padding:18px 20px 4px">
+      <button class="btn btn-red btn-lg" style="width:100%;margin-bottom:9px" onclick="onboardConnect('onedrive')">☁️ Se connecter avec OneDrive</button>
+      <button class="btn btn-red btn-lg" style="width:100%;margin-bottom:16px" onclick="onboardConnect('gdrive')">☁️ Se connecter avec Google Drive</button>
+      <button class="btn btn-ghost btn-md" style="width:100%;border-radius:var(--r)" onclick="onboardGuestConfirm()">Continuer sans compte</button>
+    </div>
+    <div id="onboardGuestWarning" style="display:none;padding:14px 20px 4px">
+      <div style="background:var(--bg3);border:1px solid var(--b);border-radius:10px;padding:13px;font-size:12px;color:var(--t2);line-height:1.5;margin-bottom:10px">
+        ⚠️ Sans compte connecté, tes entraînements restent seulement sur cet appareil. Si tu changes de téléphone ou vides ton navigateur, ils seront perdus. Tu pourras te connecter plus tard depuis Programme → Compte & sauvegarde cloud.
+      </div>
+      <button class="btn btn-ghost btn-md" style="width:100%;border-radius:var(--r)" onclick="onboardGuestFinal()">Compris, continuer sans compte</button>
+    </div>
+  </div>
+</div>
+
 <div class="screens">
 
 <!-- ══ TODAY ══ -->
@@ -2438,6 +2459,56 @@ let googleTokenClient = null;
 let googleAccessToken = null;
 const CLOUD_FILE_NAME = 'ctr-athletics-data.json';
 
+// ── Journal d'inscription — visible seulement par Carl (Google Form → Google Sheet privée) ──
+// Chaque connexion (première ou répétée) envoie une ligne discrète. Ne contient jamais
+// les entraînements eux-mêmes — seulement nom, méthode et type d'événement.
+const REG_LOG_CONFIG = {
+  formActionUrl: '', // ← https://docs.google.com/forms/d/e/FORM_ID/formResponse
+  entryName: '',      // ← entry.XXXXXXX pour le champ "Nom"
+  entryMethod: '',    // ← entry.XXXXXXX pour le champ "Méthode"
+  entryEvent: '',      // ← entry.XXXXXXX pour le champ "Type d'événement"
+};
+function logRegistration(name, method, eventType){
+  if(!REG_LOG_CONFIG.formActionUrl) return; // pas encore configuré — silencieux, n'affecte rien
+  try{
+    const params = new URLSearchParams();
+    if(REG_LOG_CONFIG.entryName) params.append(REG_LOG_CONFIG.entryName, name||'');
+    if(REG_LOG_CONFIG.entryMethod) params.append(REG_LOG_CONFIG.entryMethod, method||'');
+    if(REG_LOG_CONFIG.entryEvent) params.append(REG_LOG_CONFIG.entryEvent, eventType||'');
+    fetch(REG_LOG_CONFIG.formActionUrl, {method:'POST', mode:'no-cors', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:params.toString()});
+  }catch(e){}
+}
+function pingActivityLog(){
+  if(!S.cloudAccount) return;
+  const today = tod();
+  if(S.lastActivityLogDate === today) return; // déjà loggé aujourd'hui, pas de spam
+  S.lastActivityLogDate = today;
+  save();
+  logRegistration(S.cloudAccount.name||S.cloudAccount.email||'?', S.cloudAccount.provider==='onedrive'?'OneDrive':'Google Drive', 'Activité');
+}
+
+// ── Onboarding / splash ──
+function onboardConnect(provider){
+  if(provider==='onedrive') connectOneDrive();
+  else connectGoogleDrive();
+}
+function onboardGuestConfirm(){
+  document.getElementById('onboardGuestWarning').style.display='block';
+}
+function onboardGuestFinal(){
+  S.onboardingChoice='guest';
+  save();
+  document.getElementById('onboardSh').classList.remove('on');
+}
+function closeOnboardingIfOpen(){
+  const el=document.getElementById('onboardSh');
+  if(el && el.classList.contains('on')){
+    S.onboardingChoice = S.cloudAccount ? S.cloudAccount.provider : 'guest';
+    save();
+    el.classList.remove('on');
+  }
+}
+
 function renderCloudCard(){
   const el = document.getElementById('cloudCardBody');
   if(!el) return;
@@ -2494,9 +2565,13 @@ async function connectOneDrive(){
   if(!app){ alert("La librairie Microsoft n'a pas pu se charger. Vérifie ta connexion et réessaie."); return; }
   try{
     const res = await app.loginPopup({scopes:['Files.ReadWrite.AppFolder','User.Read']});
+    const isFirst = !S.cloudAccount;
     S.cloudAccount = {provider:'onedrive', name:res.account.name, email:res.account.username};
+    S.onboardingChoice = 'onedrive';
     save();
     renderCloudCard();
+    logRegistration(res.account.name||res.account.username, 'OneDrive', isFirst?'Première connexion':'Connexion');
+    closeOnboardingIfOpen();
     if(navigator.vibrate) navigator.vibrate(8);
   }catch(e){ alert('Connexion à OneDrive annulée ou échouée.'); }
 }
@@ -2550,13 +2625,23 @@ function initGoogleClient(){
   if(!googleTokenClient){
     googleTokenClient = google.accounts.oauth2.initTokenClient({
       client_id: CLOUD_CONFIG.google.clientId,
-      scope: 'https://www.googleapis.com/auth/drive.appdata',
-      callback: (resp)=>{
+      scope: 'https://www.googleapis.com/auth/drive.appdata email profile',
+      callback: async (resp)=>{
         if(resp && resp.access_token){
           googleAccessToken = resp.access_token;
-          S.cloudAccount = {provider:'gdrive', name:'', email:''};
+          const isFirst = !S.cloudAccount;
+          let name='', email='';
+          try{
+            const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+resp.access_token}});
+            const info = await r.json();
+            name = info.name||''; email = info.email||'';
+          }catch(e){}
+          S.cloudAccount = {provider:'gdrive', name, email};
+          S.onboardingChoice = 'gdrive';
           save();
           renderCloudCard();
+          logRegistration(name||email||'?', 'Google Drive', isFirst?'Première connexion':'Connexion');
+          closeOnboardingIfOpen();
           if(navigator.vibrate) navigator.vibrate(8);
         }
       }
@@ -4979,6 +5064,16 @@ initRecoveryBody();
 renderCloudCard();
 renderToday();
 renderProg();
+// Migration: quelqu'un qui utilisait déjà l'app avant ce splash (données ou compte cloud
+// existants) ne doit jamais se le faire imposer rétroactivement.
+if(!S.onboardingChoice && (S.cloudAccount || (S.sessions&&S.sessions.length))){
+  S.onboardingChoice = S.cloudAccount ? S.cloudAccount.provider : 'guest';
+  save();
+}
+if(S.onboardingChoice){
+  document.getElementById('onboardSh').classList.remove('on');
+  pingActivityLog();
+}
 if(S.woStart){
   showActiveBanner(true);
   if(S.woInt)clearInterval(S.woInt);
