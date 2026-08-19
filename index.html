@@ -2760,6 +2760,12 @@ function fmtLastSync(){
   if(diffH<24) return 'Il y a '+diffH+' h';
   return new Date(S.lastCloudSync).toLocaleDateString('fr-CA',{day:'numeric',month:'short'});
 }
+function syncStatusLine(){
+  if(S.lastSyncFailed){
+    return `<div style="font-size:11px;color:var(--red);font-weight:700;margin-bottom:10px">⚠️ Dernière synchro échouée — appuie sur Sauvegarder</div>`;
+  }
+  return `<div style="font-size:11px;color:var(--green);font-weight:700;margin-bottom:10px">💾 Dernière sauvegarde : ${fmtLastSync()}</div>`;
+}
 function renderCloudCard(){
   const dotEl = document.getElementById('cloudStatusDot');
   if(dotEl) dotEl.style.display = S.cloudAccount ? 'inline-flex' : 'none';
@@ -2771,7 +2777,7 @@ function renderCloudCard(){
   if(acct && acct.provider==='onedrive'){
     el.innerHTML = `<div style="font-size:13px;font-weight:800;margin-bottom:3px">☁️ Connecté à OneDrive</div>
       <div style="font-size:11px;color:var(--t3);margin-bottom:3px">${acct.email||acct.name||''}</div>
-      <div style="font-size:11px;color:var(--green);font-weight:700;margin-bottom:10px">💾 Dernière sauvegarde : ${fmtLastSync()}</div>
+      ${syncStatusLine()}
       <div style="display:flex;gap:7px">
         <button class="btn btn-red btn-md" style="flex:1;border-radius:var(--r)" onclick="saveToOneDrive()">☁️ Sauvegarder</button>
         <button class="btn btn-ghost btn-md" style="flex:1;border-radius:var(--r)" onclick="loadFromOneDrive()">⬇️ Charger</button>
@@ -2783,7 +2789,7 @@ function renderCloudCard(){
   } else if(acct && acct.provider==='gdrive'){
     el.innerHTML = `<div style="font-size:13px;font-weight:800;margin-bottom:3px">☁️ Connecté à Google Drive</div>
       <div style="font-size:11px;color:var(--t3);margin-bottom:3px">${acct.email||acct.name||''}</div>
-      <div style="font-size:11px;color:var(--green);font-weight:700;margin-bottom:10px">💾 Dernière sauvegarde : ${fmtLastSync()}</div>
+      ${syncStatusLine()}
       <div style="display:flex;gap:7px">
         <button class="btn btn-red btn-md" style="flex:1;border-radius:var(--r)" onclick="saveToGoogleDrive()">☁️ Sauvegarder</button>
         <button class="btn btn-ghost btn-md" style="flex:1;border-radius:var(--r)" onclick="loadFromGoogleDrive()">⬇️ Charger</button>
@@ -2815,7 +2821,8 @@ function initMsal(){
   if(typeof msal==='undefined') return null;
   if(!msalInstance){
     msalInstance = new msal.PublicClientApplication({
-      auth:{clientId:CLOUD_CONFIG.msal.clientId, authority:CLOUD_CONFIG.msal.authority, redirectUri:CLOUD_CONFIG.msal.redirectUri}
+      auth:{clientId:CLOUD_CONFIG.msal.clientId, authority:CLOUD_CONFIG.msal.authority, redirectUri:CLOUD_CONFIG.msal.redirectUri},
+      cache:{cacheLocation:'localStorage', storeAuthStateInCookie:true} // sessionStorage (défaut) s'efface à chaque fermeture du PWA — casse toute reconnexion silencieuse
     });
   }
   return msalInstance;
@@ -2905,7 +2912,11 @@ async function getMsalToken(){
 }
 async function saveToOneDrive(silent){
   const token = await getMsalToken();
-  if(!token){ if(!silent) alert('Reconnecte-toi à OneDrive.'); return; }
+  if(!token){
+    S.lastSyncFailed=true; persistLocal(); renderCloudCard();
+    if(!silent) alert('Reconnecte-toi à OneDrive.');
+    return;
+  }
   try{
     const body = JSON.stringify({S,v:4,exported:new Date().toISOString()});
     const res = await fetch('https://graph.microsoft.com/v1.0/me/drive/special/approot:/'+CLOUD_FILE_NAME+':/content',{
@@ -2914,10 +2925,14 @@ async function saveToOneDrive(silent){
     if(!res.ok) throw new Error();
     S.lastCloudSync=Date.now();
     S.lastLocalChange=S.lastCloudSync; // égaux exactement — évite de se re-déclencher soi-même en boucle
+    S.lastSyncFailed=false;
     persistLocal();
     renderCloudCard();
     if(!silent) alert('✓ Sauvegardé sur OneDrive');
-  }catch(e){ if(!silent) alert('La sauvegarde sur OneDrive a échoué. Réessaie.'); }
+  }catch(e){
+    S.lastSyncFailed=true; persistLocal(); renderCloudCard();
+    if(!silent) alert('La sauvegarde sur OneDrive a échoué. Réessaie.');
+  }
 }
 async function loadFromOneDrive(){
   const token = await getMsalToken();
@@ -2999,7 +3014,11 @@ async function findGDriveFileId(){
 }
 async function saveToGoogleDrive(silent){
   const token = await ensureGoogleToken();
-  if(!token){ if(!silent) alert('Reconnecte-toi à Google Drive.'); return; }
+  if(!token){
+    S.lastSyncFailed=true; persistLocal(); renderCloudCard();
+    if(!silent) alert('Reconnecte-toi à Google Drive.');
+    return;
+  }
   try{
     const fileId = await findGDriveFileId();
     const body = JSON.stringify({S,v:4,exported:new Date().toISOString()});
@@ -3013,10 +3032,14 @@ async function saveToGoogleDrive(silent){
     if(!res.ok) throw new Error();
     S.lastCloudSync=Date.now();
     S.lastLocalChange=S.lastCloudSync; // égaux exactement — évite de se re-déclencher soi-même en boucle
+    S.lastSyncFailed=false;
     persistLocal();
     renderCloudCard();
     if(!silent) alert('✓ Sauvegardé sur Google Drive');
-  }catch(e){ if(!silent) alert('La sauvegarde sur Google Drive a échoué. Réessaie.'); }
+  }catch(e){
+    S.lastSyncFailed=true; persistLocal(); renderCloudCard();
+    if(!silent) alert('La sauvegarde sur Google Drive a échoué. Réessaie.');
+  }
 }
 async function loadFromGoogleDrive(){
   const token = await ensureGoogleToken();
