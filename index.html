@@ -816,6 +816,16 @@ body::before {
   </div>
 </div>
 
+<!-- Bandeau de rattrapage — changements non synchronisés détectés au réouverture -->
+<div id="pendingSyncBanner" style="display:none;position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:12px;right:12px;z-index:8500;background:var(--bg2);border:1px solid var(--red);border-radius:var(--r);padding:13px 14px;box-shadow:0 4px 20px rgba(0,0,0,.45)">
+  <div style="font-size:13px;font-weight:800;margin-bottom:3px">⚠️ Changements non sauvegardés</div>
+  <div style="font-size:11px;color:var(--t2);margin-bottom:10px;line-height:1.4">La dernière session ne s'est peut-être pas synchronisée avec ton cloud (fermeture inattendue de l'app).</div>
+  <div style="display:flex;gap:7px">
+    <button class="btn btn-red btn-md" style="flex:1;border-radius:var(--r)" onclick="resolvePendingSync(true)">☁️ Sauvegarder maintenant</button>
+    <button class="btn btn-ghost btn-md" style="border-radius:var(--r);padding:0 14px" onclick="resolvePendingSync(false)">Plus tard</button>
+  </div>
+</div>
+
 <div class="screens">
 
 <!-- ══ TODAY ══ -->
@@ -1127,7 +1137,7 @@ const MUSCLE_GROUPS=[
 // ════════════════════════════════════════════════════════════
 let S={curDay:1,curWeek:1,ovDay:null,woStart:null,woInt:null,restInt:null,rRem:0,rTotal:0,sets:{},sessions:[],photos:[],hist:{},dayOrder:{},exWOverrides:{},exROverrides:{},exSOverrides:{},customPrograms:[],calendar:{},fullPrograms:[]};
 const KEY="ctr300v4";
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function save(){try{S.lastLocalChange=Date.now();localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function load(){try{const d=localStorage.getItem(KEY);if(d){const p=JSON.parse(d);Object.assign(S,p);}}catch(e){}}
 
 // ════════════════════════════════════════════════════════════
@@ -2498,6 +2508,35 @@ function pingActivityLog(){
   logRegistration(S.cloudAccount.name||S.cloudAccount.email||'?', S.cloudAccount.provider==='onedrive'?'OneDrive':'Google Drive', 'Activité');
 }
 
+// ── Protection des données : sauvegarde auto en arrière-plan + rattrapage au réouverture ──
+// Impossible d'imposer un vrai popup bloquant "veux-tu sauvegarder?" à la fermeture d'une PWA
+// mobile (non fiable sur iOS/Android) — donc on sauvegarde discrètement dès que l'app quitte
+// le premier plan, et on rattrape au prochain lancement si jamais ça n'a pas fonctionné.
+function hasUnsyncedChanges(){
+  return !!(S.cloudAccount && S.lastLocalChange && (!S.lastCloudSync || S.lastCloudSync < S.lastLocalChange));
+}
+function autoSyncIfNeeded(){
+  if(!hasUnsyncedChanges()) return;
+  if(S.cloudAccount.provider==='onedrive') saveToOneDrive(true);
+  else if(S.cloudAccount.provider==='gdrive') saveToGoogleDrive(true);
+}
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState==='hidden') autoSyncIfNeeded();
+});
+function checkPendingSync(){
+  if(!hasUnsyncedChanges()) return;
+  const el=document.getElementById('pendingSyncBanner');
+  if(el) el.style.display='block';
+}
+function resolvePendingSync(doSave){
+  const el=document.getElementById('pendingSyncBanner');
+  if(el) el.style.display='none';
+  if(doSave && S.cloudAccount){
+    if(S.cloudAccount.provider==='onedrive') saveToOneDrive();
+    else saveToGoogleDrive();
+  }
+}
+
 // ── Onboarding / splash ──
 function onboardConnect(provider){
   if(provider==='onedrive') connectOneDrive();
@@ -2616,17 +2655,19 @@ async function getMsalToken(){
     }catch(e2){ return null; }
   }
 }
-async function saveToOneDrive(){
+async function saveToOneDrive(silent){
   const token = await getMsalToken();
-  if(!token){ alert('Reconnecte-toi à OneDrive.'); return; }
+  if(!token){ if(!silent) alert('Reconnecte-toi à OneDrive.'); return; }
   try{
     const body = JSON.stringify({S,v:4,exported:new Date().toISOString()});
     const res = await fetch('https://graph.microsoft.com/v1.0/me/drive/special/approot:/'+CLOUD_FILE_NAME+':/content',{
       method:'PUT', headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'}, body
     });
     if(!res.ok) throw new Error();
-    alert('✓ Sauvegardé sur OneDrive');
-  }catch(e){ alert('La sauvegarde sur OneDrive a échoué. Réessaie.'); }
+    S.lastCloudSync=Date.now();
+    save();
+    if(!silent) alert('✓ Sauvegardé sur OneDrive');
+  }catch(e){ if(!silent) alert('La sauvegarde sur OneDrive a échoué. Réessaie.'); }
 }
 async function loadFromOneDrive(){
   const token = await getMsalToken();
@@ -2704,9 +2745,9 @@ async function findGDriveFileId(){
   const d = await res.json();
   return (d.files && d.files[0]) ? d.files[0].id : null;
 }
-async function saveToGoogleDrive(){
+async function saveToGoogleDrive(silent){
   const token = await ensureGoogleToken();
-  if(!token){ alert('Reconnecte-toi à Google Drive.'); return; }
+  if(!token){ if(!silent) alert('Reconnecte-toi à Google Drive.'); return; }
   try{
     const fileId = await findGDriveFileId();
     const body = JSON.stringify({S,v:4,exported:new Date().toISOString()});
@@ -2718,8 +2759,10 @@ async function saveToGoogleDrive(){
       : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`;
     const res = await fetch(url,{method:fileId?'PATCH':'POST',headers:{Authorization:'Bearer '+token,'Content-Type':`multipart/related; boundary=${boundary}`},body:multipart});
     if(!res.ok) throw new Error();
-    alert('✓ Sauvegardé sur Google Drive');
-  }catch(e){ alert('La sauvegarde sur Google Drive a échoué. Réessaie.'); }
+    S.lastCloudSync=Date.now();
+    save();
+    if(!silent) alert('✓ Sauvegardé sur Google Drive');
+  }catch(e){ if(!silent) alert('La sauvegarde sur Google Drive a échoué. Réessaie.'); }
 }
 async function loadFromGoogleDrive(){
   const token = await ensureGoogleToken();
@@ -5086,6 +5129,7 @@ function playDone(){
 
 
 load();
+checkPendingSync();
 if(S.barWeight) BAR=S.barWeight;
 S.curWeek=calcWeek();
 seedFilmPrograms();
