@@ -1137,7 +1137,17 @@ const MUSCLE_GROUPS=[
 // ════════════════════════════════════════════════════════════
 let S={curDay:1,curWeek:1,ovDay:null,woStart:null,woInt:null,restInt:null,rRem:0,rTotal:0,sets:{},sessions:[],photos:[],hist:{},dayOrder:{},exWOverrides:{},exROverrides:{},exSOverrides:{},customPrograms:[],calendar:{},fullPrograms:[]};
 const KEY="ctr300v4";
-function save(){try{S.lastLocalChange=Date.now();localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function persistLocal(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+function save(){S.lastLocalChange=Date.now();persistLocal();scheduleCloudSync();}
+let cloudSyncDebounceTimer=null;
+function scheduleCloudSync(){
+  if(!S.cloudAccount) return;
+  if(cloudSyncDebounceTimer) clearTimeout(cloudSyncDebounceTimer);
+  cloudSyncDebounceTimer=setTimeout(function(){
+    cloudSyncDebounceTimer=null;
+    autoSyncIfNeeded();
+  },4000); // 4s après le dernier changement — évite de spammer le cloud à chaque frappe/coche
+}
 function load(){try{const d=localStorage.getItem(KEY);if(d){const p=JSON.parse(d);Object.assign(S,p);}}catch(e){}}
 
 // ════════════════════════════════════════════════════════════
@@ -2610,6 +2620,7 @@ function hasUnsyncedChanges(){
   return !!(S.cloudAccount && S.lastLocalChange && (!S.lastCloudSync || S.lastCloudSync < S.lastLocalChange));
 }
 function autoSyncIfNeeded(){
+  if(cloudSyncDebounceTimer){ clearTimeout(cloudSyncDebounceTimer); cloudSyncDebounceTimer=null; }
   if(!hasUnsyncedChanges()) return;
   if(S.cloudAccount.provider==='onedrive') saveToOneDrive(true);
   else if(S.cloudAccount.provider==='gdrive') saveToGoogleDrive(true);
@@ -2761,7 +2772,8 @@ async function saveToOneDrive(silent){
     });
     if(!res.ok) throw new Error();
     S.lastCloudSync=Date.now();
-    save();
+    S.lastLocalChange=S.lastCloudSync; // égaux exactement — évite de se re-déclencher soi-même en boucle
+    persistLocal();
     if(!silent) alert('✓ Sauvegardé sur OneDrive');
   }catch(e){ if(!silent) alert('La sauvegarde sur OneDrive a échoué. Réessaie.'); }
 }
@@ -2856,7 +2868,8 @@ async function saveToGoogleDrive(silent){
     const res = await fetch(url,{method:fileId?'PATCH':'POST',headers:{Authorization:'Bearer '+token,'Content-Type':`multipart/related; boundary=${boundary}`},body:multipart});
     if(!res.ok) throw new Error();
     S.lastCloudSync=Date.now();
-    save();
+    S.lastLocalChange=S.lastCloudSync; // égaux exactement — évite de se re-déclencher soi-même en boucle
+    persistLocal();
     if(!silent) alert('✓ Sauvegardé sur Google Drive');
   }catch(e){ if(!silent) alert('La sauvegarde sur Google Drive a échoué. Réessaie.'); }
 }
