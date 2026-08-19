@@ -1181,6 +1181,31 @@ function fmt(s){return Math.floor(s/60)+':'+(s%60<10?'0':'')+s%60}
 function tod(){return new Date().toLocaleDateString('fr-CA')}
 function calcWeek(){const start=new Date(PROG.startDate),now=new Date();const diff=Math.floor((now-start)/86400000);return diff<0?1:Math.min(17,Math.floor(diff/7)+1);}
 function activeDay(){return S.ovDay||S.curDay}
+function bindSwipeDelete(cardEl){
+  if(!cardEl) return;
+  let startX=0,curX=0,dragging=false,opened=false;
+  const threshold=45,maxSwipe=84;
+  cardEl.addEventListener('touchstart',function(e){
+    startX=e.touches[0].clientX;dragging=true;window.__swipeMoved__=false;
+    cardEl.style.transition='none';
+  },{passive:true});
+  cardEl.addEventListener('touchmove',function(e){
+    if(!dragging) return;
+    let dx=e.touches[0].clientX-startX;
+    if(opened) dx-=maxSwipe;
+    dx=Math.max(-maxSwipe,Math.min(0,dx));
+    curX=dx;
+    if(Math.abs(dx)>6) window.__swipeMoved__=true;
+    cardEl.style.transform=`translateX(${dx}px)`;
+  },{passive:true});
+  cardEl.addEventListener('touchend',function(){
+    dragging=false;
+    cardEl.style.transition='transform .2s';
+    if(curX<-threshold){cardEl.style.transform=`translateX(-${maxSwipe}px)`;opened=true;}
+    else{cardEl.style.transform='translateX(0)';opened=false;}
+    setTimeout(()=>{window.__swipeMoved__=false;},50);
+  });
+}
 function viewTodayDate(dateKey){
   todayViewDate=dateKey;
   renderToday();
@@ -1545,15 +1570,21 @@ function renderToday(){
     </div>`;
     const sb=document.getElementById('startBtn');
     sb.textContent='▶ Start';sb.onclick=()=>openStartOptionsSh(actId);sb.style.opacity='1';
-    const dayCard=`<div class="pd-card" onclick="openDaySh(${JSON.stringify(actId)})">
-      <div class="pd-h">
-        <div class="pd-num"><div class="pd-j">JOUR</div><div class="pd-n">${isCustomAct?'★':actId}</div></div>
-        <div class="pd-info"><div class="pd-name">${day.name}</div><div class="pd-sub">${day.sub||''}</div></div>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    const dayCard=`<div class="swipe-wrap" style="position:relative;overflow:hidden;border-radius:var(--r);margin:0 12px 10px">
+      <div style="position:absolute;inset:0;background:var(--red);display:flex;align-items:center;justify-content:flex-end;padding-right:22px">
+        <div onclick="clearCalEntry('${todayViewDate}')" style="color:#fff;font-weight:800;font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px"><span style="font-size:17px">🗑</span>Supprimer</div>
       </div>
-      <div class="pd-exs">${day.exercises.map(ex=>`<div class="echip ${ex.new?'nw':''}">${ex.new?'★ ':''}${ex.name}</div>`).join('')}</div>
+      <div class="pd-card" id="todaySwipeCard" style="position:relative;margin:0;transition:transform .2s" onclick="if(!window.__swipeMoved__)openDaySh(${JSON.stringify(actId)})">
+        <div class="pd-h">
+          <div class="pd-num"><div class="pd-j">JOUR</div><div class="pd-n">${isCustomAct?'★':actId}</div></div>
+          <div class="pd-info"><div class="pd-name">${day.name}</div><div class="pd-sub">${day.sub||''}</div></div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+        <div class="pd-exs">${day.exercises.map(ex=>`<div class="echip ${ex.new?'nw':''}">${ex.new?'★ ':''}${ex.name}</div>`).join('')}</div>
+      </div>
     </div>`;
     tc.innerHTML=statusHtml+dayCard;
+    bindSwipeDelete(document.getElementById('todaySwipeCard'));
   }
 
   // Week summary
@@ -2329,6 +2360,25 @@ function renderCalDayProgramList(dateKey){
   if(entry){
     h+=`<button class="btn btn-ghost btn-md" style="width:100%;border-radius:var(--r);margin-bottom:12px" onclick="clearCalEntry('${dateKey}')">🗑 Retirer l'assignation</button>`;
   }
+  h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+    <div onclick="document.getElementById('calDaySh').classList.remove('on');openPickMuscles()" style="background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:12px;cursor:pointer">
+      <div style="font-size:19px;margin-bottom:6px">💪</div>
+      <div style="font-size:12px;font-weight:800;line-height:1.2">Par muscles</div>
+    </div>
+    <div onclick="document.getElementById('calDaySh').classList.remove('on');document.getElementById('otherProgSh').classList.add('on');renderOtherProgSh()" style="background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:12px;cursor:pointer">
+      <div style="font-size:19px;margin-bottom:6px;color:var(--red)">🔖</div>
+      <div style="font-size:12px;font-weight:800;line-height:1.2">Programmes sauvegardés</div>
+    </div>
+    <div onclick="document.getElementById('calDaySh').classList.remove('on');openBuilder()" style="background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:12px;cursor:pointer">
+      <div style="font-size:19px;margin-bottom:6px;color:var(--rs)">✏️</div>
+      <div style="font-size:12px;font-weight:800;line-height:1.2">Créer à partir de zéro</div>
+    </div>
+    <div onclick="document.getElementById('calDaySh').classList.remove('on');openReadyWorkouts()" style="background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:12px;cursor:pointer">
+      <div style="font-size:19px;margin-bottom:6px">⚡</div>
+      <div style="font-size:12px;font-weight:800;line-height:1.2">Séances prêtes</div>
+    </div>
+  </div>
+  <div style="font-size:10px;color:var(--t3);font-weight:800;letter-spacing:.08em;margin:4px 0 8px 2px">PROGRAMMES</div>`;
   h+=progEntries.map(p=>`
     <div class="pd-card" onclick="renderCalDayDaysList('${dateKey}','${p.key}')">
       <div class="pd-h">
