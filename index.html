@@ -37,9 +37,10 @@ body{
   position:fixed;bottom:0;left:0;right:0;
   height:calc(54px + env(safe-area-inset-bottom,0px));
   padding-bottom:env(safe-area-inset-bottom,0px);
-  background:#0F0F0F;
-  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-  border-top:1px solid var(--b);
+  background:rgba(15,15,15,.72);
+  backdrop-filter:blur(24px) saturate(1.5);-webkit-backdrop-filter:blur(24px) saturate(1.5);
+  border-top:1px solid rgba(255,255,255,.08);
+  box-shadow:0 -8px 32px rgba(0,0,0,.35);
   display:flex;z-index:50;
 }
 .sh-bg{position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.75);display:none;align-items:flex-end}
@@ -111,8 +112,8 @@ body{
 /* ─── TOPBAR ─── */
 .tb{
   position:sticky;top:0;z-index:80;
-  background:rgba(10,10,10,.93);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-  border-bottom:1px solid var(--b);
+  background:rgba(10,10,10,.72);backdrop-filter:blur(24px) saturate(1.5);-webkit-backdrop-filter:blur(24px) saturate(1.5);
+  border-bottom:1px solid rgba(255,255,255,.07);
   padding:calc(12px + env(safe-area-inset-top,0px)) 16px 10px;
   display:flex;align-items:center;justify-content:space-between;
   gap:8px;
@@ -132,10 +133,10 @@ body{
 .pg{background:rgba(212,165,32,.1);color:var(--gold);border:1px solid rgba(212,165,32,.25)}
 
 /* ─── BUTTONS ─── */
-.btn{display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;font-family:inherit;font-weight:700;transition:all .15s;letter-spacing:.02em}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;border:none;cursor:pointer;font-family:inherit;font-weight:700;transition:all .15s;letter-spacing:.02em}
 .btn:active{transform:scale(.96)}
-.btn-red{background:var(--red);color:#fff;border-radius:50px}
-.btn-red:active{background:var(--red2)}
+.btn-red{background:linear-gradient(135deg,#E01538,#A50D25);color:#fff;border-radius:50px;box-shadow:0 6px 18px rgba(200,16,46,.35),inset 0 1px 0 rgba(255,255,255,.15)}
+.btn-red:active{background:var(--red2);box-shadow:0 3px 10px rgba(200,16,46,.3)}
 .btn-ghost{background:var(--bg3);color:var(--t2);border:1px solid var(--b);border-radius:50px}
 .btn-ol{background:transparent;border:1.5px solid var(--red);color:var(--rs);border-radius:50px}
 .btn-sm{height:34px;padding:0 13px;font-size:12px}
@@ -174,15 +175,15 @@ body{
    TODAY
 ══════════════════════════════════════════ */
 .hero{
-  background:linear-gradient(155deg,#1A0808 0%,#0A0A0A 65%);
-  border-bottom:1px solid var(--b);padding:18px 16px 20px;
+  background:linear-gradient(155deg,#1f0a0a 0%,#0A0A0A 65%);
+  border-bottom:1px solid var(--b);padding:18px 16px 22px;
   position:relative;overflow:hidden;
 }
-.hero::after{content:'';position:absolute;top:-50px;right:-50px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(200,16,46,.1),transparent 70%);pointer-events:none}
+.hero::after{content:'';position:absolute;top:-60px;right:-60px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(200,16,46,.16),transparent 70%);pointer-events:none}
 .hero-phase{font-size:10px;font-weight:800;letter-spacing:.18em;color:var(--rs);text-transform:uppercase;margin-bottom:7px}
-.hero-day{font-size:28px;font-weight:900;line-height:1.1;margin-bottom:4px}
-.hero-sub{font-size:12px;color:var(--t2);margin-bottom:12px}
-.hero-badges{display:flex;gap:5px;flex-wrap:wrap}
+.hero-day{font-size:34px;font-weight:900;line-height:1.02;letter-spacing:-.025em;margin-bottom:6px;background:linear-gradient(180deg,#fff 35%,#c9c9c9 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero-sub{font-size:12.5px;color:var(--t2);margin-bottom:14px}
+.hero-badges{display:flex;gap:6px;flex-wrap:wrap}
 
 /* Week strip */
 .wstrip{display:flex;gap:6px;overflow-x:auto;padding:12px 14px;scrollbar-width:none}
@@ -413,16 +414,16 @@ body{
 /* ══════════════════════════════════════════
    PROGRAMME
 ══════════════════════════════════════════ */
-.pd-card{margin:0 12px 8px;border-radius:var(--r);background:var(--bg2);border:1px solid var(--b);overflow:hidden;cursor:pointer;transition:all .15s}
+.pd-card{margin:0 12px 8px;border-radius:16px;background:var(--bg2);border:1px solid var(--b);overflow:hidden;cursor:pointer;transition:all .15s;position:relative}
 .pd-card:active{transform:scale(.97);border-color:var(--red)}
-.pd-h{display:flex;align-items:center;gap:10px;padding:12px 13px}
-.pd-num{width:40px;height:40px;border-radius:9px;background:var(--red);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0}
-.pd-j{font-size:7px;font-weight:800;color:rgba(255,255,255,.6);text-transform:uppercase}
+.pd-h{display:flex;align-items:center;gap:11px;padding:13px 14px}
+.pd-num{width:42px;height:42px;border-radius:12px;background:linear-gradient(145deg,#E01538,#8a0b20);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 14px rgba(200,16,46,.35),inset 0 1px 0 rgba(255,255,255,.18)}
+.pd-j{font-size:7px;font-weight:800;color:rgba(255,255,255,.7);text-transform:uppercase}
 .pd-n{font-size:19px;font-weight:900;color:#fff;line-height:1}
 .pd-info{flex:1}
-.pd-name{font-size:14px;font-weight:800}
+.pd-name{font-size:14.5px;font-weight:800;letter-spacing:-.005em}
 .pd-sub{font-size:10px;color:var(--t3);margin-top:2px}
-.pd-exs{display:flex;flex-wrap:wrap;gap:4px;padding:0 13px 11px}
+.pd-exs{display:flex;flex-wrap:wrap;gap:4px;padding:0 14px 12px}
 
 #spl{position:fixed;inset:0;z-index:9999;background:#0A0A0A;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;animation:splashGo 2.4s ease forwards}
 @keyframes splashGo{0%,65%{opacity:1;pointer-events:auto}90%,100%{opacity:0;pointer-events:none;visibility:hidden}}
@@ -804,8 +805,8 @@ body::before {
         <div style="font-size:13px;color:var(--t2);line-height:1.5">Connecte un compte pour que tes entraînements se sauvegardent en lieu sûr, dans ton propre cloud — jamais partagés avec personne d'autre.</div>
       </div>
       <div style="padding:18px 20px 4px">
-        <button class="btn btn-red btn-lg" style="width:100%;margin-bottom:9px" onclick="onboardConnect('onedrive')">☁️ Se connecter avec OneDrive</button>
-        <button class="btn btn-red btn-lg" style="width:100%;margin-bottom:16px" onclick="onboardConnect('gdrive')">☁️ Se connecter avec Google Drive</button>
+        <button class="btn btn-red btn-lg" style="width:100%;margin-bottom:9px" onclick="onboardConnect('onedrive')">${ico('cloud')} Se connecter avec OneDrive</button>
+        <button class="btn btn-red btn-lg" style="width:100%;margin-bottom:16px" onclick="onboardConnect('gdrive')">${ico('cloud')} Se connecter avec Google Drive</button>
         <button class="btn btn-ghost btn-md" style="width:100%;border-radius:var(--r)" onclick="onboardGuestConfirm()">Continuer sans compte</button>
       </div>
       <div id="onboardGuestWarning" style="display:none;padding:14px 20px 4px">
@@ -848,7 +849,7 @@ body::before {
   <div style="font-size:13px;font-weight:800;margin-bottom:3px">⚠️ Changements non sauvegardés</div>
   <div style="font-size:11px;color:var(--t2);margin-bottom:10px;line-height:1.4">La dernière session ne s'est peut-être pas synchronisée avec ton cloud (fermeture inattendue de l'app).</div>
   <div style="display:flex;gap:7px">
-    <button class="btn btn-red btn-md" style="flex:1;border-radius:var(--r)" onclick="resolvePendingSync(true)">☁️ Sauvegarder maintenant</button>
+    <button class="btn btn-red btn-md" style="flex:1;border-radius:var(--r)" onclick="resolvePendingSync(true)">${ico('cloud')} Sauvegarder maintenant</button>
     <button class="btn btn-ghost btn-md" style="border-radius:var(--r);padding:0 14px" onclick="resolvePendingSync(false)">Plus tard</button>
   </div>
 </div>
@@ -982,7 +983,7 @@ body::before {
       <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t3)"><div style="width:8px;height:8px;border-radius:50%;background:var(--gold)"></div>Programme complet</div>
       <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t3)"><div style="width:8px;height:8px;border-radius:50%;background:var(--t4)"></div>Repos</div>
     </div>
-    <button class="btn btn-ghost btn-md" style="width:100%;margin-top:12px;border-radius:var(--r)" onclick="openWeekProgPick()">📅 Programme pour la semaine</button>
+    <button class="btn btn-ghost btn-md" style="width:100%;margin-top:12px;border-radius:var(--r)" onclick="openWeekProgPick()">${ico('calendar')} Programme pour la semaine</button>
   </div>
   <span class="lbl">PROGRAMMES</span>
   <div class="sg" id="progSquares" style="margin:0 12px 10px"></div>
@@ -1557,7 +1558,7 @@ function renderToday(){
     ${S.ovDay&&isViewingToday?'<span class="pill pr">Journée modifiée</span>':''}
     ${isRest?'<span class="pill pb">REPOS + LISS</span>':''}
     ${isUnassigned?'<span class="pill" style="background:var(--bg3);color:var(--t3);border:1px solid var(--b)">NON ASSIGNÉ</span>':''}
-    ${!isViewingToday?`<span class="pill" style="background:var(--bg3);color:var(--rs);border:1px solid var(--b);cursor:pointer" onclick="viewToday()">📅 Retour à aujourd'hui</span>`:''}
+    ${!isViewingToday?`<span class="pill" style="background:var(--bg3);color:var(--rs);border:1px solid var(--b);cursor:pointer" onclick="viewToday()">${ico('calendar')} Retour à aujourd'hui</span>`:''}
   `;
 
   // Week strip — Sun to Sat. Le tap navigue l'affichage vers ce jour (comme si c'était "aujourd'hui").
@@ -1605,20 +1606,20 @@ function renderToday(){
     statusHtml=`<div class="card" style="text-align:center;padding:14px;margin:0 12px 12px">
       <div style="font-size:13px;font-weight:800;margin-bottom:3px">🚶 Journée LISS — repos assigné</div>
       <div style="font-size:11px;color:var(--t3)">Marche/vélo 35–45 min · Mobilité 15 min</div>
-      <div style="font-size:11px;color:var(--rs);font-weight:700;margin-top:8px;cursor:pointer" onclick="openCalDayOptions('${todayViewDate}')">✏️ Modifier</div>
+      <div style="font-size:11px;color:var(--rs);font-weight:700;margin-top:8px;cursor:pointer" onclick="openCalDayOptions('${todayViewDate}')">${ico('edit')} Modifier</div>
     </div>`;
     const sb=document.getElementById('startBtn');
     sb.textContent='Jour de repos 🚶';sb.onclick=null;sb.style.opacity='.5';
     tc.innerHTML=statusHtml;
   } else {
     statusHtml=`<div style="text-align:right;padding:0 12px 4px">
-      <span style="font-size:11px;color:var(--t3);font-weight:700;cursor:pointer" onclick="openCalDayOptions('${todayViewDate}')">✏️ Modifier l'assignation</span>
+      <span style="font-size:11px;color:var(--t3);font-weight:700;cursor:pointer" onclick="openCalDayOptions('${todayViewDate}')">${ico('edit')} Modifier l'assignation</span>
     </div>`;
     const sb=document.getElementById('startBtn');
     sb.textContent='▶ Start';sb.onclick=()=>openStartOptionsSh(actId);sb.style.opacity='1';
     const dayCard=`<div class="swipe-wrap" style="position:relative;overflow:hidden;border-radius:var(--r);margin:0 12px 10px">
       <div style="position:absolute;inset:0;background:var(--red);display:flex;align-items:center;justify-content:flex-end;padding-right:22px">
-        <div onclick="clearCalEntry('${todayViewDate}')" style="color:#fff;font-weight:800;font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px"><span style="font-size:17px">🗑</span>Supprimer</div>
+        <div onclick="clearCalEntry('${todayViewDate}')" style="color:#fff;font-weight:800;font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px">${ico('trash',17)}<span>Supprimer</span></div>
       </div>
       <div class="pd-card" id="todaySwipeCard" style="position:relative;margin:0;transition:transform .2s" onclick="if(!window.__swipeMoved__)openDaySh(${JSON.stringify(actId)})">
         <div class="pd-h">
@@ -2405,7 +2406,7 @@ function renderCalDayProgramList(dateKey){
   const progEntries=getProgramEntries();
   let h='';
   if(entry){
-    h+=`<button class="btn btn-ghost btn-md" style="width:100%;border-radius:var(--r);margin-bottom:12px" onclick="clearCalEntry('${dateKey}')">🗑 Retirer l'assignation</button>`;
+    h+=`<button class="btn btn-ghost btn-md" style="width:100%;border-radius:var(--r);margin-bottom:12px" onclick="clearCalEntry('${dateKey}')">${ico('trash')} Retirer l'assignation</button>`;
   }
   h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
     <div onclick="document.getElementById('calDaySh').classList.remove('on');openPickMuscles()" style="background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:12px;cursor:pointer">
@@ -2417,7 +2418,7 @@ function renderCalDayProgramList(dateKey){
       <div style="font-size:12px;font-weight:800;line-height:1.2">Programmes sauvegardés</div>
     </div>
     <div onclick="document.getElementById('calDaySh').classList.remove('on');openBuilder()" style="background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:12px;cursor:pointer">
-      <div style="font-size:19px;margin-bottom:6px;color:var(--rs)">✏️</div>
+      <div style="font-size:19px;margin-bottom:6px;color:var(--rs)">${ico('edit',19)}</div>
       <div style="font-size:12px;font-weight:800;line-height:1.2">Créer à partir de zéro</div>
     </div>
     <div onclick="document.getElementById('calDaySh').classList.remove('on');openReadyWorkouts()" style="background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:12px;cursor:pointer">
@@ -2520,7 +2521,7 @@ function openSwapMenu(){
         <div style="font-size:14px;font-weight:800;line-height:1.25">Programmes sauvegardés</div>
       </div>
       <div onclick="document.getElementById('swapMenuSh').classList.remove('on');openBuilder()" style="background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:14px;cursor:pointer">
-        <div style="font-size:22px;margin-bottom:8px;color:var(--rs)">✏️</div>
+        <div style="font-size:22px;margin-bottom:8px;color:var(--rs)">${ico('edit',22)}</div>
         <div style="font-size:14px;font-weight:800;line-height:1.25">Créer à partir de zéro</div>
       </div>
       <div onclick="document.getElementById('swapMenuSh').classList.remove('on');openReadyWorkouts()" style="background:var(--bg2);border:1px solid var(--b);border-radius:var(--r);padding:14px;cursor:pointer">
@@ -2581,8 +2582,8 @@ function renderCustProgList(){
       <div class="pd-exs">${p.exercises.map(ex=>`<div class="echip">${ex.name}</div>`).join('')}</div>
       <div style="display:flex;gap:7px;padding:0 14px 13px">
         <button class="btn btn-red btn-md" style="flex:1;border-radius:var(--r)" onclick="startCustProg(${idx})">▶ Commencer</button>
-        <button class="btn btn-ghost btn-md" style="border-radius:var(--r);padding:0 14px" onclick="openBuilder(${idx})">✏️</button>
-        <button class="btn btn-ghost btn-md" style="border-radius:var(--r);padding:0 14px" onclick="deleteCustProg(${idx})">🗑️</button>
+        <button class="btn btn-ghost btn-md" style="border-radius:var(--r);padding:0 14px" onclick="openBuilder(${idx})">${ico('edit')}</button>
+        <button class="btn btn-ghost btn-md" style="border-radius:var(--r);padding:0 14px" onclick="deleteCustProg(${idx})">${ico('trash')}</button>
       </div>
     </div>`).join('');
 }
@@ -2775,27 +2776,27 @@ function renderCloudCard(){
   const gReady = !!CLOUD_CONFIG.google.clientId;
   const acct = S.cloudAccount;
   if(acct && acct.provider==='onedrive'){
-    el.innerHTML = `<div style="font-size:13px;font-weight:800;margin-bottom:3px">☁️ Connecté à OneDrive</div>
+    el.innerHTML = `<div style="font-size:13px;font-weight:800;margin-bottom:3px">${ico('cloud')} Connecté à OneDrive</div>
       <div style="font-size:11px;color:var(--t3);margin-bottom:3px">${acct.email||acct.name||''}</div>
       ${syncStatusLine()}
       <div style="display:flex;gap:7px">
-        <button class="btn btn-red btn-md" style="flex:1;border-radius:var(--r)" onclick="saveToOneDrive()">☁️ Sauvegarder</button>
-        <button class="btn btn-ghost btn-md" style="flex:1;border-radius:var(--r)" onclick="loadFromOneDrive()">⬇️ Charger</button>
+        <button class="btn btn-red btn-md" style="flex:1;border-radius:var(--r)" onclick="saveToOneDrive()">${ico('cloud')} Sauvegarder</button>
+        <button class="btn btn-ghost btn-md" style="flex:1;border-radius:var(--r)" onclick="loadFromOneDrive()">${ico('download')} Charger</button>
       </div>
       <div style="display:flex;gap:14px;justify-content:center;margin-top:10px">
-        <span style="font-size:11px;color:var(--rs);font-weight:700;cursor:pointer" onclick="openAthleteProfileForm()">✏️ Fiche athlète</span>
+        <span style="font-size:11px;color:var(--rs);font-weight:700;cursor:pointer" onclick="openAthleteProfileForm()">${ico('edit')} Fiche athlète</span>
         <span style="font-size:11px;color:var(--t3);cursor:pointer" onclick="disconnectCloud()">Se déconnecter</span>
       </div>`;
   } else if(acct && acct.provider==='gdrive'){
-    el.innerHTML = `<div style="font-size:13px;font-weight:800;margin-bottom:3px">☁️ Connecté à Google Drive</div>
+    el.innerHTML = `<div style="font-size:13px;font-weight:800;margin-bottom:3px">${ico('cloud')} Connecté à Google Drive</div>
       <div style="font-size:11px;color:var(--t3);margin-bottom:3px">${acct.email||acct.name||''}</div>
       ${syncStatusLine()}
       <div style="display:flex;gap:7px">
-        <button class="btn btn-red btn-md" style="flex:1;border-radius:var(--r)" onclick="saveToGoogleDrive()">☁️ Sauvegarder</button>
-        <button class="btn btn-ghost btn-md" style="flex:1;border-radius:var(--r)" onclick="loadFromGoogleDrive()">⬇️ Charger</button>
+        <button class="btn btn-red btn-md" style="flex:1;border-radius:var(--r)" onclick="saveToGoogleDrive()">${ico('cloud')} Sauvegarder</button>
+        <button class="btn btn-ghost btn-md" style="flex:1;border-radius:var(--r)" onclick="loadFromGoogleDrive()">${ico('download')} Charger</button>
       </div>
       <div style="display:flex;gap:14px;justify-content:center;margin-top:10px">
-        <span style="font-size:11px;color:var(--rs);font-weight:700;cursor:pointer" onclick="openAthleteProfileForm()">✏️ Fiche athlète</span>
+        <span style="font-size:11px;color:var(--rs);font-weight:700;cursor:pointer" onclick="openAthleteProfileForm()">${ico('edit')} Fiche athlète</span>
         <span style="font-size:11px;color:var(--t3);cursor:pointer" onclick="disconnectCloud()">Se déconnecter</span>
       </div>`;
   } else {
@@ -4357,6 +4358,20 @@ function svgForIcon(icon, color){
   };
   return '<svg viewBox="0 0 24 24" fill="none" stroke="'+color+'" stroke-width="1.6" stroke-linecap="round">'+(paths[icon]||paths.other)+'</svg>';
 }
+// Icônes d'action cohérentes (remplacent les emoji dans les boutons/liens UI) — trait uniforme,
+// hérite de la couleur du texte parent via currentColor sauf indication contraire.
+function ico(name, size){
+  size = size || 14;
+  var p = {
+    edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+    trash: '<path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>',
+    cloud: '<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10Z"/>',
+    download: '<path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/>',
+    calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
+    check: '<polyline points="20 6 9 17 4 12"/>',
+  };
+  return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">'+(p[name]||'')+'</svg>';
+}
 
 
 function filterExLibSearch(query){
@@ -4682,10 +4697,10 @@ function openProgDrill(key){
   let h=`<div style="font-size:11px;color:var(--t3);margin:0 2px 12px">${entry.meta}</div>`;
   h+=`<div style="display:flex;gap:7px;margin-bottom:12px">`;
   if(!entry.isCore){
-    h+=`<button class="btn btn-ghost btn-md" style="flex:1;border-radius:var(--r)" onclick="document.getElementById('progDrillSh').classList.remove('on');openFullProgBuilder(${entry.progIdx})">✏️ Modifier</button>
-      <button class="btn btn-ghost btn-md" style="border-radius:var(--r);padding:0 14px" onclick="document.getElementById('progDrillSh').classList.remove('on');deleteFullProg(${entry.progIdx})">🗑️</button>`;
+    h+=`<button class="btn btn-ghost btn-md" style="flex:1;border-radius:var(--r)" onclick="document.getElementById('progDrillSh').classList.remove('on');openFullProgBuilder(${entry.progIdx})">${ico('edit')} Modifier</button>
+      <button class="btn btn-ghost btn-md" style="border-radius:var(--r);padding:0 14px" onclick="document.getElementById('progDrillSh').classList.remove('on');deleteFullProg(${entry.progIdx})">${ico('trash')}</button>`;
   }
-  h+=`<button class="btn btn-ghost btn-md" style="${entry.isCore?'flex:1;':''}border-radius:var(--r)" onclick="openProgSchedule('${key}')">📅 Horaire</button>`;
+  h+=`<button class="btn btn-ghost btn-md" style="${entry.isCore?'flex:1;':''}border-radius:var(--r)" onclick="openProgSchedule('${key}')">${ico('calendar')} Horaire</button>`;
   h+=`</div>`;
   h+=entry.days.map((d,i)=>`
     <div class="pd-card" onclick="document.getElementById('progDrillSh').classList.remove('on');openDaySh(${JSON.stringify(d.dayId)})">
@@ -4885,7 +4900,7 @@ function openWeekProgPick(){
       </div>
       <div style="display:flex;gap:7px;padding:0 14px 13px">
         ${hasSched?`<button class="btn btn-red btn-md" style="flex:1;border-radius:var(--r)" onclick="applyScheduleThisWeek('${p.key}')">✓ Appliquer cette semaine</button>`:''}
-        <button class="btn btn-ghost btn-md" style="${hasSched?'':'flex:1;'}border-radius:var(--r)" onclick="document.getElementById('weekProgPickSh').classList.remove('on');openProgSchedule('${p.key}')">📅 ${hasSched?'Modifier':"Configurer l'horaire"}</button>
+        <button class="btn btn-ghost btn-md" style="${hasSched?'':'flex:1;'}border-radius:var(--r)" onclick="document.getElementById('weekProgPickSh').classList.remove('on');openProgSchedule('${p.key}')">${ico('calendar')} ${hasSched?'Modifier':"Configurer l'horaire"}</button>
       </div>
     </div>`;
   }).join('');
