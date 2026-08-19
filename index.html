@@ -276,6 +276,16 @@ body{
 .prev-ban-l{font-size:9px;color:var(--t3);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px}
 .prev-ban-v{font-size:13px;font-weight:800}
 .pr-badge{background:rgba(212,165,32,.12);color:var(--gold);font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px;border:1px solid rgba(212,165,32,.2)}
+.pr-top-banner{margin:0 14px 8px;background:linear-gradient(135deg,rgba(212,165,32,.16),rgba(212,165,32,.05));border:1px solid rgba(212,165,32,.4);border-radius:var(--rsm);padding:9px 12px;display:flex;align-items:center;gap:10px}
+.pr-top-icon{width:28px;height:28px;border-radius:50%;background:rgba(212,165,32,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--gold)}
+.pr-top-l{font-size:8.5px;color:var(--gold);font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.pr-top-v{font-size:12px;font-weight:700;color:#fff;margin-top:1px}
+.ex-stat-row{display:flex;margin:0 14px 8px;background:var(--bg2);border:1px solid var(--b);border-radius:var(--rsm);padding:11px 4px}
+.ex-stat{flex:1;text-align:center;position:relative}
+.ex-stat:not(:first-child)::before{content:'';position:absolute;left:0;top:12%;height:76%;width:1px;background:var(--b)}
+.ex-stat-n{font-size:15px;font-weight:900;color:#fff}
+.ex-stat-n.gr{color:var(--green)}
+.ex-stat-l{font-size:8px;color:var(--t3);margin-top:3px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
 
 /* Sets */
 .sets-wrap{padding:3px 14px 3px}
@@ -298,7 +308,8 @@ body{
 .sinp.sd{border-color:rgba(200,16,46,.4);background:rgba(200,16,46,.06)}
 .set-unit{font-size:9px;color:var(--t3);font-weight:600;width:16px;text-align:center;flex-shrink:0}
 .chk{width:34px;height:34px;border-radius:50%;border:2px solid var(--b2);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;color:var(--t3)}
-.chk.on{background:var(--red);border-color:var(--red);color:#fff}
+.chk.on{background:var(--green);border-color:var(--green);color:#fff}
+.chk.next{border-color:var(--gold);box-shadow:0 0 0 3px rgba(212,165,32,.15)}
 
 /* Add set */
 .add-set{display:flex;align-items:center;gap:7px;padding:8px 14px 3px;cursor:pointer}
@@ -1729,6 +1740,13 @@ function showActiveBanner(on){
   }
 }
 
+function getExerciseMuscle(name){
+  var muscles = Object.keys(EX_LIBRARY);
+  for(var i=0;i<muscles.length;i++){
+    if(EX_LIBRARY[muscles[i]].exercises.some(function(e){return e.name===name;})) return muscles[i];
+  }
+  return null;
+}
 function renderWo(){
   const actId=activeDay();
   const day=dayObj(actId);
@@ -1756,6 +1774,12 @@ function renderWo(){
     const sets=S.sets[ex.name];
     const prevLast=S.hist[ex.name]?.slice(-1)[0];
     const doneC=sets.filter(s=>s.done).length;
+    const nextIdx=sets.findIndex(s=>!s.done);
+    const muscle=getExerciseMuscle(ex.name);
+    const curVolume=sets.filter(s=>s.done).reduce((sum,s)=>sum+(s.w*s.r||0),0);
+    const prevExSets=prevSess?.exercises?.find(e=>e.name===ex.name)?.sets;
+    const prevVolume=prevExSets?prevExSets.reduce((sum,s)=>sum+(s.w*s.r||0),0):0;
+    const volDiffPct=(curVolume>0&&prevVolume>0)?Math.round((curVolume-prevVolume)/prevVolume*100):null;
 
     html+=`<div class="ex-blk">
       <div class="ex-hero" onclick="openImgView('${img}')" style="cursor:pointer">
@@ -1766,6 +1790,16 @@ function renderWo(){
           <div class="ex-sub">${ex.s} séries · ${ex.r} · <span style="color:var(--rs)">${wStr}</span></div>
         </div>
         ${ex.new?`<div class="ex-new-badge">★ NOUVEAU</div>`:''}
+      </div>
+      ${prevLast?.isPR?`<div class="pr-top-banner">
+        <div class="pr-top-icon">${ico('flame',15)}</div>
+        <div><div class="pr-top-l">Nouveau record</div><div class="pr-top-v">${ex.name} · ${prevLast.w} lb × ${prevLast.r}</div></div>
+      </div>`:''}
+      <div class="ex-stat-row">
+        <div class="ex-stat"><div class="ex-stat-n">${curVolume||0}</div><div class="ex-stat-l">Volume (lb)</div></div>
+        <div class="ex-stat"><div class="ex-stat-n">${doneC}/${ex.s}</div><div class="ex-stat-l">Séries</div></div>
+        <div class="ex-stat"><div class="ex-stat-n ${volDiffPct!==null&&volDiffPct>=0?'gr':''}">${volDiffPct!==null?(volDiffPct>=0?'+':'')+volDiffPct+'%':'—'}</div><div class="ex-stat-l">Vs dernière fois</div></div>
+        ${muscle?`<div class="ex-stat"><div class="ex-stat-n" style="font-size:11px">${muscle}</div><div class="ex-stat-l">Muscle</div></div>`:''}
       </div>
       <div class="ex-acts">
         <div class="ex-act" onclick="openHist('${ex.name}')">
@@ -1788,7 +1822,7 @@ function renderWo(){
         </div>
       </div>
       <div class="ex-note">${ex.note}</div>
-      ${prevLast?`<div class="prev-ban"><div><div class="prev-ban-l">Dernière fois</div><div class="prev-ban-v">${prevLast.w} lb × ${prevLast.r} reps</div></div>${prevLast.isPR?'<span class="pr-badge">🏆 PR</span>':''}</div>`:''}
+      ${prevLast?`<div class="prev-ban"><div><div class="prev-ban-l">Dernière fois</div><div class="prev-ban-v">${prevLast.w} lb × ${prevLast.r} reps</div></div></div>`:''}
       <div class="sets-wrap">
         <div class="set-hdr">
           <div style="width:32px;flex-shrink:0"></div>
@@ -1809,7 +1843,7 @@ function renderWo(){
             <div class="set-unit">lb</div>
             <input class="sinp${set.done?' sd':''}" type="number" inputmode="numeric" value="${set.r||''}" placeholder="0"
               onclick="this.select()" onfocus="this.select()" oninput="updS('${ex.name}',${si},'r',this.value)">
-            <button class="chk${set.done?' on':''}" onclick="chkSet('${ex.name}',${ei},${si})">
+            <button class="chk${set.done?' on':''}${!set.done&&si===nextIdx?' next':''}" onclick="chkSet('${ex.name}',${ei},${si})">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
             </button>
             <button onclick="delSet('${ex.name}',${si})" style="width:20px;height:20px;border-radius:50%;border:none;background:rgba(200,16,46,.15);color:var(--rs);font-size:11px;font-weight:900;cursor:pointer;flex-shrink:0">✕</button>
