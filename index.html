@@ -1461,18 +1461,28 @@ function renderToday(){
     });
   }
 
-  document.getElementById('todayLbl').textContent=viewDateObj.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});
-  const bpill=document.getElementById('todayBloc');
-  bpill.textContent=blocLbl();
-  bpill.className='pill '+(b==='A'?'pa':b==='B'?'pb':b==='C'?'pc':'pd2');
+  // Résout le programme actif (pour l'en-tête dynamique + les pilules CTR300)
+  let progKey=null;
+  if(typeof actId==='number') progKey='ctr';
+  else if(typeof actId==='string' && actId.charAt(0)==='f') progKey='full-'+actId.slice(1).split('-')[0];
 
-  document.getElementById('heroPhase').textContent=S.curWeek<=8?'PHASE 1 — FORCE & MASSE':'PHASE 2 — COUPE 300';
+  document.getElementById('todayLbl').textContent=viewDateObj.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});
+  const isCTR = progKey==='ctr' && !isRest && !isUnassigned;
+  const bpill=document.getElementById('todayBloc');
+  if(isCTR){
+    bpill.style.display='';
+    bpill.textContent=blocLbl();
+    bpill.className='pill '+(b==='A'?'pa':b==='B'?'pb':b==='C'?'pc':'pd2');
+  } else {
+    bpill.style.display='none';
+  }
+
+  document.getElementById('heroPhase').style.display='none';
   const isCustomAct=typeof actId==='string'&&(actId.charAt(0)==='c'||actId.charAt(0)==='f');
   document.getElementById('heroDay').textContent=isUnassigned?'Aucune séance assignée':(isRest?'Repos actif':(isCustomAct?day.name:`Jour ${actId} — ${day.name}`));
   document.getElementById('heroSub').textContent=isUnassigned?'Choisis une séance dans le calendrier ci-dessous':(isRest?'LISS 35–45 min · Mobilité 15 min':day.sub);
   document.getElementById('heroBadges').innerHTML=`
-    <span class="pill ${b==='A'?'pa':b==='B'?'pb':b==='C'?'pc':'pd2'}">${blocLbl()}</span>
-    <span class="pill pg">Sem. ${S.curWeek}/17</span>
+    ${isCTR?`<span class="pill ${b==='A'?'pa':b==='B'?'pb':b==='C'?'pc':'pd2'}">${blocLbl()}</span><span class="pill pg">Sem. ${S.curWeek}/17</span>`:''}
     ${S.ovDay&&isViewingToday?'<span class="pill pr">Journée modifiée</span>':''}
     ${isRest?'<span class="pill pb">REPOS + LISS</span>':''}
     ${isUnassigned?'<span class="pill" style="background:var(--bg3);color:var(--t3);border:1px solid var(--b)">NON ASSIGNÉ</span>':''}
@@ -1504,15 +1514,12 @@ function renderToday(){
   }
   document.getElementById('wstrip').innerHTML=strip;
 
-  // Résout le programme actif (pour l'en-tête dynamique + la ligne horizontale)
-  let progKey=null;
-  if(typeof actId==='number') progKey='ctr';
-  else if(typeof actId==='string' && actId.charAt(0)==='f') progKey='full-'+actId.slice(1).split('-')[0];
+  // Résout le programme actif (pour l'en-tête dynamique)
   const activeProgEntry=(progKey && !isRest && !isUnassigned)?getProgramEntries().find(p=>p.key===progKey):null;
   const tbLogoEl=document.getElementById('todayTbLogo');
   if(tbLogoEl) tbLogoEl.innerHTML=activeProgEntry?activeProgEntry.name:'';
 
-  // Today cards — ligne horizontale de programmes, plus de détails d'exercices affichés directement
+  // Today cards — soit la journée déterminée directement, soit juste le bouton pour en choisir une
   const tc=document.getElementById('todayCards');
   let statusHtml='';
   if(isUnassigned){
@@ -1522,6 +1529,7 @@ function renderToday(){
     </div>`;
     const sb=document.getElementById('startBtn');
     sb.textContent='Aucune séance assignée';sb.onclick=()=>openCalDayOptions(todayViewDate);sb.style.opacity='.6';
+    tc.innerHTML=statusHtml;
   } else if(isRest){
     statusHtml=`<div class="card" style="text-align:center;padding:14px;margin:0 12px 12px">
       <div style="font-size:13px;font-weight:800;margin-bottom:3px">🚶 Journée LISS — repos assigné</div>
@@ -1530,18 +1538,23 @@ function renderToday(){
     </div>`;
     const sb=document.getElementById('startBtn');
     sb.textContent='Jour de repos 🚶';sb.onclick=null;sb.style.opacity='.5';
+    tc.innerHTML=statusHtml;
   } else {
     statusHtml=`<div style="text-align:right;padding:0 12px 4px">
       <span style="font-size:11px;color:var(--t3);font-weight:700;cursor:pointer" onclick="openCalDayOptions('${todayViewDate}')">✏️ Modifier l'assignation</span>
     </div>`;
     const sb=document.getElementById('startBtn');
     sb.textContent='▶ Start';sb.onclick=()=>openStartOptionsSh(actId);sb.style.opacity='1';
+    const dayCard=`<div class="pd-card" onclick="openDaySh(${JSON.stringify(actId)})">
+      <div class="pd-h">
+        <div class="pd-num"><div class="pd-j">JOUR</div><div class="pd-n">${isCustomAct?'★':actId}</div></div>
+        <div class="pd-info"><div class="pd-name">${day.name}</div><div class="pd-sub">${day.sub||''}</div></div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="pd-exs">${day.exercises.map(ex=>`<div class="echip ${ex.new?'nw':''}">${ex.new?'★ ':''}${ex.name}</div>`).join('')}</div>
+    </div>`;
+    tc.innerHTML=statusHtml+dayCard;
   }
-  if(todayProgOpen===undefined){
-    todayProgOpen=progKey;
-  }
-  tc.innerHTML=statusHtml+`<div id="todayProgBrowser"></div>`;
-  renderTodayProgBrowser();
 
   // Week summary
   const tc2={pull:'#3B82F6',legs:'#C8102E',push:'#8B5CF6',full:'#F97316'};
@@ -2236,7 +2249,6 @@ function handlePhoto(e){
 // ════════════════════════════════════════════════════════════
 // ── CALENDAR ──
 let calViewYear=null,calViewMonth=null,calExpanded=false; // month is 0-11
-let todayProgOpen; // clé du programme actuellement déplié dans la ligne horizontale d'Aujourd'hui
 let todayViewDate; // date (fr-CA) actuellement affichée dans "Aujourd'hui" — null/undefined = aujourd'hui réel
 const MONTH_FR=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 const MONTH_FR_S=['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'];
@@ -2305,35 +2317,28 @@ function openCalDayOptions(dateKey){
   const dateObj=new Date(dateKey+'T12:00:00');
   const lbl=dateObj.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});
   document.getElementById('calDayShT').textContent=lbl.charAt(0).toUpperCase()+lbl.slice(1);
+  renderCalDayProgramList(dateKey);
+  raiseSheet('calDaySh');
+  document.getElementById('calDaySh').classList.add('on');
+}
+function renderCalDayProgramList(dateKey){
   const entry=S.calendar&&S.calendar[dateKey];
   const progs=S.customPrograms||[];
-
+  const progEntries=getProgramEntries();
   let h='';
   if(entry){
-    h+=`<button class="btn btn-ghost btn-md" style="width:100%;border-radius:var(--r);margin-bottom:10px" onclick="clearCalEntry('${dateKey}')">🗑 Retirer l'assignation</button>`;
+    h+=`<button class="btn btn-ghost btn-md" style="width:100%;border-radius:var(--r);margin-bottom:12px" onclick="clearCalEntry('${dateKey}')">🗑 Retirer l'assignation</button>`;
   }
-  h+='<div style="font-size:10px;color:var(--t3);font-weight:800;letter-spacing:.08em;margin:6px 0 6px 2px">PLAN 300</div>';
-  h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">';
-  PROG.days.forEach(d=>{
-    const isSel=entry&&entry.type==='day'&&entry.dayId===d.id;
-    h+=`<button class="btn ${isSel?'btn-red':'btn-ghost'} btn-sm" style="border-radius:20px" onclick="setCalEntry('${dateKey}',{type:'day',dayId:${d.id}})">J${d.id}</button>`;
-  });
-  h+='</div>';
-  const fullProgs=S.fullPrograms||[];
-  if(fullProgs.length){
-    h+='<div style="font-size:10px;color:var(--t3);font-weight:800;letter-spacing:.08em;margin:6px 0 6px 2px">PROGRAMMES COMPLETS</div>';
-    fullProgs.forEach((fp,pIdx)=>{
-      h+=`<div style="font-size:11px;font-weight:800;color:var(--t2);margin:4px 0 5px 2px">${fp.name}</div>`;
-      h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">';
-      fp.days.forEach((d,dIdx)=>{
-        const isSel=entry&&entry.type==='fullprog'&&entry.progIdx===pIdx&&entry.dayIdx===dIdx;
-        h+=`<button class="btn ${isSel?'btn-red':'btn-ghost'} btn-sm" style="border-radius:20px" onclick="setCalEntry('${dateKey}',{type:'fullprog',progIdx:${pIdx},dayIdx:${dIdx}})">${d.name}</button>`;
-      });
-      h+='</div>';
-    });
-  }
+  h+=progEntries.map(p=>`
+    <div class="pd-card" onclick="renderCalDayDaysList('${dateKey}','${p.key}')">
+      <div class="pd-h">
+        <div class="pd-num" style="background:${p.color||CTR_COLOR}"><div class="pd-j">PROG.</div><div class="pd-n" style="font-size:13px">${p.days.length}j</div></div>
+        <div class="pd-info"><div class="pd-name">${p.name}</div><div class="pd-sub">${p.days.length} journées</div></div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>`).join('');
   if(progs.length){
-    h+='<div style="font-size:10px;color:var(--t3);font-weight:800;letter-spacing:.08em;margin:6px 0 6px 2px">SÉANCES RAPIDES</div>';
+    h+='<div style="font-size:10px;color:var(--t3);font-weight:800;letter-spacing:.08em;margin:14px 0 6px 2px">SÉANCES RAPIDES</div>';
     progs.forEach((p,idx)=>{
       const isSel=entry&&entry.type==='custom'&&entry.progIdx===idx;
       h+=`<div onclick="setCalEntry('${dateKey}',{type:'custom',progIdx:${idx}})" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r);cursor:pointer;background:${isSel?'rgba(96,165,250,.14)':'var(--bg2)'};border:1px solid ${isSel?'#60A5FA':'var(--b)'};margin-bottom:7px">
@@ -2342,11 +2347,40 @@ function openCalDayOptions(dateKey){
       </div>`;
     });
   }
-  h+=`<button class="btn btn-ghost btn-md" style="width:100%;border-radius:var(--r);margin-top:6px" onclick="setCalEntry('${dateKey}',{type:'rest'})">😴 Marquer comme repos</button>`;
-
+  h+=`<button class="btn btn-ghost btn-md" style="width:100%;border-radius:var(--r);margin-top:8px" onclick="setCalEntry('${dateKey}',{type:'rest'})">😴 Marquer comme repos</button>`;
   document.getElementById('calDayShBody').innerHTML=h;
-  raiseSheet('calDaySh');
-  document.getElementById('calDaySh').classList.add('on');
+}
+function renderCalDayDaysList(dateKey, progKey){
+  const entry=S.calendar&&S.calendar[dateKey];
+  const p=getProgramEntries().find(x=>x.key===progKey);
+  if(!p) return;
+  let h=`<div onclick="renderCalDayProgramList('${dateKey}')" style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--rs);font-weight:700;font-size:13px;padding:4px 2px 12px">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>Programmes
+  </div>
+  <div style="font-size:15px;font-weight:900;margin-bottom:10px">${p.name}</div>`;
+  h+=p.days.map((d,i)=>{
+    let isSel=false;
+    if(progKey==='ctr'){ isSel = !!(entry&&entry.type==='day'&&entry.dayId===d.dayId); }
+    else { const parts=String(d.dayId).slice(1).split('-'); isSel = !!(entry&&entry.type==='fullprog'&&entry.progIdx===parseInt(parts[0])&&entry.dayIdx===parseInt(parts[1])); }
+    return `<div class="pd-card" style="${isSel?'border-color:var(--red)':''}" onclick="confirmCalDay('${dateKey}','${progKey}',${i})">
+      <div class="pd-h">
+        <div class="pd-num" style="${isSel?'background:var(--red)':''}"><div class="pd-j">JOUR</div><div class="pd-n">${i+1}</div></div>
+        <div class="pd-info"><div class="pd-name">${d.name}</div><div class="pd-sub">${d.sub||''}</div></div>
+        ${isSel?'<span style="color:var(--red);font-weight:900;font-size:16px">✓</span>':''}
+      </div>
+      <div class="pd-exs">${d.exercises.map(ex=>`<div class="echip ${ex.new?'nw':''}">${ex.new?'★ ':''}${ex.name}</div>`).join('')}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('calDayShBody').innerHTML=h;
+}
+function confirmCalDay(dateKey, progKey, dayIdx){
+  const p=getProgramEntries().find(x=>x.key===progKey);
+  if(!p) return;
+  const d=p.days[dayIdx];
+  let entryObj;
+  if(progKey==='ctr'){ entryObj={type:'day',dayId:d.dayId}; }
+  else { const parts=String(d.dayId).slice(1).split('-'); entryObj={type:'fullprog',progIdx:parseInt(parts[0]),dayIdx:parseInt(parts[1])}; }
+  setCalEntry(dateKey, entryObj);
 }
 
 function setCalEntry(dateKey,entry){
@@ -4387,33 +4421,6 @@ function getProgramEntries(){
     });
   });
   return list;
-}
-function renderTodayProgBrowser(){
-  const wrap=document.getElementById('todayProgBrowser');
-  if(!wrap) return;
-  const entries=getProgramEntries();
-  let h=`<div class="prog-strip">`+entries.map(p=>{
-    const active=todayProgOpen===p.key;
-    const style=active?`background:${p.color};border-color:${p.color};color:#fff`:`border-color:${hexA(p.color,.35)};color:${p.color}`;
-    return `<div class="prog-pill" style="${style}" onclick="toggleTodayProg('${p.key}')">${p.name}</div>`;
-  }).join('')+`</div>`;
-  const active=entries.find(p=>p.key===todayProgOpen);
-  if(active){
-    h+=`<div style="margin:0 12px 4px">`+active.days.map((d,i)=>`
-      <div class="pd-card" onclick="openDaySh(${JSON.stringify(d.dayId)})">
-        <div class="pd-h">
-          <div class="pd-num"><div class="pd-j">JOUR</div><div class="pd-n">${i+1}</div></div>
-          <div class="pd-info"><div class="pd-name">${d.name}</div><div class="pd-sub">${d.sub||''}</div></div>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-        </div>
-        <div class="pd-exs">${d.exercises.map(ex=>`<div class="echip ${ex.new?'nw':''}">${ex.new?'★ ':''}${ex.name}</div>`).join('')}</div>
-      </div>`).join('')+`</div>`;
-  }
-  wrap.innerHTML=h;
-}
-function toggleTodayProg(key){
-  todayProgOpen=(todayProgOpen===key)?null:key;
-  renderTodayProgBrowser();
 }
 function renderProgSquares(){
   const el=document.getElementById('progSquares');
