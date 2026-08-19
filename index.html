@@ -788,7 +788,7 @@ body::before {
 <div class="sh-bg on" id="onboardSh" style="z-index:9000">
   <div class="sh" style="max-height:none;border-radius:var(--r);margin:16px;padding-bottom:14px">
     <div style="text-align:center;padding:26px 20px 6px">
-      <div class="tb-logo" style="font-size:28px;margin-bottom:8px">CTR <em>300</em></div>
+      <div class="tb-logo" style="font-size:28px;margin-bottom:8px">CTR <em>ATHLETIC</em></div>
       <div style="font-size:13px;color:var(--t2);line-height:1.5">Connecte un compte pour que tes entraînements se sauvegardent en lieu sûr, dans ton propre cloud — jamais partagés avec personne d'autre.</div>
     </div>
     <div style="padding:18px 20px 4px">
@@ -810,7 +810,7 @@ body::before {
 <!-- ══ TODAY ══ -->
 <div class="scr on" id="sc-today">
   <div class="tb">
-    <div><div class="tb-logo" id="todayTbLogo">CTR <em>300</em></div><div style="font-size:10px;color:var(--t3)" id="todayLbl">—</div></div>
+    <div><div class="tb-logo" id="todayTbLogo">CTR <em>ATHLETIC</em></div><div style="font-size:10px;color:var(--t3)" id="todayLbl">—</div></div>
     <span class="pill pa" id="todayBloc">—</span>
   </div>
   <div class="hero">
@@ -2559,8 +2559,23 @@ function initMsal(){
   }
   return msalInstance;
 }
+function waitForGlobal(checkFn, timeoutMs){
+  return new Promise(resolve=>{
+    if(checkFn()) return resolve(true);
+    const start=Date.now();
+    (function poll(){
+      if(checkFn()) return resolve(true);
+      if(Date.now()-start>timeoutMs) return resolve(false);
+      setTimeout(poll, 150);
+    })();
+  });
+}
 async function connectOneDrive(){
   if(!CLOUD_CONFIG.msal.clientId){ alert("OneDrive n'est pas encore configuré pour cette app — configuration en attente."); return; }
+  if(typeof msal==='undefined'){
+    const ready = await waitForGlobal(()=>typeof msal!=='undefined', 4000);
+    if(!ready){ alert("La librairie Microsoft n'a pas pu se charger. Vérifie ta connexion et réessaie."); return; }
+  }
   const app = initMsal();
   if(!app){ alert("La librairie Microsoft n'a pas pu se charger. Vérifie ta connexion et réessaie."); return; }
   try{
@@ -2649,8 +2664,12 @@ function initGoogleClient(){
   }
   return googleTokenClient;
 }
-function connectGoogleDrive(){
+async function connectGoogleDrive(){
   if(!CLOUD_CONFIG.google.clientId){ alert("Google Drive n'est pas encore configuré pour cette app — configuration en attente."); return; }
+  if(typeof google==='undefined' || !google.accounts){
+    const ready = await waitForGlobal(()=>typeof google!=='undefined' && !!google.accounts, 4000);
+    if(!ready){ alert("La librairie Google n'a pas pu se charger. Vérifie ta connexion et réessaie."); return; }
+  }
   const client = initGoogleClient();
   if(!client){ alert("La librairie Google n'a pas pu se charger. Vérifie ta connexion et réessaie."); return; }
   client.requestAccessToken();
