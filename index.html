@@ -954,6 +954,7 @@ body::before {
     <button class="btn btn-ol btn-sm" onclick="finishWo()">Terminer ✓</button>
   </div>
   <div class="prog-bar"><div class="prog-fill" id="woProg" style="width:0%"></div></div>
+  <div id="spotifyWidget" style="display:none;align-items:center;gap:9px;margin:8px 12px;background:var(--bg2);border:1px solid var(--b);border-radius:12px;padding:7px 10px"></div>
   <span class="lbl" id="woBlocLbl">BLOC A · 72%</span>
   <div id="woExs"></div>
   <div style="padding:6px 12px 12px"><button class="btn btn-red btn-lg" onclick="finishWo()">✓ Terminer la séance</button></div>
@@ -1067,6 +1068,10 @@ body::before {
   <span class="lbl">COMPTE & SAUVEGARDE CLOUD</span>
   <div class="card" style="margin:0 12px 12px">
     <div id="cloudCardBody"></div>
+  </div>
+  <span class="lbl">MUSIQUE</span>
+  <div class="card" style="margin:0 12px 12px">
+    <div id="spotifyCardBody"></div>
   </div>
   <span class="lbl">DONNÉES</span>
   <div class="card" style="margin:0 12px 12px">
@@ -1766,6 +1771,7 @@ function startWo(){
   reqWakeLock();
   S.woStart=Date.now();S.sets={};
   go('wo');renderWo();
+  startSpotifyPolling();
   if(S.woInt)clearInterval(S.woInt);
   // Timer for workout screen
   S.woInt=setInterval(()=>{
@@ -1965,6 +1971,7 @@ function finishWo(){
   relWakeLock();
   if(S.woInt)clearInterval(S.woInt);
   if(S.restInt)clearInterval(S.restInt);
+  if(spotifyNowPlayingInt){clearInterval(spotifyNowPlayingInt);spotifyNowPlayingInt=null;}
   const restOvEl=document.getElementById('restOv');if(restOvEl)restOvEl.classList.remove('on');
   const restMiniEl=document.getElementById('restMini');if(restMiniEl)restMiniEl.classList.remove('on');
   const actId=activeDay();const day=dayObj(actId);
@@ -2723,6 +2730,146 @@ function renderCustProgList(){
 // EXPORT / IMPORT
 // ════════════════════════════════════════════════════════════
 // ══════════════════════════════════════════════════════════════
+// SPOTIFY — contrôle à distance de ce qui joue déjà sur ton appareil (pas de lecture
+// dans le navigateur, ça évite d'exiger de garder l'onglet ouvert). Authorization Code
+// + PKCE : flux conçu pour les apps 100% client, sans secret, sans backend.
+// ⚠️ Contrôler la lecture exige un compte Spotify Premium (limite de l'API elle-même).
+// ⚠️ Nécessite un Client ID — voir instructions de configuration.
+// ══════════════════════════════════════════════════════════════
+const SPOTIFY_CONFIG = {
+  clientId: '', // ← à remplir après création d'une app sur developer.spotify.com/dashboard
+  redirectUri: window.location.origin + window.location.pathname,
+  scopes: 'user-read-currently-playing user-read-playback-state user-modify-playback-state',
+};
+let spotifyNowPlayingInt = null;
+
+function base64url(buf){
+  return btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+async function connectSpotify(){
+  if(!SPOTIFY_CONFIG.clientId){ alert("Spotify n'est pas encore configuré pour cette app — configuration en attente."); return; }
+  const verifier=base64url(crypto.getRandomValues(new Uint8Array(64)));
+  sessionStorage.setItem('sp_verifier', verifier);
+  const digest=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
+  const challenge=base64url(digest);
+  const params=new URLSearchParams({
+    client_id:SPOTIFY_CONFIG.clientId, response_type:'code', redirect_uri:SPOTIFY_CONFIG.redirectUri,
+    scope:SPOTIFY_CONFIG.scopes, code_challenge_method:'S256', code_challenge:challenge,
+  });
+  window.location.href='https://accounts.spotify.com/authorize?'+params.toString();
+}
+async function handleSpotifyCallback(){
+  const params=new URLSearchParams(window.location.search);
+  const code=params.get('code');
+  if(!code) return;
+  const verifier=sessionStorage.getItem('sp_verifier');
+  if(!verifier) return;
+  try{
+    const res=await fetch('https://accounts.spotify.com/api/token',{
+      method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:new URLSearchParams({
+        grant_type:'authorization_code', code, redirect_uri:SPOTIFY_CONFIG.redirectUri,
+        client_id:SPOTIFY_CONFIG.clientId, code_verifier:verifier,
+      })
+    });
+    const d=await res.json();
+    if(d.access_token){
+      S.spotify={accessToken:d.access_token, refreshToken:d.refresh_token, expiresAt:Date.now()+d.expires_in*1000};
+      save();
+      window.history.replaceState({},'',SPOTIFY_CONFIG.redirectUri);
+      renderSpotifyCard();
+      if(S.woStart) startSpotifyPolling();
+    }
+  }catch(e){}
+}
+async function getSpotifyToken(){
+  if(!S.spotify) return null;
+  if(Date.now() < S.spotify.expiresAt - 30000) return S.spotify.accessToken;
+  try{
+    const res=await fetch('https://accounts.spotify.com/api/token',{
+      method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:new URLSearchParams({grant_type:'refresh_token', refresh_token:S.spotify.refreshToken, client_id:SPOTIFY_CONFIG.clientId})
+    });
+    const d=await res.json();
+    if(!d.access_token) return null;
+    S.spotify.accessToken=d.access_token;
+    S.spotify.expiresAt=Date.now()+d.expires_in*1000;
+    if(d.refresh_token) S.spotify.refreshToken=d.refresh_token;
+    save();
+    return S.spotify.accessToken;
+  }catch(e){ return null; }
+}
+function disconnectSpotify(){
+  S.spotify=null; save();
+  if(spotifyNowPlayingInt){ clearInterval(spotifyNowPlayingInt); spotifyNowPlayingInt=null; }
+  renderSpotifyWidget();
+  renderSpotifyCard();
+}
+async function spotifyApi(path, method){
+  const token=await getSpotifyToken();
+  if(!token) return null;
+  try{
+    const res=await fetch('https://api.spotify.com/v1'+path,{method:method||'GET', headers:{Authorization:'Bearer '+token}});
+    if(res.status===204) return {};
+    if(!res.ok) return null;
+    return await res.json();
+  }catch(e){ return null; }
+}
+async function spotifyPlayPause(){
+  const cur=await spotifyApi('/me/player');
+  if(cur && cur.is_playing) await spotifyApi('/me/player/pause','PUT');
+  else await spotifyApi('/me/player/play','PUT');
+  setTimeout(renderSpotifyWidget, 400);
+}
+async function spotifyNext(){ await spotifyApi('/me/player/next','POST'); setTimeout(renderSpotifyWidget, 400); }
+async function spotifyPrev(){ await spotifyApi('/me/player/previous','POST'); setTimeout(renderSpotifyWidget, 400); }
+async function renderSpotifyWidget(){
+  const el=document.getElementById('spotifyWidget');
+  if(!el) return;
+  if(!S.spotify){ el.style.display='none'; return; }
+  const cur=await spotifyApi('/me/player/currently-playing');
+  if(!cur || !cur.item){
+    el.style.display='flex';
+    el.innerHTML=`<div style="font-size:11px;color:var(--t3);flex:1">Spotify connecté — rien en lecture</div>`;
+    return;
+  }
+  el.style.display='flex';
+  const art=cur.item.album?.images?.slice(-1)[0]?.url||'';
+  const playing=cur.is_playing;
+  el.innerHTML=`
+    <img src="${art}" style="width:34px;height:34px;border-radius:6px;flex-shrink:0" onerror="this.style.opacity='0'">
+    <div style="flex:1;min-width:0">
+      <div style="font-size:11.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${cur.item.name}</div>
+      <div style="font-size:10px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${(cur.item.artists||[]).map(a=>a.name).join(', ')}</div>
+    </div>
+    <button onclick="spotifyPrev()" style="background:none;border:none;color:var(--t2);cursor:pointer;padding:4px">${ico('skipback',16)}</button>
+    <button onclick="spotifyPlayPause()" style="background:none;border:none;color:#fff;cursor:pointer;padding:4px">${ico(playing?'pause':'play',20)}</button>
+    <button onclick="spotifyNext()" style="background:none;border:none;color:var(--t2);cursor:pointer;padding:4px">${ico('skipfwd',16)}</button>
+  `;
+}
+function startSpotifyPolling(){
+  if(!S.spotify) return;
+  renderSpotifyWidget();
+  if(spotifyNowPlayingInt) clearInterval(spotifyNowPlayingInt);
+  spotifyNowPlayingInt=setInterval(renderSpotifyWidget, 15000);
+}
+function renderSpotifyCard(){
+  const el=document.getElementById('spotifyCardBody');
+  if(!el) return;
+  const ready=!!SPOTIFY_CONFIG.clientId;
+  if(S.spotify){
+    el.innerHTML=`<div style="font-size:13px;font-weight:800;margin-bottom:3px">${ico('musicNote',15)} Connecté à Spotify</div>
+      <div style="font-size:11px;color:var(--t3);margin-bottom:10px">Contrôle à distance pendant l'entraînement — nécessite Premium</div>
+      <button class="btn btn-ghost btn-md" style="width:100%;border-radius:var(--r)" onclick="disconnectSpotify()">Se déconnecter</button>`;
+  } else {
+    el.innerHTML=`<div style="font-size:13px;font-weight:800;margin-bottom:3px">Aucun compte connecté</div>
+      <div style="font-size:11px;color:var(--t3);margin-bottom:10px">Connecte Spotify pour voir et contrôler ta musique (jouer/pause/suivant) directement pendant tes séances.</div>
+      <button class="btn ${ready?'btn-red':'btn-ghost'} btn-md" style="width:100%;border-radius:var(--r)" onclick="connectSpotify()">${ico('musicNote')} Se connecter avec Spotify${ready?'':' '+ico('lock',13)}</button>
+      ${!ready?'<div style="font-size:10px;color:var(--t3);margin-top:9px">'+ico('lock',11)+' = configuration en attente côté développeur</div>':''}`;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
 // SAUVEGARDE CLOUD — OneDrive (MSAL.js) et Google Drive (Google Identity Services)
 // 100% côté client, aucun backend. Chaque personne se connecte avec SON compte,
 // ses données vivent dans SON drive (dossier caché dédié à l'app), jamais partagées.
@@ -2934,10 +3081,10 @@ function renderCloudCard(){
     el.innerHTML = `<div style="font-size:13px;font-weight:800;margin-bottom:3px">Aucun compte connecté</div>
       <div style="font-size:11px;color:var(--t3);margin-bottom:10px">Connecte un compte pour que tes entraînements se sauvegardent dans ton propre cloud — chaque personne garde ses données séparées, sans jamais les mélanger.</div>
       <div style="display:flex;gap:7px">
-        <button class="btn ${msalReady?'btn-red':'btn-ghost'} btn-md" style="flex:1;border-radius:var(--r)" onclick="connectOneDrive()">OneDrive${msalReady?'':' 🔒'}</button>
-        <button class="btn ${gReady?'btn-red':'btn-ghost'} btn-md" style="flex:1;border-radius:var(--r)" onclick="connectGoogleDrive()">Google Drive${gReady?'':' 🔒'}</button>
+        <button class="btn ${msalReady?'btn-red':'btn-ghost'} btn-md" style="flex:1;border-radius:var(--r)" onclick="connectOneDrive()">OneDrive${msalReady?'':' '+ico('lock',13)}</button>
+        <button class="btn ${gReady?'btn-red':'btn-ghost'} btn-md" style="flex:1;border-radius:var(--r)" onclick="connectGoogleDrive()">Google Drive${gReady?'':' '+ico('lock',13)}</button>
       </div>
-      ${(!msalReady||!gReady)?'<div style="font-size:10px;color:var(--t3);margin-top:9px">🔒 = configuration en attente côté développeur</div>':''}`;
+      ${(!msalReady||!gReady)?'<div style="font-size:10px;color:var(--t3);margin-top:9px">'+ico('lock',11)+' = configuration en attente côté développeur</div>':''}`;
   }
 }
 function disconnectCloud(){
@@ -4512,6 +4659,12 @@ function ico(name, size){
     scale: '<path d="M12 3v18M5 7h14M5 7l-3 8a4 4 0 0 0 6 0zM19 7l-3 8a4 4 0 0 0 6 0z"/>',
     clipboard: '<rect x="4" y="4" width="16" height="18" rx="2"/><path d="M9 2h6a1 1 0 0 1 1 1v2H8V3a1 1 0 0 1 1-1z"/>',
     undo: '<path d="M3 10h10a5 5 0 0 1 0 10H8"/><polyline points="7 5 3 10 7 15"/>',
+    play: '<polygon points="6 3 20 12 6 21 6 3" fill="currentColor" stroke="none"/>',
+    pause: '<rect x="6" y="4" width="4" height="16" rx="1" fill="currentColor" stroke="none"/><rect x="14" y="4" width="4" height="16" rx="1" fill="currentColor" stroke="none"/>',
+    skipfwd: '<polygon points="5 4 15 12 5 20 5 4" fill="currentColor" stroke="none"/><rect x="17" y="4" width="2.5" height="16" rx="1" fill="currentColor" stroke="none"/>',
+    skipback: '<polygon points="19 20 9 12 19 4 19 20" fill="currentColor" stroke="none"/><rect x="4.5" y="4" width="2.5" height="16" rx="1" fill="currentColor" stroke="none"/>',
+    musicNote: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+    lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
   };
   return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">'+(p[name]||'')+'</svg>';
 }
@@ -5545,6 +5698,8 @@ seedFilmPrograms();
 save();
 initRecoveryBody();
 renderCloudCard();
+renderSpotifyCard();
+if(window.location.search.includes('code=')) handleSpotifyCallback();
 renderToday();
 renderProg();
 // Migration: quelqu'un qui utilisait déjà l'app avant ce splash (données ou compte cloud
