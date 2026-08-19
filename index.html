@@ -798,20 +798,47 @@ body::before {
 <!-- ONBOARDING / SPLASH — connexion cloud au premier lancement -->
 <div class="sh-bg on" id="onboardSh" style="z-index:9000">
   <div class="sh" style="max-height:none;border-radius:var(--r);margin:16px;padding-bottom:14px">
-    <div style="text-align:center;padding:26px 20px 6px">
-      <div class="tb-logo" style="font-size:28px;margin-bottom:8px">CTR <em>ATHLETIC</em></div>
-      <div style="font-size:13px;color:var(--t2);line-height:1.5">Connecte un compte pour que tes entraînements se sauvegardent en lieu sûr, dans ton propre cloud — jamais partagés avec personne d'autre.</div>
-    </div>
-    <div style="padding:18px 20px 4px">
-      <button class="btn btn-red btn-lg" style="width:100%;margin-bottom:9px" onclick="onboardConnect('onedrive')">☁️ Se connecter avec OneDrive</button>
-      <button class="btn btn-red btn-lg" style="width:100%;margin-bottom:16px" onclick="onboardConnect('gdrive')">☁️ Se connecter avec Google Drive</button>
-      <button class="btn btn-ghost btn-md" style="width:100%;border-radius:var(--r)" onclick="onboardGuestConfirm()">Continuer sans compte</button>
-    </div>
-    <div id="onboardGuestWarning" style="display:none;padding:14px 20px 4px">
-      <div style="background:var(--bg3);border:1px solid var(--b);border-radius:10px;padding:13px;font-size:12px;color:var(--t2);line-height:1.5;margin-bottom:10px">
-        ⚠️ Sans compte connecté, tes entraînements restent seulement sur cet appareil. Si tu changes de téléphone ou vides ton navigateur, ils seront perdus. Tu pourras te connecter plus tard depuis Programme → Compte & sauvegarde cloud.
+    <div id="onboardStep1">
+      <div style="text-align:center;padding:26px 20px 6px">
+        <div class="tb-logo" style="font-size:28px;margin-bottom:8px">CTR <em>ATHLETIC</em></div>
+        <div style="font-size:13px;color:var(--t2);line-height:1.5">Connecte un compte pour que tes entraînements se sauvegardent en lieu sûr, dans ton propre cloud — jamais partagés avec personne d'autre.</div>
       </div>
-      <button class="btn btn-ghost btn-md" style="width:100%;border-radius:var(--r)" onclick="onboardGuestFinal()">Compris, continuer sans compte</button>
+      <div style="padding:18px 20px 4px">
+        <button class="btn btn-red btn-lg" style="width:100%;margin-bottom:9px" onclick="onboardConnect('onedrive')">☁️ Se connecter avec OneDrive</button>
+        <button class="btn btn-red btn-lg" style="width:100%;margin-bottom:16px" onclick="onboardConnect('gdrive')">☁️ Se connecter avec Google Drive</button>
+        <button class="btn btn-ghost btn-md" style="width:100%;border-radius:var(--r)" onclick="onboardGuestConfirm()">Continuer sans compte</button>
+      </div>
+      <div id="onboardGuestWarning" style="display:none;padding:14px 20px 4px">
+        <div style="background:var(--bg3);border:1px solid var(--b);border-radius:10px;padding:13px;font-size:12px;color:var(--t2);line-height:1.5;margin-bottom:10px">
+          ⚠️ Sans compte connecté, tes entraînements restent seulement sur cet appareil. Si tu changes de téléphone ou vides ton navigateur, ils seront perdus. Tu pourras te connecter plus tard depuis Programme → Compte & sauvegarde cloud.
+        </div>
+        <button class="btn btn-ghost btn-md" style="width:100%;border-radius:var(--r)" onclick="onboardGuestFinal()">Compris, continuer sans compte</button>
+      </div>
+    </div>
+    <div id="onboardStep2" style="display:none">
+      <div style="text-align:center;padding:22px 20px 4px">
+        <div style="font-size:15px;font-weight:900;margin-bottom:4px">🏋️ Fiche athlète</div>
+        <div style="font-size:12px;color:var(--t2);line-height:1.5">Quelques infos rapides, optionnelles, pour personnaliser ton expérience.</div>
+      </div>
+      <div style="padding:14px 20px 4px;display:flex;flex-direction:column;gap:9px">
+        <input type="text" id="apName" placeholder="Nom complet" style="width:100%;background:var(--bg3);border:1px solid var(--b);border-radius:10px;padding:11px 12px;color:#fff;font-size:14px;outline:none;box-sizing:border-box">
+        <input type="email" id="apEmail" placeholder="Courriel" style="width:100%;background:var(--bg3);border:1px solid var(--b);border-radius:10px;padding:11px 12px;color:#fff;font-size:14px;outline:none;box-sizing:border-box">
+        <div style="display:flex;gap:9px">
+          <input type="number" id="apAge" placeholder="Âge" style="flex:1;background:var(--bg3);border:1px solid var(--b);border-radius:10px;padding:11px 12px;color:#fff;font-size:14px;outline:none;box-sizing:border-box">
+          <input type="number" id="apWeight" placeholder="Poids (lb)" style="flex:1;background:var(--bg3);border:1px solid var(--b);border-radius:10px;padding:11px 12px;color:#fff;font-size:14px;outline:none;box-sizing:border-box">
+          <input type="number" id="apHeight" placeholder="Grandeur (cm)" style="flex:1;background:var(--bg3);border:1px solid var(--b);border-radius:10px;padding:11px 12px;color:#fff;font-size:14px;outline:none;box-sizing:border-box">
+        </div>
+        <select id="apExperience" style="width:100%;background:var(--bg3);border:1px solid var(--b);border-radius:10px;padding:11px 12px;color:#fff;font-size:14px;outline:none;box-sizing:border-box">
+          <option value="">Niveau d'expérience</option>
+          <option value="Débutant">Débutant (0-1 an)</option>
+          <option value="Intermédiaire">Intermédiaire (1-3 ans)</option>
+          <option value="Avancé">Avancé (3+ ans)</option>
+        </select>
+      </div>
+      <div style="padding:16px 20px 4px">
+        <button class="btn btn-red btn-lg" style="width:100%;margin-bottom:9px" onclick="submitAthleteProfile()">Continuer</button>
+        <button class="btn btn-ghost btn-md" style="width:100%;border-radius:var(--r)" onclick="skipAthleteProfile()">Passer cette étape</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2592,6 +2619,11 @@ const REG_LOG_CONFIG = {
   entryName: '',      // ← entry.XXXXXXX pour le champ "Nom"
   entryMethod: '',    // ← entry.XXXXXXX pour le champ "Méthode"
   entryEvent: '',      // ← entry.XXXXXXX pour le champ "Type d'événement"
+  entryEmail: '',       // ← entry.XXXXXXX pour le champ "Courriel"
+  entryAge: '',          // ← entry.XXXXXXX pour le champ "Âge"
+  entryWeight: '',        // ← entry.XXXXXXX pour le champ "Poids"
+  entryHeight: '',         // ← entry.XXXXXXX pour le champ "Grandeur"
+  entryExperience: '',      // ← entry.XXXXXXX pour le champ "Niveau d'expérience"
 };
 function logRegistration(name, method, eventType){
   if(!REG_LOG_CONFIG.formActionUrl) return; // pas encore configuré — silencieux, n'affecte rien
@@ -2600,6 +2632,21 @@ function logRegistration(name, method, eventType){
     if(REG_LOG_CONFIG.entryName) params.append(REG_LOG_CONFIG.entryName, name||'');
     if(REG_LOG_CONFIG.entryMethod) params.append(REG_LOG_CONFIG.entryMethod, method||'');
     if(REG_LOG_CONFIG.entryEvent) params.append(REG_LOG_CONFIG.entryEvent, eventType||'');
+    fetch(REG_LOG_CONFIG.formActionUrl, {method:'POST', mode:'no-cors', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:params.toString()});
+  }catch(e){}
+}
+function logAthleteProfile(p){
+  if(!REG_LOG_CONFIG.formActionUrl) return;
+  try{
+    const params = new URLSearchParams();
+    if(REG_LOG_CONFIG.entryName) params.append(REG_LOG_CONFIG.entryName, p.name||'');
+    if(REG_LOG_CONFIG.entryMethod) params.append(REG_LOG_CONFIG.entryMethod, (S.cloudAccount&&S.cloudAccount.provider==='onedrive')?'OneDrive':'Google Drive');
+    if(REG_LOG_CONFIG.entryEvent) params.append(REG_LOG_CONFIG.entryEvent, 'Fiche athlète');
+    if(REG_LOG_CONFIG.entryEmail) params.append(REG_LOG_CONFIG.entryEmail, p.email||'');
+    if(REG_LOG_CONFIG.entryAge) params.append(REG_LOG_CONFIG.entryAge, p.age||'');
+    if(REG_LOG_CONFIG.entryWeight) params.append(REG_LOG_CONFIG.entryWeight, p.weight||'');
+    if(REG_LOG_CONFIG.entryHeight) params.append(REG_LOG_CONFIG.entryHeight, p.height||'');
+    if(REG_LOG_CONFIG.entryExperience) params.append(REG_LOG_CONFIG.entryExperience, p.experience||'');
     fetch(REG_LOG_CONFIG.formActionUrl, {method:'POST', mode:'no-cors', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:params.toString()});
   }catch(e){}
 }
@@ -2660,8 +2707,48 @@ function closeOnboardingIfOpen(){
   if(el && el.classList.contains('on')){
     S.onboardingChoice = S.cloudAccount ? S.cloudAccount.provider : 'guest';
     save();
-    el.classList.remove('on');
+    showOnboardProfileStep();
   }
+}
+function showOnboardProfileStep(){
+  const el=document.getElementById('onboardSh');
+  if(!el || !el.classList.contains('on')) return;
+  document.getElementById('onboardStep1').style.display='none';
+  const nameField=document.getElementById('apName');
+  if(nameField && S.cloudAccount) nameField.value=S.cloudAccount.name||'';
+  const emailField=document.getElementById('apEmail');
+  if(emailField && S.cloudAccount) emailField.value=S.cloudAccount.email||'';
+  document.getElementById('onboardStep2').style.display='block';
+}
+function submitAthleteProfile(){
+  const profile={
+    name:(document.getElementById('apName').value||'').trim(),
+    email:(document.getElementById('apEmail').value||'').trim(),
+    age:(document.getElementById('apAge').value||'').trim(),
+    weight:(document.getElementById('apWeight').value||'').trim(),
+    height:(document.getElementById('apHeight').value||'').trim(),
+    experience:document.getElementById('apExperience').value||'',
+  };
+  S.athleteProfile=profile;
+  save();
+  logAthleteProfile(profile);
+  document.getElementById('onboardSh').classList.remove('on');
+  if(navigator.vibrate) navigator.vibrate(8);
+}
+function openAthleteProfileForm(){
+  document.getElementById('onboardStep1').style.display='none';
+  document.getElementById('onboardStep2').style.display='block';
+  const p=S.athleteProfile||{};
+  document.getElementById('apName').value=p.name||(S.cloudAccount?S.cloudAccount.name:'')||'';
+  document.getElementById('apEmail').value=p.email||(S.cloudAccount?S.cloudAccount.email:'')||'';
+  document.getElementById('apAge').value=p.age||'';
+  document.getElementById('apWeight').value=p.weight||'';
+  document.getElementById('apHeight').value=p.height||'';
+  document.getElementById('apExperience').value=p.experience||'';
+  document.getElementById('onboardSh').classList.add('on');
+}
+function skipAthleteProfile(){
+  document.getElementById('onboardSh').classList.remove('on');
 }
 
 function renderCloudCard(){
@@ -2679,7 +2766,10 @@ function renderCloudCard(){
         <button class="btn btn-red btn-md" style="flex:1;border-radius:var(--r)" onclick="saveToOneDrive()">☁️ Sauvegarder</button>
         <button class="btn btn-ghost btn-md" style="flex:1;border-radius:var(--r)" onclick="loadFromOneDrive()">⬇️ Charger</button>
       </div>
-      <div style="font-size:11px;color:var(--t3);margin-top:9px;cursor:pointer;text-align:center" onclick="disconnectCloud()">Se déconnecter</div>`;
+      <div style="display:flex;gap:14px;justify-content:center;margin-top:10px">
+        <span style="font-size:11px;color:var(--rs);font-weight:700;cursor:pointer" onclick="openAthleteProfileForm()">✏️ Fiche athlète</span>
+        <span style="font-size:11px;color:var(--t3);cursor:pointer" onclick="disconnectCloud()">Se déconnecter</span>
+      </div>`;
   } else if(acct && acct.provider==='gdrive'){
     el.innerHTML = `<div style="font-size:13px;font-weight:800;margin-bottom:3px">☁️ Connecté à Google Drive</div>
       <div style="font-size:11px;color:var(--t3);margin-bottom:10px">${acct.email||acct.name||''}</div>
@@ -2687,7 +2777,10 @@ function renderCloudCard(){
         <button class="btn btn-red btn-md" style="flex:1;border-radius:var(--r)" onclick="saveToGoogleDrive()">☁️ Sauvegarder</button>
         <button class="btn btn-ghost btn-md" style="flex:1;border-radius:var(--r)" onclick="loadFromGoogleDrive()">⬇️ Charger</button>
       </div>
-      <div style="font-size:11px;color:var(--t3);margin-top:9px;cursor:pointer;text-align:center" onclick="disconnectCloud()">Se déconnecter</div>`;
+      <div style="display:flex;gap:14px;justify-content:center;margin-top:10px">
+        <span style="font-size:11px;color:var(--rs);font-weight:700;cursor:pointer" onclick="openAthleteProfileForm()">✏️ Fiche athlète</span>
+        <span style="font-size:11px;color:var(--t3);cursor:pointer" onclick="disconnectCloud()">Se déconnecter</span>
+      </div>`;
   } else {
     el.innerHTML = `<div style="font-size:13px;font-weight:800;margin-bottom:3px">Aucun compte connecté</div>
       <div style="font-size:11px;color:var(--t3);margin-bottom:10px">Connecte un compte pour que tes entraînements se sauvegardent dans ton propre cloud — chaque personne garde ses données séparées, sans jamais les mélanger.</div>
