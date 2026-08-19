@@ -2749,21 +2749,30 @@ function base64url(buf){
 async function connectSpotify(){
   if(!SPOTIFY_CONFIG.clientId){ alert("Spotify n'est pas encore configuré pour cette app — configuration en attente."); return; }
   const verifier=base64url(crypto.getRandomValues(new Uint8Array(64)));
-  sessionStorage.setItem('sp_verifier', verifier);
   const digest=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
   const challenge=base64url(digest);
   const params=new URLSearchParams({
     client_id:SPOTIFY_CONFIG.clientId, response_type:'code', redirect_uri:SPOTIFY_CONFIG.redirectUri,
     scope:SPOTIFY_CONFIG.scopes, code_challenge_method:'S256', code_challenge:challenge,
   });
-  window.location.href='https://accounts.spotify.com/authorize?'+params.toString();
+  const popup=window.open('https://accounts.spotify.com/authorize?'+params.toString(),'spotify_auth','width=420,height=650');
+  if(!popup){ alert("La fenêtre de connexion a été bloquée. Autorise les pop-ups pour ce site et réessaie."); return; }
+  const poll=setInterval(async ()=>{
+    let code=null;
+    try{
+      if(popup.closed){ clearInterval(poll); return; }
+      if(popup.location.href.indexOf(SPOTIFY_CONFIG.redirectUri)===0){
+        code=new URLSearchParams(popup.location.search).get('code');
+      }
+    }catch(e){ return; } // encore sur accounts.spotify.com — origine différente, on réessaie
+    if(code){
+      clearInterval(poll);
+      popup.close();
+      await exchangeSpotifyCode(code, verifier);
+    }
+  },500);
 }
-async function handleSpotifyCallback(){
-  const params=new URLSearchParams(window.location.search);
-  const code=params.get('code');
-  if(!code) return;
-  const verifier=sessionStorage.getItem('sp_verifier');
-  if(!verifier) return;
+async function exchangeSpotifyCode(code, verifier){
   try{
     const res=await fetch('https://accounts.spotify.com/api/token',{
       method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
@@ -2776,11 +2785,13 @@ async function handleSpotifyCallback(){
     if(d.access_token){
       S.spotify={accessToken:d.access_token, refreshToken:d.refresh_token, expiresAt:Date.now()+d.expires_in*1000};
       save();
-      window.history.replaceState({},'',SPOTIFY_CONFIG.redirectUri);
       renderSpotifyCard();
       if(S.woStart) startSpotifyPolling();
+      if(navigator.vibrate) navigator.vibrate(8);
+    } else {
+      alert("La connexion à Spotify a échoué. Réessaie.");
     }
-  }catch(e){}
+  }catch(e){ alert("La connexion à Spotify a échoué. Réessaie."); }
 }
 async function getSpotifyToken(){
   if(!S.spotify) return null;
@@ -2823,14 +2834,23 @@ async function spotifyPlayPause(){
 }
 async function spotifyNext(){ await spotifyApi('/me/player/next','POST'); setTimeout(renderSpotifyWidget, 400); }
 async function spotifyPrev(){ await spotifyApi('/me/player/previous','POST'); setTimeout(renderSpotifyWidget, 400); }
-async function renderSpotifyWidget(){
-  const el=document.getElementById('spotifyWidget');
+function spotifyLogoSvg(size){
+  size = size || 20;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" style="flex-shrink:0">
+    <circle cx="12" cy="12" r="12" fill="#1ED760"/>
+    <path d="M7 15.3c2.7-.8 5.8-.6 8.2.8" stroke="#000" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+    <path d="M6.4 12.2c3.2-1 7-.8 9.9 1" stroke="#000" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <path d="M6 9.1c3.7-1.1 8.2-.9 11.6 1.2" stroke="#000" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  </svg>`;
+}
+async function renderNowPlayingInto(elId){
+  const el=document.getElementById(elId);
   if(!el) return;
   if(!S.spotify){ el.style.display='none'; return; }
   const cur=await spotifyApi('/me/player/currently-playing');
   if(!cur || !cur.item){
     el.style.display='flex';
-    el.innerHTML=`<div style="font-size:11px;color:var(--t3);flex:1">Spotify connecté — rien en lecture</div>`;
+    el.innerHTML=`<div style="font-size:11px;color:var(--t3);flex:1">Spotify connecté — rien en lecture pour l'instant</div>`;
     return;
   }
   el.style.display='flex';
@@ -2847,6 +2867,7 @@ async function renderSpotifyWidget(){
     <button onclick="spotifyNext()" style="background:none;border:none;color:var(--t2);cursor:pointer;padding:4px">${ico('skipfwd',16)}</button>
   `;
 }
+async function renderSpotifyWidget(){ await renderNowPlayingInto('spotifyWidget'); }
 function startSpotifyPolling(){
   if(!S.spotify) return;
   renderSpotifyWidget();
@@ -2858,13 +2879,15 @@ function renderSpotifyCard(){
   if(!el) return;
   const ready=!!SPOTIFY_CONFIG.clientId;
   if(S.spotify){
-    el.innerHTML=`<div style="font-size:13px;font-weight:800;margin-bottom:3px">${ico('musicNote',15)} Connecté à Spotify</div>
-      <div style="font-size:11px;color:var(--t3);margin-bottom:10px">Contrôle à distance pendant l'entraînement — nécessite Premium</div>
+    el.innerHTML=`<div style="font-size:13px;font-weight:800;margin-bottom:3px;display:flex;align-items:center;gap:7px">${spotifyLogoSvg(16)} Connecté à Spotify</div>
+      <div style="font-size:11px;color:var(--t3);margin-bottom:10px">Contrôle à distance de ce qui joue déjà sur ton appareil — nécessite Premium</div>
+      <div id="spotifySettingsNowPlaying" style="display:none;align-items:center;gap:9px;background:var(--bg3);border:1px solid var(--b);border-radius:12px;padding:7px 10px;margin-bottom:10px"></div>
       <button class="btn btn-ghost btn-md" style="width:100%;border-radius:var(--r)" onclick="disconnectSpotify()">Se déconnecter</button>`;
+    renderNowPlayingInto('spotifySettingsNowPlaying');
   } else {
     el.innerHTML=`<div style="font-size:13px;font-weight:800;margin-bottom:3px">Aucun compte connecté</div>
       <div style="font-size:11px;color:var(--t3);margin-bottom:10px">Connecte Spotify pour voir et contrôler ta musique (jouer/pause/suivant) directement pendant tes séances.</div>
-      <button class="btn ${ready?'btn-red':'btn-ghost'} btn-md" style="width:100%;border-radius:var(--r)" onclick="connectSpotify()">${ico('musicNote')} Se connecter avec Spotify${ready?'':' '+ico('lock',13)}</button>
+      <button class="btn ${ready?'btn-red':'btn-ghost'} btn-md" style="width:100%;border-radius:var(--r);background:${ready?'#1ED760':''};color:${ready?'#000':''}" onclick="connectSpotify()">${spotifyLogoSvg(18)} Se connecter avec Spotify${ready?'':' '+ico('lock',13)}</button>
       ${!ready?'<div style="font-size:10px;color:var(--t3);margin-top:9px">'+ico('lock',11)+' = configuration en attente côté développeur</div>':''}`;
   }
 }
@@ -5699,7 +5722,6 @@ save();
 initRecoveryBody();
 renderCloudCard();
 renderSpotifyCard();
-if(window.location.search.includes('code=')) handleSpotifyCallback();
 renderToday();
 renderProg();
 // Migration: quelqu'un qui utilisait déjà l'app avant ce splash (données ou compte cloud
