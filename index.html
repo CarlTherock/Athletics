@@ -2746,31 +2746,39 @@ let spotifyNowPlayingInt = null;
 function base64url(buf){
   return btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 }
-async function connectSpotify(){
+function connectSpotify(){
   if(!SPOTIFY_CONFIG.clientId){ alert("Spotify n'est pas encore configuré pour cette app — configuration en attente."); return; }
-  const verifier=base64url(crypto.getRandomValues(new Uint8Array(64)));
-  const digest=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
-  const challenge=base64url(digest);
-  const params=new URLSearchParams({
-    client_id:SPOTIFY_CONFIG.clientId, response_type:'code', redirect_uri:SPOTIFY_CONFIG.redirectUri,
-    scope:SPOTIFY_CONFIG.scopes, code_challenge_method:'S256', code_challenge:challenge,
-  });
-  const popup=window.open('https://accounts.spotify.com/authorize?'+params.toString(),'spotify_auth','width=420,height=650');
+  // Safari bloque window.open() si le moindre délai asynchrone (même une micro-tâche) s'écoule
+  // entre le clic et l'appel — donc on ouvre une fenêtre vide EN PREMIER, de façon synchrone,
+  // et on n'y injecte l'URL réelle qu'une fois le calcul PKCE (asynchrone) terminé.
+  const popup=window.open('','spotify_auth','width=420,height=650');
   if(!popup){ alert("La fenêtre de connexion a été bloquée. Autorise les pop-ups pour ce site et réessaie."); return; }
-  const poll=setInterval(async ()=>{
-    let code=null;
-    try{
-      if(popup.closed){ clearInterval(poll); return; }
-      if(popup.location.href.indexOf(SPOTIFY_CONFIG.redirectUri)===0){
-        code=new URLSearchParams(popup.location.search).get('code');
+  popup.document.write('<body style="background:#0A0A0A;color:#888;font-family:-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">Connexion à Spotify…</body>');
+  (async ()=>{
+    const verifier=base64url(crypto.getRandomValues(new Uint8Array(64)));
+    const digest=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
+    const challenge=base64url(digest);
+    const params=new URLSearchParams({
+      client_id:SPOTIFY_CONFIG.clientId, response_type:'code', redirect_uri:SPOTIFY_CONFIG.redirectUri,
+      scope:SPOTIFY_CONFIG.scopes, code_challenge_method:'S256', code_challenge:challenge,
+    });
+    if(popup.closed){ return; }
+    popup.location.href='https://accounts.spotify.com/authorize?'+params.toString();
+    const poll=setInterval(async ()=>{
+      let code=null;
+      try{
+        if(popup.closed){ clearInterval(poll); return; }
+        if(popup.location.href.indexOf(SPOTIFY_CONFIG.redirectUri)===0){
+          code=new URLSearchParams(popup.location.search).get('code');
+        }
+      }catch(e){ return; } // encore sur accounts.spotify.com — origine différente, on réessaie
+      if(code){
+        clearInterval(poll);
+        popup.close();
+        await exchangeSpotifyCode(code, verifier);
       }
-    }catch(e){ return; } // encore sur accounts.spotify.com — origine différente, on réessaie
-    if(code){
-      clearInterval(poll);
-      popup.close();
-      await exchangeSpotifyCode(code, verifier);
-    }
-  },500);
+    },500);
+  })();
 }
 async function exchangeSpotifyCode(code, verifier){
   try{
