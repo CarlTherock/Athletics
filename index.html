@@ -831,7 +831,7 @@ body::before {
 <!-- ══ TODAY ══ -->
 <div class="scr on" id="sc-today">
   <div class="tb">
-    <div><div class="tb-logo" id="todayTbLogo">CTR <em>ATHLETIC</em></div><div style="font-size:10px;color:var(--t3)" id="todayLbl">—</div></div>
+    <div><div class="tb-logo" id="todayTbLogo">CTR <em>ATHLETIC</em></div><div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;color:var(--t3)" id="todayLbl">—</span><span id="cloudStatusDot" style="display:none;align-items:center;gap:4px;font-size:9px;font-weight:800;color:#22C55E"><span style="width:6px;height:6px;border-radius:50%;background:#22C55E;display:inline-block"></span>En ligne</span></div></div>
     <span class="pill pa" id="todayBloc">—</span>
   </div>
   <div class="hero">
@@ -1181,10 +1181,10 @@ function fmt(s){return Math.floor(s/60)+':'+(s%60<10?'0':'')+s%60}
 function tod(){return new Date().toLocaleDateString('fr-CA')}
 function calcWeek(){const start=new Date(PROG.startDate),now=new Date();const diff=Math.floor((now-start)/86400000);return diff<0?1:Math.min(17,Math.floor(diff/7)+1);}
 function activeDay(){return S.ovDay||S.curDay}
-function bindSwipeDelete(cardEl){
+function bindSwipeDelete(cardEl, onDelete){
   if(!cardEl) return;
   let startX=0,curX=0,dragging=false,opened=false;
-  const threshold=45,maxSwipe=84;
+  const revealThreshold=45,fullDeleteThreshold=130,maxSwipe=84,maxDrag=220;
   cardEl.addEventListener('touchstart',function(e){
     startX=e.touches[0].clientX;dragging=true;window.__swipeMoved__=false;
     cardEl.style.transition='none';
@@ -1193,15 +1193,24 @@ function bindSwipeDelete(cardEl){
     if(!dragging) return;
     let dx=e.touches[0].clientX-startX;
     if(opened) dx-=maxSwipe;
-    dx=Math.max(-maxSwipe,Math.min(0,dx));
+    dx=Math.max(-maxDrag,Math.min(0,dx));
     curX=dx;
     if(Math.abs(dx)>6) window.__swipeMoved__=true;
     cardEl.style.transform=`translateX(${dx}px)`;
   },{passive:true});
   cardEl.addEventListener('touchend',function(){
     dragging=false;
+    if(curX<-fullDeleteThreshold){
+      // Style Apple : glissement complet — suppression automatique, pas besoin de taper le bouton
+      cardEl.style.transition='transform .18s, opacity .18s';
+      cardEl.style.transform='translateX(-100%)';
+      cardEl.style.opacity='0';
+      if(navigator.vibrate) navigator.vibrate(12);
+      setTimeout(()=>{ if(onDelete) onDelete(); },160);
+      return;
+    }
     cardEl.style.transition='transform .2s';
-    if(curX<-threshold){cardEl.style.transform=`translateX(-${maxSwipe}px)`;opened=true;}
+    if(curX<-revealThreshold){cardEl.style.transform=`translateX(-${maxSwipe}px)`;opened=true;}
     else{cardEl.style.transform='translateX(0)';opened=false;}
     setTimeout(()=>{window.__swipeMoved__=false;},50);
   });
@@ -1584,7 +1593,7 @@ function renderToday(){
       </div>
     </div>`;
     tc.innerHTML=statusHtml+dayCard;
-    bindSwipeDelete(document.getElementById('todaySwipeCard'));
+    bindSwipeDelete(document.getElementById('todaySwipeCard'), ()=>clearCalEntry(todayViewDate));
   }
 
   // Week summary
@@ -1796,6 +1805,7 @@ function finishWo(){
   save();
   showActiveBanner(false);
   go('today');
+  autoSyncIfNeeded();
 }
 
 // History sheet
@@ -2644,6 +2654,8 @@ function closeOnboardingIfOpen(){
 }
 
 function renderCloudCard(){
+  const dotEl = document.getElementById('cloudStatusDot');
+  if(dotEl) dotEl.style.display = S.cloudAccount ? 'inline-flex' : 'none';
   const el = document.getElementById('cloudCardBody');
   if(!el) return;
   const msalReady = !!CLOUD_CONFIG.msal.clientId;
